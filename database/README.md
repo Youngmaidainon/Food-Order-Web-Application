@@ -7,94 +7,19 @@
 
 ## 🏗️ โครงสร้างตารางและความสัมพันธ์ (Schema Design)
 
-```mermaid
-erDiagram
-    categories ||--o{ menu_items : contains
-    menu_items ||--o{ order_items : ordered_in
-    menu_items ||--o{ cart_items : added_in
-    dressings ||--o{ order_items : selected_in
-    dressings ||--o{ cart_items : selected_in
-    orders ||--|{ order_items : contains
-    cart_sessions ||--o{ cart_items : holds
-    admin_users ||--o{ admin_sessions : owns
-
-    categories {
-        serial id PK
-        varchar name
-    }
-    menu_items {
-        serial id PK
-        int category_id FK
-        varchar name
-        text description
-        numeric price
-        varchar image_url
-        boolean is_available
-    }
-    dressings {
-        serial id PK
-        varchar name
-        boolean is_available
-    }
-    orders {
-        serial id PK
-        varchar order_number UK
-        varchar customer_name
-        varchar customer_phone
-        delivery_type_enum delivery_type
-        text delivery_address
-        numeric total_amount
-        order_status_enum status
-        varchar discord_message_id
-        varchar discord_cancel_message_id
-        timestamp created_at
-    }
-    order_items {
-        serial id PK
-        int order_id FK
-        int menu_item_id FK
-        int dressing_id FK
-        int quantity
-        numeric price_per_unit
-    }
-    cart_sessions {
-        uuid id PK
-        timestamp created_at
-        timestamp last_active
-    }
-    cart_items {
-        serial id PK
-        uuid session_id FK
-        int menu_item_id FK
-        int dressing_id FK
-        int quantity
-    }
-    store_status {
-        int id PK
-        boolean is_open
-        int current_sequence
-        varchar restaurant_name
-    }
-    admin_users {
-        serial id PK
-        varchar username UK
-        varchar password_hash
-        timestamp created_at
-        timestamp password_rotated_at
-    }
-    admin_sessions {
-        uuid id PK
-        int admin_id FK
-        timestamp expires_at
-        timestamp created_at
-    }
-    daily_reports {
-        serial id PK
-        date report_date UK
-        varchar discord_message_id
-        timestamp created_at
-    }
-```
+| ตาราง (Table) | คอลัมน์หลัก / Foreign Key | คำอธิบาย |
+|---|---|---|
+| `categories` | `id (PK)`, `name` | หมวดหมู่อาหาร |
+| `menu_items` | `id (PK)`, `category_id (FK)`, `name`, `price`, `is_available` | รายการเมนูอาหาร |
+| `dressings` | `id (PK)`, `name`, `is_available` | ตัวเลือกน้ำสลัด |
+| `orders` | `id (PK)`, `order_number (UK)`, `customer_name`, `status`, `delivery_type` | ข้อมูลคำสั่งซื้อ |
+| `order_items` | `id (PK)`, `order_id (FK)`, `menu_item_id (FK)`, `dressing_id (FK)`, `quantity` | รายการอาหารในคำสั่งซื้อ |
+| `cart_sessions` | `id (PK, UUID)`, `created_at`, `last_active` | เซสชันตะกร้าสินค้า |
+| `cart_items` | `id (PK)`, `session_id (FK)`, `menu_item_id (FK)`, `dressing_id (FK)`, `quantity` | รายการสินค้าในตะกร้า |
+| `store_status` | `id (PK)`, `is_open`, `current_sequence`, `restaurant_name` | สถานะเปิด/ปิดร้านและคิว |
+| `admin_users` | `id (PK)`, `username (UK)`, `password_hash` | บัญชีผู้ดูแลระบบ |
+| `admin_sessions` | `id (PK, UUID)`, `admin_id (FK)`, `expires_at` | เซสชันการเข้าสู่ระบบแอดมิน |
+| `daily_reports` | `id (PK)`, `report_date (UK)`, `discord_message_id` | บันทึกประวัติการส่งรายงานรายวัน |
 
 ---
 

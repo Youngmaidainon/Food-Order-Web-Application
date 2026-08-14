@@ -18,21 +18,6 @@
 
 ## 📐 สถาปัตยกรรมระบบ (System Architecture)
 
-```mermaid
-graph TD
-    Client["📱 Frontend (React + Vite + Tailwind)<br/>Hosted on Vercel / Nginx"]
-    API["⚙️ Backend API (Express.js Feature-First)<br/>Hosted on Render / Docker"]
-    DB[("🗄️ PostgreSQL Database<br/>Neon Serverless / Local DB")]
-    Discord["💬 Discord Webhook<br/>Order Notifications & Reports"]
-    Cron["⏰ cron-job.org / External Cron<br/>Keep-Alive & Session Cleanup"]
-
-    Client -->|HTTPS / REST API| API
-    API -->|Connection Pool (pg)| DB
-    API -->|Webhook Notifications| Discord
-    Cron -->|GET /api/health| API
-    Cron -->|POST /internal/cron/maintenance| API
-```
-
 1. **Client (Frontend)**: React 18 + Vite + Tailwind CSS สไตล์ Glassmorphism รองรับ Responsive ทั้งมือถือและเดสก์ท็อป พร้อมระบบ CartContext (Optimistic UI + Debounced sync) และ TrackingModal ติดตามสถานะออเดอร์ Real-time
 2. **Application Server (Backend)**: Express.js จัดโครงสร้างแบบ **Feature-First** (`admin`, `cart`, `dressings`, `menu`, `orders`, `store`, `cron`), มี **Centralized Config (Fail-Fast)**, **Typed AppError Hierarchy**, **Structured JSON Logging (Pino)**, และระบบ **Auto-Migration** รันคำสั่ง SQL ตั้งค่าฐานข้อมูลอัตโนมัติเมื่อเริ่มเซิร์ฟเวอร์
 3. **Database**: PostgreSQL พร้อม Custom ENUM Types, Foreign Key Cascades, และ Composite Unique Constraints สำหรับควบคุมความถูกต้องของข้อมูล
