@@ -4,8 +4,9 @@
 
   <img src="https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%20%7C%20Tailwind-61DAFB?style=flat-square&logo=react&logoColor=black" alt="Frontend" />
   <img src="https://img.shields.io/badge/Backend-Node.js%20%7C%20Express%20%7C%20Feature--First-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Backend" />
-  <img src="https://img.shields.io/badge/Database-PostgreSQL%20%7C%20Neon-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="Database" />
-  <img src="https://img.shields.io/badge/Deploy-Docker%20%7C%20Render%20%7C%20Vercel-000000?style=flat-square&logo=vercel&logoColor=white" alt="Deploy" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="Database" />
+  <img src="https://img.shields.io/badge/Container-Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/Cloud%20%26%20Deploy-Render%20%7C%20Vercel%20%7C%20Neon-000000?style=flat-square&logo=vercel&logoColor=white" alt="Cloud & Deploy" />
   <img src="https://img.shields.io/badge/Integration-Discord%20Webhook-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord" />
 </div>
 
