@@ -1,0 +1,146 @@
+import http from 'http';
+import app from './src/index.js';
+import { applicationConfig } from './src/config/config.js';
+import { executeQuery, databasePool } from './src/config/database.js';
+import { appLogger } from './src/logger.js';
+
+// Override global console methods with Pino logger for structured logging
+globalThis.console.log = (...args) => appLogger.info({ msg: args.join(' ') });
+globalThis.console.error = (...args) => appLogger.error({ msg: args.join(' ') });
+globalThis.console.warn = (...args) => appLogger.warn({ msg: args.join(' ') });
+globalThis.console.info = (...args) => appLogger.info({ msg: args.join(' ') });
+globalThis.console.debug = (...args) => appLogger.debug({ msg: args.join(' ') });
+
+// Run database schema migrations on server initialization
+async function runDatabaseMigrations() {
+  try {
+
+    await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS restaurant_name VARCHAR(100) DEFAULT 'ร้านสปริงโรลออนไลน์'`);
+    await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS current_sequence INT DEFAULT 0`);
+
+    await executeQuery(`ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check`);
+    await executeQuery(`
+      ALTER TABLE orders 
+      ADD CONSTRAINT orders_status_check 
+      CHECK (status IN ('รอดำเนินการ', 'รับออเดอร์แล้ว', 'กำลังเตรียมอาหาร', 'พร้อมรับอาหาร', 'รับอาหารแล้ว', 'กำลังจัดส่ง', 'จัดส่งแล้ว', 'ยกเลิก'))
+    `);
+
+    await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL`);
+    await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancel_reason TEXT DEFAULT NULL`);
+    await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS canceled_by TEXT DEFAULT NULL`);
+    await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS sequence_number INT DEFAULT 0`);
+    await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS previous_status VARCHAR(50) DEFAULT NULL`);
+    await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP WITH TIME ZONE DEFAULT NULL`);
+    await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS discord_cancel_message_id VARCHAR(255) DEFAULT NULL`);
+
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS daily_reports (
+        id SERIAL PRIMARY KEY,
+        discord_message_id VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await executeQuery(`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`);
+    await executeQuery(`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC)`);
+    await executeQuery(`CREATE INDEX IF NOT EXISTS idx_orders_deleted_at ON orders(deleted_at)`);
+    await executeQuery(`CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)`);
+
+    await executeQuery(`
+      INSERT INTO dressings (id, name, is_available)
+      VALUES (0, 'ไม่รับน้ำสลัด', true)
+      ON CONFLICT (id) DO UPDATE SET is_available = true, name = EXCLUDED.name
+    `);
+
+    await executeQuery(`SELECT setval('dressings_id_seq', GREATEST((SELECT MAX(id) FROM dressings WHERE id != 0), 1))`);
+
+
+
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS admin_sessions (
+        session_id UUID PRIMARY KEY,
+        admin_id INT REFERENCES admin_users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+      )
+    `);
+
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS cart_sessions (
+        session_id UUID PRIMARY KEY,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        last_accessed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS cart_items (
+        id SERIAL PRIMARY KEY,
+        session_id UUID REFERENCES cart_sessions(session_id) ON DELETE CASCADE,
+        menu_item_id INT REFERENCES menu_items(id) ON DELETE CASCADE,
+        dressing_id INT REFERENCES dressings(id) ON DELETE SET NULL,
+        quantity INT NOT NULL DEFAULT 1,
+        item_notes TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(session_id, menu_item_id, dressing_id)
+      )
+    `);
+
+    const adminUsername = process.env.ADMIN_INIT_USERNAME || 'admin';
+    const adminUserCheckQueryResult = await executeQuery(`SELECT password_rotated_at FROM admin_users WHERE username = $1`, [adminUsername]);
+    if (adminUserCheckQueryResult.rows.length > 0) {
+      const passwordRotatedAt = adminUserCheckQueryResult.rows[0].password_rotated_at;
+      const initialAdminPassword = process.env.ADMIN_INIT_PASSWORD;
+
+      if (!passwordRotatedAt && initialAdminPassword) {
+        const bcryptModule = await import('bcryptjs');
+        const hashedPassword = await bcryptModule.default.hash(initialAdminPassword, 10);
+        await executeQuery(`
+          UPDATE admin_users 
+          SET password_hash = $1, password_rotated_at = NOW() 
+          WHERE username = $2
+        `, [hashedPassword, adminUsername]);
+        console.log('🔒 Admin password successfully rotated from ADMIN_INIT_PASSWORD');
+      } else if (passwordRotatedAt && initialAdminPassword) {
+        console.warn(`⚠️ ADMIN_INIT_PASSWORD is set but password was already rotated on ${passwordRotatedAt}; ignoring`);
+      }
+    }
+
+    console.log('✅ Database migrations applied successfully');
+  } catch (migrationError) {
+    console.error('⚠️ Migration warning (non-fatal):', migrationError.message);
+  }
+}
+
+
+runDatabaseMigrations().then(() => {
+  const httpServer = http.createServer(app);
+  
+  const server = httpServer.listen(applicationConfig.port, () => {
+    appLogger.info({ msg: `🌯 Spring Roll Online Store Backend running on port ${applicationConfig.port}` });
+  });
+
+  const shutdown = async (signal) => {
+    appLogger.info({ msg: `Received ${signal}. Shutting down gracefully...` });
+    server.close(async () => {
+      appLogger.info({ msg: 'HTTP server closed.' });
+      try {
+        await databasePool.end();
+        appLogger.info({ msg: 'Database pool closed.' });
+        process.exit(0);
+      } catch (err) {
+        appLogger.error({ msg: 'Error closing database pool', error: err });
+        process.exit(1);
+      }
+    });
+
+    // Force close after 10s
+    setTimeout(() => {
+      appLogger.error({ msg: 'Could not close connections in time, forcefully shutting down' });
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+});

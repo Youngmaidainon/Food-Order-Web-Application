@@ -1,0 +1,22 @@
+﻿import express from 'express';
+import { StoreRepository } from './store_repository.js';
+import { StoreService } from './store_service.js';
+
+const storeRouter = express.Router();
+const storeRepository = new StoreRepository();
+const storeService = new StoreService(storeRepository);
+
+// Export instances to be used by other features (e.g. orders)
+export { storeService, storeRepository };
+
+// GET /api/store/status - Fetch store status
+storeRouter.get('/status', async (req, res, next) => {
+  try {
+    const data = await storeService.getStatus();
+    return res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+export { storeRouter };

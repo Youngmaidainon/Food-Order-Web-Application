@@ -1,0 +1,33 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="#ecfdf5" />
+  
+  <!-- Spring Roll Shadow -->
+  <ellipse cx="256" cy="380" rx="140" ry="20" fill="#d1fae5" />
+  
+  <!-- Spring Roll Body -->
+  <g transform="translate(136, 170) rotate(-10 120 70)">
+    <!-- Main wrapper -->
+    <rect x="0" y="0" width="240" height="120" rx="50" fill="#fcd34d" />
+    
+    <!-- Lighter inner wrap for depth -->
+    <path d="M 40 20 Q 120 5 200 20 Q 225 60 200 100 Q 120 115 40 100 Q 15 60 40 20 Z" fill="#fde68a" />
+    
+    <!-- Veggies left -->
+    <path d="M 15 25 Q -10 60 15 95" fill="none" stroke="#10b981" stroke-width="20" stroke-linecap="round" />
+    <path d="M 5 45 Q -20 60 5 75" fill="none" stroke="#f43f5e" stroke-width="15" stroke-linecap="round" />
+    
+    <!-- Veggies right -->
+    <path d="M 225 25 Q 250 60 225 95" fill="none" stroke="#10b981" stroke-width="20" stroke-linecap="round" />
+    <path d="M 235 45 Q 260 60 235 75" fill="none" stroke="#f43f5e" stroke-width="15" stroke-linecap="round" />
+    <path d="M 230 30 Q 265 60 230 90" fill="none" stroke="#fbbf24" stroke-width="12" stroke-linecap="round" />
+    
+    <!-- Wrap creases -->
+    <path d="M 70 15 Q 60 60 80 105" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+    <path d="M 120 10 Q 110 60 130 110" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+    <path d="M 170 15 Q 160 60 180 105" fill="none" stroke="#f59e0b" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+    
+    <!-- Highlight -->
+    <path d="M 50 25 Q 120 10 190 25" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+  </g>
+</svg>

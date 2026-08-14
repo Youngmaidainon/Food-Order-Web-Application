@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #10B981; /* Fresh Green */
+    --primary-hover: #059669;
+    --primary-light: rgba(16, 185, 129, 0.15);
+    
+    --secondary: #F59E0B; /* Amber */
+    --secondary-hover: #D97706;
+    
+    --bg-color: #09090b; /* Premium Deep Black */
+    --surface: #18181b; /* Dark Surface */
+    --surface-hover: #27272a;
+    
+    --text-main: #f4f4f5; /* Light text */
+    --text-muted: #a1a1aa; /* Muted light text */
+    
+    --border-color: rgba(255, 255, 255, 0.08); /* Soft glass border */
+    
+    --glass-bg: rgba(24, 24, 27, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    
+    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.15);
+    
+    --radius-sm: 10px;
+    --radius-md: 18px;
+    --radius-lg: 28px;
+    --radius-full: 9999px;
+    
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html {
+    font-size: 14px; /* Reduce base size to prevent Thai word breaking */
+  }
+
+  @media (min-width: 768px) {
+    html {
+      font-size: 15px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    html {
+      font-size: 16px;
+    }
+  }
+
+  body {
+    @apply bg-[#09090b] text-[#f4f4f5] antialiased overflow-x-hidden;
+    font-family: 'Prompt', system-ui, sans-serif;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: keep-all; /* Better for Thai headers, prevents arbitrary character breaks */
+  }
+
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    border-radius: 9999px;
+    filter: blur(120px);
+    z-index: -10;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+  
+  body::before {
+    top: -15%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background-color: rgba(16, 185, 129, 0.15);
+  }
+  
+  body::after {
+    bottom: -15%;
+    right: -10%;
+    width: 700px;
+    height: 700px;
+    background-color: rgba(245, 158, 11, 0.12);
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10;
+  }
+  .glass-card {
+    @apply bg-[#18181b]/80 backdrop-blur-md border border-white/5;
+  }
+  .text-glow {
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  }
+}
+
+/* Custom Scrollbar for modern look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}

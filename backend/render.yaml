@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: springroll-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HTTPS_ENABLED
+        value: "true"
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+      - key: ADMIN_INIT_USERNAME
+        sync: false
+      - key: ADMIN_INIT_PASSWORD
+        sync: false
+      - key: DISCORD_WEBHOOK_URL
+        sync: false
+      - key: DISCORD_CANCEL_WEBHOOK_URL
+        sync: false
+      - key: DISCORD_REPORT_WEBHOOK_URL
+        sync: false
