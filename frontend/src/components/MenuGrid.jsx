@@ -28,16 +28,16 @@ export default function MenuGrid({ menuItems, isStoreOpen, onAddItem, dressings 
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 mb-[100px]" id="menu-grid-container">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 mb-[100px] w-full" id="menu-grid-container">
         {filteredItems.length === 0 ? (
           <div className="text-center p-12 text-gray-500 glass-card rounded-3xl border border-dashed border-white/20">ไม่มีรายการสินค้าในหมวดหมู่นี้</div>
         ) : (
           filteredItems.map(item => (
-            <div className="glass-card rounded-3xl p-6 flex flex-col transition-all shadow-lg relative overflow-hidden group hover:-translate-y-2 hover:shadow-glow hover:border-primary/50" key={item.id}>
+            <div className="glass-card rounded-3xl p-5 sm:p-6 flex flex-col transition-all shadow-lg relative overflow-hidden group hover:-translate-y-2 hover:shadow-glow hover:border-primary/50" key={item.id}>
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/20 transition-colors"></div>
               
               <div className="text-6xl sm:text-7xl text-center mb-5 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:rotate-6 drop-shadow-2xl">{item.image_url || '🌯'}</div>
-              <div className="text-xl sm:text-2xl font-bold mb-2 text-white min-h-[3.5rem] line-clamp-2 relative z-10">{item.name}</div>
+              <div className="text-lg sm:text-xl leading-tight tracking-tight font-bold mb-2 text-white min-h-[3.5rem] line-clamp-2 relative z-10 break-keep">{item.name}</div>
               <div className="text-sm text-gray-400 flex-grow mb-6 relative z-10">{item.description || 'ชิ้นพอดีกิน อีสฉ่ำ'}</div>
               
               <div className="flex flex-wrap items-center justify-between gap-3 mt-auto relative z-10 border-t border-white/10 pt-4">

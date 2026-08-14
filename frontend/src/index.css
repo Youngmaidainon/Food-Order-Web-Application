@@ -39,18 +39,18 @@
   }
 
   html {
-    font-size: 14px; /* Reduce base size to prevent Thai word breaking */
+    font-size: 13px; /* Base size */
   }
 
   @media (min-width: 768px) {
     html {
-      font-size: 15px;
+      font-size: 14px; /* iPad */
     }
   }
 
   @media (min-width: 1024px) {
     html {
-      font-size: 16px;
+      font-size: 14px; /* Desktop */
     }
   }
 
@@ -59,7 +59,8 @@
     font-family: 'Prompt', system-ui, sans-serif;
     overflow-wrap: break-word;
     word-wrap: break-word;
-    word-break: keep-all; /* Better for Thai headers, prevents arbitrary character breaks */
+    word-break: normal; /* normal allows Thai dictionary break, keep-all might overflow or tear */
+    text-wrap: pretty; /* Prevents orphans and improves wrapping */
   }
 
   body::before, body::after {
