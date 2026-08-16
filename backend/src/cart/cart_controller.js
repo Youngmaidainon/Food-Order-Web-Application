@@ -12,6 +12,7 @@ const cartService = new CartService(cartRepository);
 
 export { cartService, cartRepository };
 
+// Rate Limiter: ป้องกัน DoS บนตะกร้าสินค้า
 const cartRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 150,
@@ -20,10 +21,11 @@ const cartRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// ใช้ Middleware จัดการ Session ของตะกร้าสินค้า (Guest Session) ก่อนเข้า Endpoint อื่นๆ
 cartRouter.use(ensureCartSessionMiddleware);
 cartRouter.use(cartRateLimiter);
 
-// GET /api/cart - Fetch current items in shopping cart
+// GET /api/cart - ดึงข้อมูลสินค้าในตะกร้าปัจจุบัน
 cartRouter.get('/', async (req, res, next) => {
   try {
     const data = await cartService.getCartItems(req.cartSessionId);
@@ -33,7 +35,7 @@ cartRouter.get('/', async (req, res, next) => {
   }
 });
 
-// POST /api/cart/add - Add item to cart
+// POST /api/cart/add - เพิ่มสินค้าลงตะกร้า (มีการ Validate Input ป้องกัน Injection)
 cartRouter.post('/add', validate(cartItemAddSchema), async (req, res, next) => {
   try {
     await cartService.addItem(req.cartSessionId, req.body);

@@ -6,11 +6,11 @@ import { sendDiscordDailySummary } from '../../discord.js';
 
 const storeRouter = express.Router();
 
-// PATCH /api/admin/store/status - Update store status
+// PATCH /api/admin/store/status - อัปเดตสถานะการเปิด/ปิดร้าน
 storeRouter.patch('/status', authenticateAdminSession, async (request, response) => {
   const { is_open: isOpen, announcement_message: announcementMessage, restaurant_name: restaurantName } = request.body;
   
-  // Input Validation
+  // ตรวจสอบข้อมูลก่อนประมวลผล (Input Validation)
   if (restaurantName && restaurantName.length > 100) {
     return response.status(400).json({ success: false, message: 'ชื่อร้านยาวเกินไป (สูงสุด 100 ตัวอักษร)' });
   }
@@ -24,9 +24,9 @@ storeRouter.patch('/status', authenticateAdminSession, async (request, response)
     const existingStatus = await databaseClient.query('SELECT is_open FROM store_status WHERE id = 1');
     const wasOpen = existingStatus.rows.length > 0 ? existingStatus.rows[0].is_open : true;
 
-    // Shop is closing
+    // กรณีที่กำลังปิดร้าน
     if (wasOpen && isOpen === false) {
-      // 1. Gather stats for the day
+      // 1. รวบรวมสถิติยอดขายประจำวัน
       const todaySalesRes = await databaseClient.query(`
         SELECT COALESCE(SUM(total_amount), 0) as total_sales, COUNT(id) as total_orders
         FROM orders WHERE status IN ('รับอาหารแล้ว', 'จัดส่งแล้ว')
@@ -51,7 +51,7 @@ storeRouter.patch('/status', authenticateAdminSession, async (request, response)
       const cancelledCount = cancelledRes.rows[0].cancelled_count;
       const bestSellers = bestSellersRes.rows;
 
-      // Delete all cancel messages
+      // ลบข้อความแจ้งเตือนยกเลิกทั้งหมด
       if (applicationConfig.discordCancelWebhookUrl) {
         const cancelMessagesRes = await databaseClient.query(`SELECT discord_cancel_message_id FROM orders WHERE discord_cancel_message_id IS NOT NULL`);
         for (const row of cancelMessagesRes.rows) {
@@ -63,7 +63,7 @@ storeRouter.patch('/status', authenticateAdminSession, async (request, response)
         }
       }
 
-      // Delete all new order messages
+      // ลบข้อความแจ้งเตือนออเดอร์ใหม่ทั้งหมด
       if (applicationConfig.discordWebhookUrl) {
         const orderMessagesRes = await databaseClient.query(`SELECT discord_message_id FROM orders WHERE discord_message_id IS NOT NULL`);
         for (const row of orderMessagesRes.rows) {
@@ -75,15 +75,15 @@ storeRouter.patch('/status', authenticateAdminSession, async (request, response)
         }
       }
 
-      // 2. Send Discord Summary
+      // 2. ส่งสรุปยอดขายไปที่ Discord
       await sendDiscordDailySummary(totalSales, bestSellers, cancelledCount, totalOrders);
 
-      // 3. Clear database to reset for next opening
+      // 3. ล้างฐานข้อมูลเพื่อเตรียมพร้อมสำหรับการเปิดร้านครั้งต่อไป
       await databaseClient.query('DELETE FROM order_items');
       await databaseClient.query('DELETE FROM orders');
     }
 
-    // Reset sequence if store opens or closes
+    // รีเซ็ตคิวเมื่อร้านเปิดหรือปิด
     let sequenceUpdate = '';
     if (isOpen !== undefined && isOpen !== wasOpen) {
       sequenceUpdate = ', current_sequence = 0';

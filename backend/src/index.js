@@ -22,7 +22,9 @@ app.set('trust proxy', 1); // Trust first proxy (Render)
 
 app.use(requestContext);
 
+// ติดตั้ง Security Headers ด้วย Helmet ป้องกัน XSS, Clickjacking, MIME Sniffing
 app.use(helmet());
+// ตั้งค่า CORS (Cross-Origin Resource Sharing) แบบ Whitelist (Security First)
 app.use(cors({
   origin: (origin, callback) => {
     // Always allow all origins in development (for Cloudflare tunnels, etc.)
@@ -46,10 +48,11 @@ app.use(cors({
   },
   credentials: true
 }));
+// จำกัดขนาด Request Body (Payload Size Limit) ป้องกัน DoS จาก Payload ขนาดใหญ่
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 
-// Enforce HTTPS in production
+// บังคับเปลี่ยน HTTP เป็น HTTPS บน Production (Transport Security - HSTS)
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
     if (req.headers['x-forwarded-proto'] !== 'https' && !req.secure) {
@@ -59,6 +62,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Global Rate Limiter: ป้องกัน DoS ระดับ API ทั้งระบบ
 const generalApiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
@@ -67,6 +71,7 @@ const generalApiRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate Limiter พิเศษสำหรับ Login (จำกัด 5 ครั้งต่อ 15 นาที เพื่อป้องกัน Brute-Force Password)
 const adminLoginRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,

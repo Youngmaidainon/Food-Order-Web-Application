@@ -17,7 +17,7 @@ export async function checkStoreIsOpen(databaseClient) {
   return !!statusQueryResult.rows[0].is_open;
 }
 
-// GET /api/store/status - Fetch store status
+// GET /api/store/status - ดึงสถานะเปิด/ปิดร้าน
 storeRouter.get('/status', async (request, response) => {
   try {
     const statusQueryResult = await executeQuery(

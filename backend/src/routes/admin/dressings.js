@@ -4,7 +4,7 @@ import { authenticateAdminSession } from '../../middleware/auth.js';
 
 const dressingsRouter = express.Router();
 
-// GET /api/admin/dressings - Get all dressings
+// GET /api/admin/dressings - ดึงข้อมูลน้ำสลัดทั้งหมด
 dressingsRouter.get('/', authenticateAdminSession, async (request, response) => {
   try {
     const dressingsQueryResult = await executeQuery('SELECT * FROM dressings ORDER BY id ASC');
@@ -15,7 +15,7 @@ dressingsRouter.get('/', authenticateAdminSession, async (request, response) => 
   }
 });
 
-// POST /api/admin/dressings - Add new dressing
+// POST /api/admin/dressings - เพิ่มน้ำสลัดใหม่
 dressingsRouter.post('/', authenticateAdminSession, async (request, response) => {
   const { name: dressingName, is_available: isAvailable = true } = request.body;
   if (!dressingName) return response.status(400).json({ success: false, message: 'กรุณาระบุชื่อน้ำสลัด' });
@@ -34,7 +34,7 @@ dressingsRouter.post('/', authenticateAdminSession, async (request, response) =>
   }
 });
 
-// PUT /api/admin/dressings/:id - Edit dressing
+// PUT /api/admin/dressings/:id - แก้ไขข้อมูลน้ำสลัด
 dressingsRouter.put('/:id', authenticateAdminSession, async (request, response) => {
   const { id: dressingId } = request.params;
   const { name: dressingName, is_available: isAvailable } = request.body;
@@ -63,7 +63,7 @@ dressingsRouter.put('/:id', authenticateAdminSession, async (request, response) 
   }
 });
 
-// DELETE /api/admin/dressings/:id - Delete dressing
+// DELETE /api/admin/dressings/:id - ลบข้อมูลน้ำสลัด
 dressingsRouter.delete('/:id', authenticateAdminSession, async (request, response) => {
   const { id: dressingId } = request.params;
   if (parseInt(dressingId, 10) === 0) return response.status(400).json({ success: false, message: 'ไม่สามารถลบค่าพื้นฐานได้' });

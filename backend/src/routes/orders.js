@@ -5,14 +5,14 @@ import { sendDiscordOrderNotification, deleteDiscordOrderNotification, sendDisco
 
 const ordersRouter = express.Router();
 
-// Helper to generate unique order number
+// ฟังก์ชันช่วยสร้างหมายเลขออเดอร์แบบไม่ซ้ำกัน
 const generateUniqueOrderNumber = () => {
   const currentDateString = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const randomFourDigitNumber = Math.floor(1000 + Math.random() * 9000);
   return `ORD-${currentDateString}-${randomFourDigitNumber}`;
 };
 
-// POST /api/orders - Create new order
+// POST /api/orders - สร้างคำสั่งซื้อใหม่
 ordersRouter.post('/', async (request, response) => {
   const { customer_name: customerName, customer_phone: customerPhone, delivery_type: deliveryType, address: deliveryAddress, items: orderItemsList } = request.body;
 
@@ -20,7 +20,7 @@ ordersRouter.post('/', async (request, response) => {
     return response.status(400).json({ success: false, message: 'กรุณากรอกข้อมูลและเลือกสินค้าให้ครบถ้วน' });
   }
 
-  // Input Validation
+  // ตรวจสอบข้อมูลก่อนประมวลผล (Input Validation)
   if (customerName.length > 50) {
     return response.status(400).json({ success: false, message: 'ชื่อผู้สั่งซื้อยาวเกินไป (สูงสุด 50 ตัวอักษร)' });
   }
@@ -53,7 +53,7 @@ ordersRouter.post('/', async (request, response) => {
     const clientIp = request.ip || '0.0.0.0';
     const cartSessionId = request.cookies?.springroll_cart_session || null;
 
-    // Rate Limiting Check: Prevent concurrent active orders from the same Phone OR Session
+    // ตรวจสอบการจำกัดอัตรา (Rate Limiting): ป้องกันการสั่งอาหารรัวๆ จากเบอร์โทรหรือเซสชันเดียวกัน
     let activeOrderCheck;
     if (cartSessionId) {
       activeOrderCheck = await databaseClient.query(
@@ -200,7 +200,7 @@ ordersRouter.post('/', async (request, response) => {
   }
 });
 
-// GET /api/orders/track/:order_number - Track order status by order number
+// GET /api/orders/track/:order_number - ติดตามสถานะออเดอร์ด้วยหมายเลขออเดอร์
 ordersRouter.get('/track/:order_number', async (request, response) => {
   try {
     const { order_number: targetOrderNumber } = request.params;
@@ -243,7 +243,7 @@ ordersRouter.get('/track/:order_number', async (request, response) => {
   }
 });
 
-// PATCH /api/orders/:id/status - Cancel order by customer
+// PATCH /api/orders/:id/status - ยกเลิกออเดอร์โดยลูกค้า
 ordersRouter.patch('/:id/status', async (request, response) => {
   const { id: orderId } = request.params;
   const { status: targetStatus, cancel_reason: cancelReason } = request.body;

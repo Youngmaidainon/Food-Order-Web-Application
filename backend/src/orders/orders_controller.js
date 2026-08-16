@@ -11,7 +11,7 @@ const ordersService = new OrdersService(ordersRepository);
 
 export { ordersService, ordersRepository };
 
-// Rate limiter ป้องกันการสแปมสั่งอาหาร (10 ครั้ง / 15 นาที)
+// Rate Limiter: ป้องกันสแปมและ DoS จำกัดโควต้าสร้างออเดอร์ 10 ครั้งต่อ 15 นาที
 const createOrderRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -36,7 +36,7 @@ const cancelOrderRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// POST /api/orders - Create new order
+// POST /api/orders - รับออเดอร์ใหม่ พร้อม Validate Input (ป้องกัน Payload Injection) และ Rate Limiting
 ordersRouter.post('/', createOrderRateLimiter, validate(createOrderSchema), async (req, res, next) => {
   try {
     const data = await ordersService.createOrder(req.body, req.ip, req.cookies?.springroll_cart_session);
@@ -49,7 +49,7 @@ ordersRouter.post('/', createOrderRateLimiter, validate(createOrderSchema), asyn
     if (error.statusCode) {
       return next(error);
     }
-    // Convert generic error to AppError for client if needed, or pass it to handler
+    // ส่ง Error กลับไปที่ Global Error Handler แทนการคืน Stack Trace (ป้องกัน Information Leak)
     error.statusCode = error.statusCode || 400; // Validation errors default to 400
     next(error);
   }
@@ -65,7 +65,7 @@ ordersRouter.get('/track/:order_number', trackOrderRateLimiter, async (req, res,
   }
 });
 
-// PATCH /api/orders/:id/status - Cancel order by customer
+// PATCH /api/orders/:id/status - ยกเลิกออเดอร์โดยลูกค้า (ส่งต่อให้ Service จัดการ Logic)
 ordersRouter.patch('/:id/status', cancelOrderRateLimiter, validate(cancelOrderSchema), async (req, res, next) => {
   try {
     const data = await ordersService.cancelOrderCustomer(req.params.id, req.body.status, req.body.cancel_reason);

@@ -1,4 +1,4 @@
-﻿import { ValidationError, AppError } from '../shared/errors.js';
+import { ValidationError, AppError } from '../shared/errors.js';
 import { getDatabaseClient } from '../shared/database/database.js';
 import { storeService } from '../store/store_controller.js';
 import { sendDiscordOrderNotification, deleteDiscordOrderNotification, sendDiscordCancelNotification } from '../discord.js';
@@ -15,6 +15,7 @@ export class OrdersService {
   }
 
   async createOrder(data, ip, cartSessionId) {
+    // แยกส่วนประกอบของข้อมูล (Destructuring)
     const { customer_name: customerName, customer_phone: customerPhone, delivery_type: deliveryType, address: deliveryAddress, items: orderItemsList } = data;
 
     if (!customerName || !customerPhone || !deliveryType || !orderItemsList || !Array.isArray(orderItemsList) || orderItemsList.length === 0) {
@@ -36,6 +37,7 @@ export class OrdersService {
     const databaseClient = await getDatabaseClient();
 
     try {
+      // เช็คว่าร้านเปิดอยู่หรือไม่ (Business Rule: เปิดรับออเดอร์)
       const isStoreCurrentlyOpen = await storeService.checkStoreIsOpen(databaseClient);
       if (!isStoreCurrentlyOpen) {
         throw new ValidationError('ขออภัย ขณะนี้ร้านปิดรับออเดอร์');
@@ -43,9 +45,11 @@ export class OrdersService {
 
       const activeOrderCheck = await this.ordersRepository.getActiveOrderCountByPhoneOrSession(databaseClient, customerPhone.trim(), cartSessionId);
       if (activeOrderCheck) {
+        // Business Rule: ห้ามสั่งออเดอร์ซ้อนกันถ้าอันเดิมยังไม่เสร็จ (Anti Spam)
         throw new AppError(`คุณมีออเดอร์ที่กำลังดำเนินการอยู่ (รหัส: ${activeOrderCheck.order_number}) กรุณารอให้ออเดอร์ปัจจุบันเสร็จสิ้นก่อนสั่งใหม่`, 'TOO_MANY_REQUESTS', 429);
       }
 
+      // เริ่มต้น Transaction (ป้องกัน Data Inconsistency หากระหว่างบันทึกข้อมูลมีข้อผิดพลาด)
       await databaseClient.query('BEGIN');
 
       let calculatedTotalAmount = 0;
@@ -138,6 +142,7 @@ export class OrdersService {
 
       return completeOrderPayload;
     } catch (error) {
+      // ยกเลิกการเปลี่ยนแปลงทั้งหมดใน Transaction หากมี Error เกิดขึ้น (Rollback)
       await databaseClient.query('ROLLBACK');
       throw error;
     } finally {

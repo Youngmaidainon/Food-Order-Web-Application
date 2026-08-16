@@ -4,7 +4,7 @@ import { authenticateAdminSession } from '../../middleware/auth.js';
 
 const categoriesRouter = express.Router();
 
-// GET /api/admin/categories - Get all categories
+// GET /api/admin/categories - ดึงข้อมูลหมวดหมู่ทั้งหมด
 categoriesRouter.get('/', authenticateAdminSession, async (request, response) => {
   try {
     const categoriesQueryResult = await executeQuery('SELECT * FROM categories ORDER BY display_order ASC, id ASC');
@@ -15,7 +15,7 @@ categoriesRouter.get('/', authenticateAdminSession, async (request, response) =>
   }
 });
 
-// POST /api/admin/categories - Add new category
+// POST /api/admin/categories - เพิ่มหมวดหมู่ใหม่
 categoriesRouter.post('/', authenticateAdminSession, async (request, response) => {
   const { name: categoryName, display_order: displayOrder = 0 } = request.body;
   if (!categoryName) return response.status(400).json({ success: false, message: 'กรุณาระบุชื่อหมวดหมู่' });

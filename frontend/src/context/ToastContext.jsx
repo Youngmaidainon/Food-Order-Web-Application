@@ -2,9 +2,11 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const ToastContext = createContext(null);
 
+// Provider สำหรับแสดง Popup แจ้งเตือนมุมขวาบน (Global Toast Notification)
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
+  // สร้างเสียงแจ้งเตือนสั้นๆ เพื่อดึงดูดความสนใจผ่าน Web Audio API
   const playToastSound = () => {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -30,9 +32,10 @@ export function ToastProvider({ children }) {
     }
   };
 
+  // แสดง Toast แจ้งเตือน และตั้งเวลาให้หายไปอัตโนมัติภายใน 3 วินาที
   const showToast = useCallback((message, type = 'success') => {
     playToastSound();
-    const id = Date.now() + Math.random(); // ensure uniqueness
+    const id = Date.now() + Math.random(); // ป้องกันรหัสซ้ำกัน
     setToasts(prev => [...prev, { id, message, type }]);
     
     setTimeout(() => {

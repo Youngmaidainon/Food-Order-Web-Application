@@ -1,5 +1,6 @@
 import { appLogger } from '../logger.js';
 
+// Base Error Class: ระบุโครงสร้างของ Error แบบ Typed Hierarchy
 export class AppError extends Error {
   constructor(message, code, statusCode, isOperational = true) {
     super(message);
@@ -34,6 +35,7 @@ export class ForbiddenError extends AppError {
   }
 }
 
+// Global Error Handler: ดักจับ Error และส่งกลับเป็นมาตรฐาน RFC 9457 ป้องกัน Information Leakage
 export function globalErrorHandler(err, req, res, next) {
   if (err instanceof AppError && err.isOperational) {
     return res.status(err.statusCode).json({
@@ -44,6 +46,7 @@ export function globalErrorHandler(err, req, res, next) {
     });
   }
   
+  // บันทึก Log สำหรับ Error ที่ไม่คาดคิด (Generic 500) ห้ามคืนค่า Stack Trace สู่ Client เด็ดขาด
   appLogger.error({ error: err.message, stack: err.stack, request_id: req.id }, 'Unexpected error');
   res.status(500).json({ title: 'Internal Error', status: 500, request_id: req.id });
 }

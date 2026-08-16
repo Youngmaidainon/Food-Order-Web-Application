@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { sendApiRequest } from '../../api/api.js';
 import { useAlert } from '../../context/AlertContext';
 
+// หน้ากระดานสำหรับตรวจสอบและจัดการสถานะของคำสั่งซื้อทั้งหมด
 export default function Orders() {
   const { showAlert, showPrompt } = useAlert();
   const [orders, setOrders] = useState([]);
@@ -25,7 +26,7 @@ export default function Orders() {
       if (document.visibilityState === 'visible') {
         fetchOrders(false);
       }
-    }, 3000); // Auto refresh every 3 seconds when visible
+    }, 3000); // ตั้งเวลา Refresh อัตโนมัติทุก 3 วินาทีเมื่อหน้าต่างกำลังทำงาน
 
     return () => {
       clearInterval(interval);
@@ -33,6 +34,7 @@ export default function Orders() {
     };
   }, [statusFilter]);
 
+  // โหลดรายการคำสั่งซื้อตามสถานะที่เลือก
   const fetchOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
@@ -47,6 +49,7 @@ export default function Orders() {
     }
   };
 
+  // อัปเดตสถานะของคำสั่งซื้อ (เช่น กำลังจัดเตรียม, เสร็จสิ้น)
   const updateOrderStatus = async (orderId, newStatus) => {
     let payload = { status: newStatus };
     if (newStatus === 'ยกเลิก') {

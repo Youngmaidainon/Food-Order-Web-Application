@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+// แถบเมนูด้านบนสุดของฝั่งลูกค้า (แสดงโลโก้และปุ่มติดตามออเดอร์)
 export default function Header({ storeStatus, onTrackOrder }) {
   const isOpen = storeStatus?.is_open ?? true;
   const announcement = storeStatus?.announcement_message || (isOpen ? 'เปิดรับออเดอร์ค่า 💖' : 'ร้านปิดบริการชั่วคราว');

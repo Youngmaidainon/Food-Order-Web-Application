@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+// กำหนดขอบเขตความปลอดภัยสำหรับข้อมูลฝั่งขาเข้า (Trust Boundary)
 export const adminLoginSchema = z.object({
   username: z.string().trim().min(1, 'กรุณากรอก Username'),
   password: z.string().trim().min(1, 'กรุณากรอก Password'),
@@ -12,6 +13,7 @@ const orderItemSchema = z.object({
   item_notes: z.string().max(200).optional(),
 });
 
+// กำหนด Schema โครงสร้างการสั่งอาหาร เพื่อป้องกัน Payload ผิดปกติ (Payload Injection)
 export const createOrderSchema = z.object({
   customer_name: z.string().trim().min(1, 'กรุณากรอกชื่อ').max(50, 'ชื่อผู้สั่งซื้อยาวเกินไป (สูงสุด 50 ตัวอักษร)'),
   customer_phone: z.string().trim().min(9, 'เบอร์โทรศัพท์สั้นเกินไป').max(10, 'เบอร์โทรศัพท์ยาวเกินไป'),

@@ -8,7 +8,7 @@ import { adminLoginSchema } from '../../shared/validators/index.js';
 
 const authRouter = express.Router();
 
-// POST /api/admin/login - Login admin
+// POST /api/admin/login - เข้าสู่ระบบสำหรับผู้ดูแลระบบ
 authRouter.post('/login', validate(adminLoginSchema), async (request, response) => {
   const { username, password } = request.body;
 
@@ -18,7 +18,7 @@ authRouter.post('/login', validate(adminLoginSchema), async (request, response) 
     const initUsername = process.env.ADMIN_INIT_USERNAME || 'admin';
     const initPassword = (process.env.ADMIN_INIT_PASSWORD || '').trim();
 
-    // Auto-create initial admin if DB is somehow empty or seed failed
+    // สร้างบัญชี Admin อัตโนมัติหากฐานข้อมูลว่างเปล่าหรือการ Seed ข้อมูลล้มเหลว
     if (adminQueryResult.rows.length === 0 && initPassword && username === initUsername && password === initPassword) {
       const hashedPassword = await bcrypt.hash(password, 12);
       await executeQuery('INSERT INTO admin_users (username, password_hash, password_rotated_at) VALUES ($1, $2, NOW())', [username, hashedPassword]);
@@ -34,7 +34,7 @@ authRouter.post('/login', validate(adminLoginSchema), async (request, response) 
     let isPasswordValid = false;
 
     if (adminUserRecord.password_hash) {
-      // Check if it's the dummy hash
+      // ตรวจสอบว่าเป็นรหัสผ่านชั่วคราว (Dummy Hash) หรือไม่
       if (adminUserRecord.password_hash.startsWith('$2a$10$X8X8X8X8X8X8X8X8X8X8X')) {
         if (initPassword && password === initPassword) {
           isPasswordValid = true;
@@ -51,7 +51,7 @@ authRouter.post('/login', validate(adminLoginSchema), async (request, response) 
     }
 
     const newAdminSessionId = uuidv4();
-    const sessionExpirationDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const sessionExpirationDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // หมดอายุใน 24 ชั่วโมง
 
     await executeQuery(
       'INSERT INTO admin_sessions (session_id, admin_id, expires_at) VALUES ($1, $2, $3)',
@@ -62,7 +62,7 @@ authRouter.post('/login', validate(adminLoginSchema), async (request, response) 
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production' && process.env.HTTPS_ENABLED === 'true',
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
+      maxAge: 24 * 60 * 60 * 1000 // หมดอายุใน 1 วัน
     });
 
     return response.json({
@@ -75,7 +75,7 @@ authRouter.post('/login', validate(adminLoginSchema), async (request, response) 
   }
 });
 
-// POST /api/admin/logout - Logout admin
+// POST /api/admin/logout - ออกจากระบบผู้ดูแลระบบ
 authRouter.post('/logout', authenticateAdminSession, async (request, response) => {
   try {
     const activeAdminSessionId = request.cookies.springroll_admin_session;
@@ -90,7 +90,7 @@ authRouter.post('/logout', authenticateAdminSession, async (request, response) =
   }
 });
 
-// GET /api/admin/me - Get current admin session
+// GET /api/admin/me - ตรวจสอบเซสชันผู้ดูแลระบบปัจจุบัน
 authRouter.get('/me', authenticateAdminSession, (request, response) => {
   return response.json({ success: true, admin: request.admin });
 });

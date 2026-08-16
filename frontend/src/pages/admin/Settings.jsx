@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { sendApiRequest } from '../../api/api.js';
 import { useAlert } from '../../context/AlertContext';
 
+// หน้าสำหรับตั้งค่าข้อมูลทั่วไปของร้าน เช่น ชื่อร้าน และสถานะเปิด/ปิด
 export default function Settings() {
   const { showAlert, showConfirm } = useAlert();
   const [storeStatus, setStoreStatus] = useState(null);
@@ -14,6 +15,7 @@ export default function Settings() {
     fetchSettings();
   }, []);
 
+  // โหลดข้อมูลการตั้งค่าปัจจุบันของร้าน
   const fetchSettings = async () => {
     try {
       const res = await sendApiRequest('/store/status');
@@ -28,6 +30,7 @@ export default function Settings() {
     }
   };
 
+  // บันทึกการตั้งค่าใหม่ไปยังเซิร์ฟเวอร์
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     if (!storeStatus) return;

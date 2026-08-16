@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 
+// แถบสรุปตะกร้าสินค้าแบบย่อสำหรับแสดงผลบนหน้าจอมือถือ
 export default function MobileCartBar({ onOpenCart }) {
   const { totalQuantity, totalPrice } = useCart();
 

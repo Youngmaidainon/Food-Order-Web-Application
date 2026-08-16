@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { sendApiRequest } from '../../api/api.js';
 import { useAlert } from '../../context/AlertContext';
 
+// หน้าสรุปภาพรวมและสถิติยอดขายของร้านสำหรับผู้ดูแล
 export default function Dashboard() {
   const { showAlert } = useAlert();
   const [analytics, setAnalytics] = useState(null);
@@ -14,6 +15,7 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  // โหลดข้อมูลสถิติยอดขายและสถานะร้านค้าจาก API
   const fetchData = async () => {
     try {
       const [analyticsRes, statusRes] = await Promise.all([

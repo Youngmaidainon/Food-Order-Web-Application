@@ -5,10 +5,11 @@ import rateLimit from 'express-rate-limit';
 
 const menuRouter = express.Router();
 
-// Dependency Injection
+// ใช้งาน Dependency Injection: สอดไส้ Repository เข้าไปใน Service (ง่ายต่อการ Test)
 const menuRepository = new MenuRepository();
 const menuService = new MenuService(menuRepository);
 
+// Rate Limiter: ป้องกัน DoS บน Endpoint ดูเมนู
 const menuRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -17,7 +18,7 @@ const menuRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// GET /api/menu - Get all available menu items with category
+// GET /api/menu - ดึงข้อมูลเมนูและหมวดหมู่ทั้งหมด
 menuRouter.get('/', menuRateLimiter, async (req, res, next) => {
   try {
     const data = await menuService.getMenu();

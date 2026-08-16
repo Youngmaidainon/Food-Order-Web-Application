@@ -3,10 +3,12 @@ import { sendApiRequest } from '../api/api.js';
 
 const CartContext = createContext(null);
 
+// Provider สำหรับจัดการสถานะของตะกร้าสินค้าแบบ Global (Cart State Management)
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
   const updateTimeoutRef = useRef({});
   
+  // โหลดข้อมูลตะกร้าล่าสุดจากเซิร์ฟเวอร์
   const fetchCart = useCallback(async () => {
     try {
       const res = await sendApiRequest('/cart');
@@ -22,6 +24,7 @@ export function CartProvider({ children }) {
     fetchCart();
   }, [fetchCart]);
 
+  // เพิ่มสินค้าลงตะกร้าพร้อมตัวเลือกน้ำสลัดและหมายเหตุ
   const addItemToCart = async (menuItem, dressing = null, notes = '') => {
     try {
       const res = await sendApiRequest('/cart/add', {
@@ -41,8 +44,9 @@ export function CartProvider({ children }) {
     }
   };
 
+  // ปรับจำนวนสินค้าพร้อมระบบ Optimistic Update และ Debounce ป้องกัน API ทำงานหนัก
   const updateQuantity = async (cartItemId, newQty) => {
-    // Optimistic Update
+    // อัปเดต UI ทันทีโดยไม่ต้องรอ API (Optimistic Update)
     setCartItems(prevItems => prevItems.map(item => {
       if (item.cart_item_id === cartItemId) {
         return { ...item, quantity: newQty };
@@ -50,7 +54,7 @@ export function CartProvider({ children }) {
       return item;
     }).filter(item => item.quantity > 0));
 
-    // Debounce API Call
+    // หน่วงเวลาการเรียก API เพื่อลดภาระเซิร์ฟเวอร์
     if (updateTimeoutRef.current[cartItemId]) {
       clearTimeout(updateTimeoutRef.current[cartItemId]);
     }
@@ -72,8 +76,9 @@ export function CartProvider({ children }) {
     }, 500);
   };
 
+  // ลบสินค้าออกจากตะกร้า
   const removeItem = async (cartItemId) => {
-    // Optimistic Update
+    // อัปเดต UI ทันทีโดยไม่ต้องรอ API (Optimistic Update)
     setCartItems(prevItems => prevItems.filter(item => item.cart_item_id !== cartItemId));
 
     try {
@@ -87,8 +92,9 @@ export function CartProvider({ children }) {
     }
   };
   
+  // ล้างตะกร้าสินค้าทั้งหมด
   const clearCart = async () => {
-    // Optimistic Update
+    // อัปเดต UI ทันทีโดยไม่ต้องรอ API (Optimistic Update)
     setCartItems([]);
 
     try {

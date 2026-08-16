@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { sendApiRequest } from '../api/api.js';
 
+// Modal สำหรับกรอกข้อมูลส่วนตัวและยืนยันการสั่งซื้อ
 export default function CheckoutModal({ isOpen, onClose, cartItems, totalPrice, onCheckoutSuccess }) {
   const [deliveryType, setDeliveryType] = useState('รับเองที่ร้าน');
   const [name, setName] = useState('');
@@ -11,6 +12,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, totalPrice, 
 
   if (!isOpen) return null;
 
+  // ส่งข้อมูลคำสั่งซื้อไปยัง API หลังบ้าน
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (cartItems.length === 0) {

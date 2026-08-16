@@ -3,6 +3,7 @@ import { sendApiRequest } from '../api/api.js';
 import { useAlert } from '../context/AlertContext';
 import { useToast } from '../context/ToastContext';
 
+// Modal สำหรับติดตามสถานะคำสั่งซื้อแบบ Real-time พร้อมระบบขอยกเลิก
 export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
   const { showAlert, showPrompt } = useAlert();
   const { showToast } = useToast();
@@ -10,7 +11,7 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
   const [trackingData, setTrackingData] = useState(null);
   const [error, setError] = useState('');
 
-  // Handle initialOrderNum
+  // อัปเดตข้อมูลเลขออเดอร์เมื่อเปิดหน้าต่างครั้งแรก
   useEffect(() => {
     if (isOpen) {
       setOrderNum(initialOrderNum || '');
@@ -19,7 +20,7 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
     }
   }, [isOpen, initialOrderNum]);
 
-  // Toast notification on status change
+  // แจ้งเตือนผ่าน Toast เมื่อสถานะออเดอร์มีการเปลี่ยนแปลง
   const prevStatusRef = useRef(null);
   useEffect(() => {
     if (trackingData) {
@@ -49,14 +50,14 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
     }
   }, [orderNum]);
 
-  // Auto search when opened with initialOrderNum
+  // ค้นหาอัตโนมัติเมื่อเปิดหน้าต่างพร้อมเลขออเดอร์เริ่มต้น
   useEffect(() => {
     if (isOpen && initialOrderNum && !trackingData) {
       handleSearch(initialOrderNum);
     }
   }, [isOpen, initialOrderNum, handleSearch, trackingData]);
 
-  // Auto refresh polling
+  // ตั้งเวลา Refresh ข้อมูลสถานะอัตโนมัติ (Polling) เพื่อให้อัพเดทเสมอ
   useEffect(() => {
     let intervalId;
     if (isOpen && trackingData) {
@@ -81,6 +82,7 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
     }
   };
 
+  // แจ้งขอยกเลิกออเดอร์ไปยังเซิร์ฟเวอร์ พร้อมให้ลูกค้าระบุเหตุผล
   const handleCancel = async () => {
     if (!trackingData) return;
     const reason = await showPrompt('กรุณาระบุเหตุผลการยกเลิก (1-20 ตัวอักษร):');

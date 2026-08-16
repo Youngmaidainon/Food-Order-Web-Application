@@ -4,7 +4,7 @@ import { authenticateAdminSession } from '../../middleware/auth.js';
 
 const analyticsRouter = express.Router();
 
-// GET /api/admin/analytics - Analytics and sales reports
+// GET /api/admin/analytics - ดึงข้อมูลสถิติและรายงานยอดขาย
 analyticsRouter.get('/', authenticateAdminSession, async (request, response) => {
   try {
     const salesMetricsQueryResult = await executeQuery(`

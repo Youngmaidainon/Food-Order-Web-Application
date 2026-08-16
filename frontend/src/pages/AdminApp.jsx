@@ -8,6 +8,7 @@ import Menu from './admin/Menu';
 import Dressings from './admin/Dressings';
 import Settings from './admin/Settings';
 
+// หน้าหลักฝั่งแอดมิน: จัดการ Routing และ Layout (Sidebar) สำหรับระบบหลังบ้าน
 export default function AdminApp() {
   const { admin, isLoading, logout } = useAdmin();
   const location = useLocation();
@@ -27,13 +28,13 @@ export default function AdminApp() {
 
   return (
     <div className="flex min-h-screen bg-bg-color text-text-main selection:bg-primary/30 selection:text-white">
-      {/* Overlay for mobile sidebar */}
+      {/* ฉากหลังสีดำสำหรับเมนูด้านข้างบนมือถือ */}
       <div 
         className={`xl:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsSidebarOpen(false)}
       ></div>
 
-      {/* Sidebar */}
+      {/* เมนูด้านข้าง (Sidebar) */}
       <div className={`fixed h-screen left-0 top-0 transform -translate-x-full xl:relative xl:h-auto xl:translate-x-0 w-[280px] glass border-r border-white/5 p-6 flex flex-col transition-transform duration-300 z-[100] shadow-2xl xl:shadow-none ${isSidebarOpen ? 'translate-x-0' : ''}`}>
         <div className="flex flex-col mb-10 gap-4 mt-2">
           <div className="flex items-center gap-3">
@@ -83,7 +84,7 @@ export default function AdminApp() {
         </button>
       </div>
 
-      {/* Main Content */}
+      {/* พื้นที่เนื้อหาหลัก */}
       <div className="flex-1 p-4 md:p-8 overflow-y-auto min-h-[calc(100vh-64px)]">
         <button className="xl:hidden bg-transparent border-none text-text-main text-2xl cursor-pointer p-2 mb-4 inline-flex items-center" onClick={() => setIsSidebarOpen(true)}>
           ☰

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { sendApiRequest } from '../../api/api.js';
 import { useAlert } from '../../context/AlertContext';
 
+// หน้าสำหรับจัดการข้อมูลและสถานะการพร้อมให้บริการของเมนูอาหารทั้งหมด
 export default function Menu() {
   const { showAlert, showConfirm } = useAlert();
   const [menuItems, setMenuItems] = useState([]);
@@ -18,6 +19,7 @@ export default function Menu() {
     fetchCategories();
   }, []);
 
+  // โหลดรายการหมวดหมู่เมนูอาหารทั้งหมด
   const fetchCategories = async () => {
     try {
       const res = await sendApiRequest('/admin/categories');
@@ -29,6 +31,7 @@ export default function Menu() {
     }
   };
 
+  // โหลดข้อมูลรายการอาหารทั้งหมดจาก API
   const fetchMenu = async () => {
     setIsLoading(true);
     try {
@@ -43,8 +46,9 @@ export default function Menu() {
     }
   };
 
+  // สลับสถานะเปิด/ปิดรับออเดอร์สำหรับเมนูนั้นๆ
   const toggleAvailability = async (item) => {
-    // Optimistic Update
+    // อัปเดตหน้าจอทันทีเพื่อความรวดเร็ว (Optimistic Update)
     setMenuItems(prev => prev.map(m => m.id === item.id ? { ...m, is_available: !m.is_available } : m));
 
     try {
@@ -61,11 +65,12 @@ export default function Menu() {
     }
   };
 
+  // ลบข้อมูลเมนูอาหารออกจากระบบ (ต้องกดยืนยันก่อน)
   const deleteItem = async (id) => {
     const isConfirmed = await showConfirm('ยืนยันการลบเมนู?');
     if (!isConfirmed) return;
     
-    // Optimistic Update
+    // อัปเดตหน้าจอทันทีเพื่อความรวดเร็ว (Optimistic Update)
     setMenuItems(prev => prev.filter(m => m.id !== id));
 
     try {
@@ -96,6 +101,7 @@ export default function Menu() {
     setIsModalOpen(true);
   };
 
+  // บันทึกข้อมูลการเพิ่มหรือแก้ไขเมนูอาหารไปยังฐานข้อมูล
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -117,6 +123,7 @@ export default function Menu() {
     }
   };
 
+  // เพิ่มหมวดหมู่เมนูอาหารใหม่
   const handleAddCategory = async (e) => {
     e.preventDefault();
     if (!newCategoryName || newCategoryName.trim() === '') return;

@@ -5,7 +5,7 @@ import { deleteDiscordOrderNotification, sendDiscordCancelNotification } from '.
 
 const ordersRouter = express.Router();
 
-// GET /api/admin/orders - Get all orders with items, optional status filter & sort (asc/desc)
+// GET /api/admin/orders - ดึงข้อมูลออเดอร์ทั้งหมดพร้อมไอเทม (มี Filter สถานะ และ Sort)
 ordersRouter.get('/', authenticateAdminSession, async (request, response) => {
   try {
     const { status: filterStatus, sort: sortDirection = 'desc', page = '1', limit = '50' } = request.query;
@@ -92,7 +92,7 @@ ordersRouter.get('/', authenticateAdminSession, async (request, response) => {
 });
 
 
-// PATCH /api/admin/orders/:id/status - Update order status
+// PATCH /api/admin/orders/:id/status - อัปเดตสถานะออเดอร์
 ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, response) => {
   const { id: orderId } = request.params;
   const { status: newTargetStatus, cancel_reason: cancelReason, reason: legacyReason } = request.body;
@@ -183,7 +183,7 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
 });
 
 
-// POST /api/admin/orders/reset-queue - Reset order queue sequence
+// POST /api/admin/orders/reset-queue - รีเซ็ตคิวการสั่งอาหาร
 ordersRouter.post('/reset-queue', authenticateAdminSession, async (request, response) => {
   const databaseClient = await getDatabaseClient();
   try {

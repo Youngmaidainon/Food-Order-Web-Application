@@ -3,7 +3,7 @@ import { executeQuery } from '../config/database.js';
 
 const dressingsRouter = express.Router();
 
-// GET /api/dressings - Get all available salad dressings
+// GET /api/dressings - ดึงข้อมูลน้ำสลัดทั้งหมดที่พร้อมใช้งาน
 dressingsRouter.get('/', async (request, response) => {
   try {
     const dressingsQueryResult = await executeQuery('SELECT * FROM dressings WHERE is_available = true ORDER BY id ASC');

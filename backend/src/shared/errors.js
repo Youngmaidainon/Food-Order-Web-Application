@@ -1,3 +1,4 @@
+// สร้าง Typed Error Hierarchy กำหนดรูปแบบ Error ทั้งระบบแทนที่จะส่ง Error ธรรมดา
 export class AppError extends Error {
   constructor(message, code, statusCode, isOperational = true) {
     super(message);

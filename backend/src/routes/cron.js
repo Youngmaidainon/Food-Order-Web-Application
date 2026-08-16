@@ -27,12 +27,12 @@ router.all('/maintenance', async (req, res) => {
   try {
     // ใช้ Promise.all เพื่อรันคำสั่งลบข้อมูลพร้อมกัน (Parallel) ทำให้ทำงานเสร็จเร็วขึ้น
     const [cartCleanupResult, adminCleanupResult] = await Promise.all([
-      // Cleanup old unauthenticated cart sessions (older than 15 minutes)
+      // ล้างข้อมูลเซสชันตะกร้าที่ไม่ได้เข้าสู่ระบบ (เก่ากว่า 15 นาที)
       executeQuery(`
         DELETE FROM cart_sessions 
         WHERE last_accessed_at < NOW() - INTERVAL '15 minutes'
       `),
-      // Cleanup expired admin sessions
+      // ล้างข้อมูลเซสชันผู้ดูแลระบบที่หมดอายุแล้ว
       executeQuery(`
         DELETE FROM admin_sessions 
         WHERE expires_at < NOW()

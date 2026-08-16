@@ -8,6 +8,7 @@ import AdminApp from './pages/AdminApp'
 import { AlertProvider } from './context/AlertContext'
 import { ToastProvider } from './context/ToastContext'
 
+// จุดเริ่มต้นของแอปพลิเคชัน: กำหนด Routing และหุ้มด้วย Context Providers ทั้งหมด
 function App() {
   return (
     <BrowserRouter>

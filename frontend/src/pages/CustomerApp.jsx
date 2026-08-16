@@ -12,6 +12,7 @@ import { sendApiRequest } from '../api/api.js';
 import { useAlert } from '../context/AlertContext';
 import { useToast } from '../context/ToastContext';
 
+// หน้าหลักฝั่งลูกค้า: รวบรวม Component ทั้งหมดที่เกี่ยวข้องกับการสั่งอาหาร
 export default function CustomerApp() {
   const { addItemToCart, cartItems, totalPrice, clearCart } = useCart();
   const { showToast } = useToast();
@@ -30,6 +31,7 @@ export default function CustomerApp() {
   const [activeOrder, setActiveOrder] = useState(localStorage.getItem('activeOrder'));
   const [activeOrderStatus, setActiveOrderStatus] = useState(null);
 
+  // โหลดข้อมูลสถานะร้าน เมนู และน้ำสลัดเมื่อเปิดหน้าเว็บ
   useEffect(() => {
     async function fetchData() {
       try {
@@ -54,6 +56,7 @@ export default function CustomerApp() {
     fetchData();
   }, []);
 
+  // ตรวจสอบสถานะออเดอร์ล่าสุดแบบ Real-time (Polling ทุก 10 วินาที)
   useEffect(() => {
     let intervalId;
     
@@ -91,12 +94,14 @@ export default function CustomerApp() {
     };
   }, [activeOrder, activeOrderStatus, isTrackingModalOpen, showToast]);
 
+  // เปิด Modal เลือกน้ำสลัดเมื่อกดเพิ่มสินค้า
   const handleAddItem = (item) => {
     setSelectedMenuItem(item);
     setSelectedDressing(dressings[0]);
     setIsDressingModalOpen(true);
   };
 
+  // ยืนยันการเลือกน้ำสลัดและเพิ่มสินค้าลงตะกร้า
   const handleConfirmDressing = async () => {
     if (selectedMenuItem) {
       await addItemToCart(selectedMenuItem, selectedDressing);
@@ -107,6 +112,7 @@ export default function CustomerApp() {
     }
   };
 
+  // บันทึกรหัสออเดอร์และเปิดหน้าต่างติดตามสถานะเมื่อสั่งซื้อสำเร็จ
   const handleCheckoutSuccess = async (order) => {
     showToast(`สั่งซื้อสำเร็จ! รหัสออเดอร์ ${order.order_number}`, 'success');
     await clearCart();
@@ -126,7 +132,7 @@ export default function CustomerApp() {
       
       <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 p-4 sm:px-6 lg:py-8 lg:px-[5%] max-w-[1400px] mx-auto items-start">
         <div className="flex-1 min-w-0 w-full">
-          {/* Modern Premium Hero Section */}
+          {/* ส่วนแสดงข้อความโปรโมทหลัก (Hero Section) พร้อมลูกเล่นความสวยงาม */}
           <div className="glass-card rounded-2xl lg:rounded-3xl p-8 lg:p-12 text-center mb-8 sm:mb-10 shadow-lg relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 opacity-50 group-hover:opacity-70 transition-opacity duration-500"></div>
             <div className="relative z-10 flex flex-col items-center">
@@ -142,7 +148,7 @@ export default function CustomerApp() {
               </p>
             </div>
             
-            {/* Decorative background blur elements */}
+            {/* เอฟเฟกต์เบลอพื้นหลังตกแต่งเพื่อความสวยงาม */}
             <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary rounded-full mix-blend-screen filter blur-[100px] opacity-20"></div>
             <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-secondary rounded-full mix-blend-screen filter blur-[100px] opacity-20"></div>
           </div>

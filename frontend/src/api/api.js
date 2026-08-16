@@ -1,5 +1,7 @@
+// ดึง URL ของ API จาก Environment (ค่าเริ่มต้นคือ /api)
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+// คลาสจัดการ Error จาก API พร้อมรองรับข้อความตอบกลับจากเซิร์ฟเวอร์
 export class ApiError extends Error {
   constructor(status, body) {
     super(body?.detail || body?.message || `API error ${status}`);
@@ -8,6 +10,7 @@ export class ApiError extends Error {
   }
 }
 
+// ฟังก์ชันกลางสำหรับเรียก API พร้อมแนบ Cookie (Credentials) อัตโนมัติ
 export async function sendApiRequest(apiEndpointUrl, requestOptions = {}) {
   const requestHeaders = {
     'Content-Type': 'application/json',
@@ -18,7 +21,7 @@ export async function sendApiRequest(apiEndpointUrl, requestOptions = {}) {
     const httpResponse = await fetch(`${API_BASE_URL}${apiEndpointUrl.startsWith('/') ? '' : '/'}${apiEndpointUrl}`, {
       ...requestOptions,
       headers: requestHeaders,
-      credentials: 'include', // Important for sending cookies/session
+      credentials: 'include', // สำคัญมากสำหรับการส่ง Cookies หรือข้อมูลเซสชันไปกับ API
     });
 
     if (httpResponse.status === 204) {
@@ -34,6 +37,6 @@ export async function sendApiRequest(apiEndpointUrl, requestOptions = {}) {
     return responseDataJson;
   } catch (apiRequestError) {
     console.error(`เกิดข้อผิดพลาดในการเรียก API ${apiEndpointUrl}:`, apiRequestError);
-    throw apiRequestError; // Throw to be handled by the UI
+    throw apiRequestError; // ส่งข้อผิดพลาดต่อไปให้หน้าจอ UI จัดการ
   }
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { sendApiRequest } from '../../api/api.js';
 import { useAlert } from '../../context/AlertContext';
 
+// หน้าสำหรับจัดการข้อมูลและสถานะการพร้อมให้บริการของน้ำสลัด
 export default function Dressings() {
   const { showAlert, showConfirm } = useAlert();
   const [dressings, setDressings] = useState([]);
@@ -28,8 +29,9 @@ export default function Dressings() {
     }
   };
 
+  // สลับสถานะเปิด/ปิดใช้งานน้ำสลัด
   const toggleAvailability = async (item) => {
-    // Optimistic Update
+    // อัปเดตหน้าจอทันทีเพื่อความรวดเร็ว (Optimistic Update)
     setDressings(prev => prev.map(d => d.id === item.id ? { ...d, is_available: !d.is_available } : d));
 
     try {
@@ -46,11 +48,12 @@ export default function Dressings() {
     }
   };
 
+  // ลบข้อมูลน้ำสลัดออกจากระบบ (ต้องกดยืนยันก่อน)
   const deleteItem = async (id) => {
     const isConfirmed = await showConfirm('ยืนยันการลบน้ำสลัด?');
     if (!isConfirmed) return;
     
-    // Optimistic Update
+    // อัปเดตหน้าจอทันทีเพื่อความรวดเร็ว (Optimistic Update)
     setDressings(prev => prev.filter(d => d.id !== id));
 
     try {
@@ -64,6 +67,7 @@ export default function Dressings() {
     }
   };
 
+  // บันทึกการเพิ่มหรือแก้ไขข้อมูลน้ำสลัดไปยังฐานข้อมูล
   const handleSubmit = async (e) => {
     e.preventDefault();
     const endpoint = editingId ? `/admin/dressings/${editingId}` : '/admin/dressings';

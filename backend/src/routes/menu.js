@@ -3,7 +3,7 @@ import { executeQuery } from '../config/database.js';
 
 const menuRouter = express.Router();
 
-// GET /api/menu - Get all available menu items with category
+// GET /api/menu - ดึงข้อมูลเมนูอาหารทั้งหมดที่พร้อมขายพร้อมหมวดหมู่
 menuRouter.get('/', async (request, response) => {
   try {
     const fetchMenuItemsSql = `

@@ -4,7 +4,7 @@ import { executeQuery } from '../config/database.js';
 
 const cartRouter = express.Router();
 
-// Middleware to ensure a shopping cart session exists for the user
+// ตรวจสอบและสร้างเซสชันตะกร้าสินค้าสำหรับผู้ใช้
 const ensureCartSessionMiddleware = async (request, response, nextFunction) => {
   let cartSessionId = request.cookies.springroll_cart_session;
 
@@ -16,7 +16,7 @@ const ensureCartSessionMiddleware = async (request, response, nextFunction) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production' && process.env.HTTPS_ENABLED === 'true',
         sameSite: 'lax',
-        maxAge: 24 * 60 * 60 * 1000 // 1 day
+        maxAge: 24 * 60 * 60 * 1000 // หมดอายุใน 1 วัน
       });
     } else {
       const sessionQueryResult = await executeQuery('SELECT session_id FROM cart_sessions WHERE session_id = $1', [cartSessionId]);
@@ -27,10 +27,10 @@ const ensureCartSessionMiddleware = async (request, response, nextFunction) => {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production' && process.env.HTTPS_ENABLED === 'true',
           sameSite: 'lax',
-          maxAge: 24 * 60 * 60 * 1000 // 1 day
+          maxAge: 24 * 60 * 60 * 1000 // หมดอายุใน 1 วัน
         });
       }
-      // Removed UPDATE last_accessed_at query to optimize database load
+      // นำการอัปเดต last_accessed_at ออกเพื่อลดภาระฐานข้อมูล
 
     }
     request.cartSessionId = cartSessionId;
@@ -43,7 +43,7 @@ const ensureCartSessionMiddleware = async (request, response, nextFunction) => {
 
 cartRouter.use(ensureCartSessionMiddleware);
 
-// GET /api/cart - Fetch current items in shopping cart
+// GET /api/cart - ดึงข้อมูลสินค้าทั้งหมดในตะกร้าปัจจุบัน
 cartRouter.get('/', async (request, response) => {
   try {
     const fetchCartItemsSql = `
@@ -71,7 +71,7 @@ cartRouter.get('/', async (request, response) => {
   }
 });
 
-// POST /api/cart/add - Add item to cart
+// POST /api/cart/add - เพิ่มสินค้าลงในตะกร้า
 cartRouter.post('/add', async (request, response) => {
   const { menu_item_id: menuItemId, dressing_id: dressingId, quantity = 1, item_notes: itemNotes = '' } = request.body;
 
@@ -116,7 +116,7 @@ cartRouter.post('/add', async (request, response) => {
   }
 });
 
-// PUT /api/cart/update/:id - Update item quantity
+// PUT /api/cart/update/:id - อัปเดตจำนวนสินค้าในตะกร้า
 cartRouter.put('/update/:id', async (request, response) => {
   const { quantity: newQuantity } = request.body;
   const { id: cartItemId } = request.params;
@@ -138,7 +138,7 @@ cartRouter.put('/update/:id', async (request, response) => {
   }
 });
 
-// DELETE /api/cart/remove/:id - Remove item
+// DELETE /api/cart/remove/:id - ลบสินค้าออกจากตะกร้า
 cartRouter.delete('/remove/:id', async (request, response) => {
   try {
     await executeQuery('DELETE FROM cart_items WHERE id = $1 AND session_id = $2', [request.params.id, request.cartSessionId]);
@@ -149,7 +149,7 @@ cartRouter.delete('/remove/:id', async (request, response) => {
   }
 });
 
-// DELETE /api/cart/clear - Clear cart
+// DELETE /api/cart/clear - ล้างตะกร้าสินค้าทั้งหมด
 cartRouter.delete('/clear', async (request, response) => {
   try {
     await executeQuery('DELETE FROM cart_items WHERE session_id = $1', [request.cartSessionId]);

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 
+// แถบตะกร้าสินค้าด้านข้างสำหรับเดสก์ท็อป
 export default function CartSidebar({ isStoreOpen, onCheckout }) {
   const { cartItems, updateQuantity, removeItem, totalPrice } = useCart();
 

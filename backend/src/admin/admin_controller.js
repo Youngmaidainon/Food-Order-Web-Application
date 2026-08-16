@@ -11,6 +11,7 @@ import analyticsRouter from '../routes/admin/analytics.js';
 
 const adminRouter = express.Router();
 
+// Rate Limiting (ป้องกัน Brute Force / DoS ระดับ Router ของฝั่งแอดมิน)
 const adminRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 150,
@@ -20,7 +21,7 @@ const adminRateLimiter = rateLimit({
 });
 
 adminRouter.use('/', authRouter);
-adminRouter.use(adminRateLimiter); // Apply to all subsequent admin routes
+adminRouter.use(adminRateLimiter); // บังคับใช้ Rate Limiter กับทุก Route ของแอดมิน (ยกเว้น Login)
 adminRouter.use('/orders', ordersRouter);
 adminRouter.use('/menu', menuRouter);
 adminRouter.use('/categories', categoriesRouter);

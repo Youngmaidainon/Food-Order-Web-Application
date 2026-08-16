@@ -6,21 +6,21 @@
 
 @layer base {
   :root {
-    --primary: #10B981; /* Fresh Green */
+    --primary: #10B981; /* สีเขียวสดใส */
     --primary-hover: #059669;
     --primary-light: rgba(16, 185, 129, 0.15);
     
-    --secondary: #F59E0B; /* Amber */
+    --secondary: #F59E0B; /* สีเหลืองอำพัน */
     --secondary-hover: #D97706;
     
-    --bg-color: #09090b; /* Premium Deep Black */
-    --surface: #18181b; /* Dark Surface */
+    --bg-color: #09090b; /* สีดำเข้มพรีเมียม */
+    --surface: #18181b; /* สีพื้นผิวดำ */
     --surface-hover: #27272a;
     
-    --text-main: #f4f4f5; /* Light text */
-    --text-muted: #a1a1aa; /* Muted light text */
+    --text-main: #f4f4f5; /* สีตัวหนังสือหลัก (สว่าง) */
+    --text-muted: #a1a1aa; /* สีตัวหนังสือรอง (หม่น) */
     
-    --border-color: rgba(255, 255, 255, 0.08); /* Soft glass border */
+    --border-color: rgba(255, 255, 255, 0.08); /* สีขอบแบบกระจกบางๆ */
     
     --glass-bg: rgba(24, 24, 27, 0.65);
     --glass-border: rgba(255, 255, 255, 0.08);
@@ -39,18 +39,18 @@
   }
 
   html {
-    font-size: 13px; /* Base size */
+    font-size: 13px; /* ขนาดฟอนต์พื้นฐาน */
   }
 
   @media (min-width: 768px) {
     html {
-      font-size: 14px; /* iPad */
+      font-size: 14px; /* ขนาดฟอนต์สำหรับ iPad */
     }
   }
 
   @media (min-width: 1024px) {
     html {
-      font-size: 14px; /* Desktop */
+      font-size: 14px; /* ขนาดฟอนต์สำหรับ Desktop */
     }
   }
 
@@ -59,8 +59,8 @@
     font-family: 'Prompt', system-ui, sans-serif;
     overflow-wrap: break-word;
     word-wrap: break-word;
-    word-break: normal; /* normal allows Thai dictionary break, keep-all might overflow or tear */
-    text-wrap: pretty; /* Prevents orphans and improves wrapping */
+    word-break: normal; /* ปกป้องการตัดคำภาษาไทยให้สมบูรณ์ */
+    text-wrap: pretty; /* ป้องกันข้อความลอยและปรับการขึ้นบรรทัดใหม่ให้สวยงาม */
   }
 
   body::before, body::after {
@@ -102,7 +102,7 @@
   }
 }
 
-/* Custom Scrollbar for modern look */
+/* ปรับแต่งแถบเลื่อน (Scrollbar) ให้ดูทันสมัย */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
