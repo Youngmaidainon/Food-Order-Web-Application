@@ -67,7 +67,7 @@
 
 ### การทดสอบแบบ Public ด้วย Cloudflare Tunnel (ทดสอบ Webhook 100%)
 สำหรับทดสอบระบบเสมือน Production จริง รวมถึงให้ Discord/External services ยิงกลับมาได้:
-1. รัน Docker Compose ปกติ: `docker compose up -d`
+1. รัน Docker Compose ปกติ: `docker compose up -d --build`
 2. เปิด Tunnel ชี้ไปที่ Frontend (Port 80):
    ```bash
    npx cloudflared tunnel --url http://localhost
