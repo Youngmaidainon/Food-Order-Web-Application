@@ -1,3 +1,4 @@
+name: springroll
 services:
   db:
     image: postgres:15-alpine
@@ -16,6 +17,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - backend-net
+
 
   backend:
     build:
@@ -28,10 +32,14 @@ services:
       NODE_ENV: production
       PORT: 8000
       ALLOW_DYNAMIC_CORS: 'true'
-
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - frontend-net
+      - backend-net
+    cap_drop:
+      - ALL
 
   frontend:
     build:
@@ -39,9 +47,25 @@ services:
     container_name: springroll_frontend
     restart: always
     ports:
-      - "80:80"
+      - "80:8080"
     depends_on:
       - backend
+    networks:
+      - frontend-net
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+    internal: true
 
 volumes:
   pgdata:
