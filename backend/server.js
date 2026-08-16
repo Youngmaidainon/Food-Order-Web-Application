@@ -18,12 +18,8 @@ async function runDatabaseMigrations() {
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS restaurant_name VARCHAR(100) DEFAULT 'ร้านสปริงโรลออนไลน์'`);
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS current_sequence INT DEFAULT 0`);
 
-    await executeQuery(`ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check`);
-    await executeQuery(`
-      ALTER TABLE orders 
-      ADD CONSTRAINT orders_status_check 
-      CHECK (status IN ('รอดำเนินการ', 'รับออเดอร์แล้ว', 'กำลังเตรียมอาหาร', 'พร้อมรับอาหาร', 'รับอาหารแล้ว', 'กำลังจัดส่ง', 'จัดส่งแล้ว', 'ยกเลิก'))
-    `);
+    await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45) DEFAULT NULL`);
+    await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS session_id VARCHAR(255) DEFAULT NULL`);
 
     await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL`);
     await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancel_reason TEXT DEFAULT NULL`);
@@ -81,8 +77,7 @@ async function runDatabaseMigrations() {
         dressing_id INT REFERENCES dressings(id) ON DELETE SET NULL,
         quantity INT NOT NULL DEFAULT 1,
         item_notes TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(session_id, menu_item_id, dressing_id)
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `);
 

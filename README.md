@@ -65,6 +65,16 @@
    - **Backend API**: `http://localhost:8000/api`
    - **Health Check**: `http://localhost:8000/api/health`
 
+### การทดสอบแบบ Public ด้วย Cloudflare Tunnel (ทดสอบ Webhook 100%)
+สำหรับทดสอบระบบเสมือน Production จริง รวมถึงให้ Discord/External services ยิงกลับมาได้:
+1. รัน Docker Compose ปกติ: `docker compose up -d`
+2. เปิด Tunnel ชี้ไปที่ Frontend (Port 80):
+   ```bash
+   npx cloudflared tunnel --url http://localhost
+   ```
+3. นำ URL ที่ได้จาก Cloudflared (เช่น `https://xxxx.trycloudflare.com`) ไปเปิดทดสอบบนมือถือ หรือตั้งค่า Webhook ได้เลย!
+   (ระบบ CORS ถูกตั้งให้เปิดรับทุก Origin ชั่วคราวเมื่อรันแบบ Development)
+
 ---
 
 ### วิธีที่ 2: Deploy ฟรีผ่าน Cloud (Neon + Render + Vercel + cron-job.org)
@@ -93,7 +103,7 @@
 
 #### 3. Deploy Frontend บน Vercel
 - สร้างโปรเจกต์บน [Vercel.com](https://vercel.com) ผูกกับโฟลเดอร์ `frontend`
-- แก้ไข `frontend/vercel.json` ชี้ `destination` ของ `/api/(.*)` ไปที่ Render Backend URL
+- **สำคัญ:** เข้าไปแก้ไขไฟล์ `frontend/vercel.json` โดยเปลี่ยน `https://your-backend-url.onrender.com` ให้เป็น URL จริงของ Render Backend ที่เพิ่งสร้างเสร็จ
 - กด Deploy จะได้ Domain หน้าร้านค้าทันที
 
 #### 4. ตั้งค่า cron-job.org (ป้องกัน Render Sleep)

@@ -99,7 +99,25 @@ CREATE TABLE IF NOT EXISTS admin_sessions (
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
--- 9. Daily Reports Table
+-- 9. Cart Sessions Table
+CREATE TABLE IF NOT EXISTS cart_sessions (
+    session_id UUID PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_accessed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. Cart Items Table
+CREATE TABLE IF NOT EXISTS cart_items (
+    id SERIAL PRIMARY KEY,
+    session_id UUID REFERENCES cart_sessions(session_id) ON DELETE CASCADE,
+    menu_item_id INT REFERENCES menu_items(id) ON DELETE CASCADE,
+    dressing_id INT REFERENCES dressings(id) ON DELETE SET NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    item_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 11. Daily Reports Table
 CREATE TABLE IF NOT EXISTS daily_reports (
     id SERIAL PRIMARY KEY,
     discord_message_id VARCHAR(255) NOT NULL,
@@ -114,6 +132,8 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_deleted_at ON orders(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_cart_sessions_last_active ON cart_sessions(last_accessed_at);
+CREATE INDEX IF NOT EXISTS idx_admin_sessions_expires_at ON admin_sessions(expires_at);
 
 -- ========================================================
 -- Seed Data เริ่มต้นสำหรับทดสอบระบบ

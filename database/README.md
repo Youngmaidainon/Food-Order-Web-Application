@@ -14,12 +14,12 @@
 | `dressings` | `id (PK)`, `name`, `is_available` | ตัวเลือกน้ำสลัด |
 | `orders` | `id (PK)`, `order_number (UK)`, `customer_name`, `status`, `delivery_type` | ข้อมูลคำสั่งซื้อ |
 | `order_items` | `id (PK)`, `order_id (FK)`, `menu_item_id (FK)`, `dressing_id (FK)`, `quantity` | รายการอาหารในคำสั่งซื้อ |
-| `cart_sessions` | `id (PK, UUID)`, `created_at`, `last_active` | เซสชันตะกร้าสินค้า |
-| `cart_items` | `id (PK)`, `session_id (FK)`, `menu_item_id (FK)`, `dressing_id (FK)`, `quantity` | รายการสินค้าในตะกร้า |
+| `cart_sessions` | `session_id (PK, UUID)`, `created_at`, `last_accessed_at` | เซสชันตะกร้าสินค้า |
+| `cart_items` | `id (PK)`, `session_id (FK)`, `menu_item_id (FK)`, `dressing_id (FK)`, `quantity`, `item_notes` | รายการสินค้าในตะกร้า |
 | `store_status` | `id (PK)`, `is_open`, `current_sequence`, `restaurant_name` | สถานะเปิด/ปิดร้านและคิว |
-| `admin_users` | `id (PK)`, `username (UK)`, `password_hash` | บัญชีผู้ดูแลระบบ |
-| `admin_sessions` | `id (PK, UUID)`, `admin_id (FK)`, `expires_at` | เซสชันการเข้าสู่ระบบแอดมิน |
-| `daily_reports` | `id (PK)`, `report_date (UK)`, `discord_message_id` | บันทึกประวัติการส่งรายงานรายวัน |
+| `admin_users` | `id (PK)`, `username (UK)`, `password_hash`, `password_rotated_at` | บัญชีผู้ดูแลระบบ |
+| `admin_sessions` | `session_id (PK, UUID)`, `admin_id (FK)`, `expires_at` | เซสชันการเข้าสู่ระบบแอดมิน |
+| `daily_reports` | `id (PK)`, `discord_message_id`, `created_at` | บันทึกประวัติการส่งรายงานรายวัน |
 
 ---
 
