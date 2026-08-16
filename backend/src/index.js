@@ -18,7 +18,7 @@ import { ForbiddenError } from './shared/errors.js';
 
 const app = express();
 
-app.set('trust proxy', 1); // Trust first proxy (Render)
+app.set('trust proxy', 'loopback, linklocal, uniquelocal'); // Trust internal proxies (Docker/Nginx/Render)
 
 app.use(requestContext);
 
@@ -32,8 +32,13 @@ app.use(cors({
       return callback(null, true);
     }
 
-    if (!origin) return callback(new ForbiddenError('Not allowed by CORS (Missing Origin)'));
+    if (!origin) return callback(null, true); // Allow same-origin or curl requests
     
+    // อนุญาตทุก Origin หากเปิดใช้งาน ALLOW_DYNAMIC_CORS (เฉพาะการจำลอง Production บน Docker)
+    if (process.env.ALLOW_DYNAMIC_CORS === 'true') {
+      return callback(null, true);
+    }
+
     let allowedOrigins = ['http://localhost', 'http://localhost:80', 'http://localhost:8080'];
     if (process.env.CORS_ORIGIN) {
       const origins = process.env.CORS_ORIGIN.split(',').map(o => o.trim());
@@ -52,15 +57,7 @@ app.use(cors({
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 
-// บังคับเปลี่ยน HTTP เป็น HTTPS บน Production (Transport Security - HSTS)
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    if (req.headers['x-forwarded-proto'] !== 'https' && !req.secure) {
-      return res.redirect('https://' + req.get('host') + req.url);
-    }
-    next();
-  });
-}
+// (ลบการบังคับ HTTPS Redirect ออก เนื่องจาก Render จัดการให้ที่ Edge Layer แล้ว และทำให้เกิดปัญหากับการจำลอง Proxy ภายใน Docker)
 
 // Global Rate Limiter: ป้องกัน DoS ระดับ API ทั้งระบบ
 const generalApiRateLimiter = rateLimit({

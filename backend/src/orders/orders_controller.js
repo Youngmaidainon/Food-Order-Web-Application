@@ -68,7 +68,7 @@ ordersRouter.get('/track/:order_number', trackOrderRateLimiter, async (req, res,
 // PATCH /api/orders/:id/status - ยกเลิกออเดอร์โดยลูกค้า (ส่งต่อให้ Service จัดการ Logic)
 ordersRouter.patch('/:id/status', cancelOrderRateLimiter, validate(cancelOrderSchema), async (req, res, next) => {
   try {
-    const data = await ordersService.cancelOrderCustomer(req.params.id, req.body.status, req.body.cancel_reason);
+    const data = await ordersService.cancelOrderCustomer(req.params.id, req.body.status, req.body.cancel_reason, req.cookies?.springroll_cart_session);
     return res.json({ success: true, message: 'ยกเลิกออเดอร์เรียบร้อยแล้ว', data });
   } catch (error) {
     if (error.statusCode) {

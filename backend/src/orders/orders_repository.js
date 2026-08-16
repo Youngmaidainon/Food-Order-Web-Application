@@ -74,8 +74,9 @@ export class OrdersRepository {
   }
 
   async getOrderByNumber(orderNumber) {
+    // ปิดบังข้อมูลส่วนบุคคล (PII) เพื่อป้องกันข้อมูลลูกค้ารั่วไหล
     const result = await executeQuery(
-      'SELECT id, order_number, sequence_number, customer_name, customer_phone, delivery_type, address, status, cancel_reason, canceled_by, total_amount, created_at FROM orders WHERE order_number = $1 AND deleted_at IS NULL',
+      'SELECT id, order_number, sequence_number, delivery_type, status, cancel_reason, canceled_by, total_amount, created_at FROM orders WHERE order_number = $1 AND deleted_at IS NULL',
       [orderNumber]
     );
     return result.rows.length > 0 ? result.rows[0] : null;
@@ -107,7 +108,7 @@ export class OrdersRepository {
   }
 
   async getOrderByIdForUpdate(client, orderId) {
-    const result = await client.query('SELECT id, status, order_number, discord_message_id FROM orders WHERE id = $1 AND deleted_at IS NULL FOR UPDATE', [orderId]);
+    const result = await client.query('SELECT id, status, order_number, discord_message_id, session_id FROM orders WHERE id = $1 AND deleted_at IS NULL FOR UPDATE', [orderId]);
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 

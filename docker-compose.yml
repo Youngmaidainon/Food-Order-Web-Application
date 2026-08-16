@@ -25,8 +25,9 @@ services:
     env_file:
       - .env
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 8000
+      ALLOW_DYNAMIC_CORS: 'true'
 
     depends_on:
       db:

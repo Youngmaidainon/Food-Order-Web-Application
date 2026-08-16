@@ -159,7 +159,7 @@ export class OrdersService {
     return orderRecord;
   }
 
-  async cancelOrderCustomer(orderId, targetStatus, cancelReason) {
+  async cancelOrderCustomer(orderId, targetStatus, cancelReason, cartSessionId) {
     if (targetStatus !== 'ยกเลิก') throw new ValidationError('ลูกค้าสามารถทำการยกเลิกออเดอร์ได้เท่านั้น');
     if (!cancelReason || cancelReason.trim().length < 1 || cancelReason.trim().length > 20) {
       throw new ValidationError('กรุณาระบุเหตุผลการยกเลิก 1-20 ตัวอักษร');
@@ -171,6 +171,12 @@ export class OrdersService {
 
       const currentOrderRecord = await this.ordersRepository.getOrderByIdForUpdate(databaseClient, orderId);
       if (!currentOrderRecord) throw new ValidationError('ไม่พบออเดอร์ที่ต้องการยกเลิก');
+      
+      // ป้องกัน IDOR: ตรวจสอบว่า session_id ตรงกับคนที่สั่งหรือไม่
+      if (currentOrderRecord.session_id !== cartSessionId) {
+        throw new AppError('ไม่มีสิทธิ์เข้าถึงออเดอร์นี้', 'FORBIDDEN', 403);
+      }
+
       if (currentOrderRecord.status !== 'รอดำเนินการ') {
         throw new ValidationError(`ไม่สามารถยกเลิกออเดอร์ได้ เนื่องจากสถานะปัจจุบันคือ "${currentOrderRecord.status}"`);
       }

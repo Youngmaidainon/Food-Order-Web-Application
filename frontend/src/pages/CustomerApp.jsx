@@ -6,6 +6,7 @@ import MobileCartBar from '../components/MobileCartBar';
 import DressingModal from '../components/DressingModal';
 import CheckoutModal from '../components/CheckoutModal';
 import TrackingModal from '../components/TrackingModal';
+import CartModal from '../components/CartModal';
 import { useCart } from '../context/CartContext';
 import { sendApiRequest } from '../api/api.js';
 
@@ -24,6 +25,7 @@ export default function CustomerApp() {
   const [isDressingModalOpen, setIsDressingModalOpen] = useState(false);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   
   const [selectedMenuItem, setSelectedMenuItem] = useState(null);
   const [selectedDressing, setSelectedDressing] = useState(null);
@@ -104,11 +106,20 @@ export default function CustomerApp() {
   // ยืนยันการเลือกน้ำสลัดและเพิ่มสินค้าลงตะกร้า
   const handleConfirmDressing = async () => {
     if (selectedMenuItem) {
-      await addItemToCart(selectedMenuItem, selectedDressing);
+      const currentMenu = selectedMenuItem;
+      const currentDressing = selectedDressing;
+      
+      // ปิด Modal และเคลียร์ค่าทันที (Instant UI Feedback) ป้องกันการกดย้ำ
       setIsDressingModalOpen(false);
       setSelectedMenuItem(null);
       setSelectedDressing(null);
-      showToast('เพิ่มสินค้าลงตะกร้าแล้ว', 'success');
+      
+      try {
+        await addItemToCart(currentMenu, currentDressing);
+        showToast('เพิ่มสินค้าลงตะกร้าแล้ว', 'success');
+      } catch (error) {
+        showToast('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง', 'error');
+      }
     }
   };
 
@@ -169,7 +180,17 @@ export default function CustomerApp() {
       </div>
 
       <MobileCartBar 
-        onOpenCart={() => setIsCheckoutModalOpen(true)} 
+        onOpenCart={() => setIsCartModalOpen(true)} 
+      />
+
+      <CartModal 
+        isOpen={isCartModalOpen}
+        onClose={() => setIsCartModalOpen(false)}
+        isStoreOpen={storeStatus.is_open}
+        onCheckout={() => {
+          setIsCartModalOpen(false);
+          setIsCheckoutModalOpen(true);
+        }}
       />
 
       <DressingModal 

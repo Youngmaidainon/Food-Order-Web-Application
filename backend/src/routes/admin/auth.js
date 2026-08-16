@@ -60,8 +60,8 @@ authRouter.post('/login', validate(adminLoginSchema), async (request, response) 
 
     response.cookie('springroll_admin_session', newAdminSessionId, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' && process.env.HTTPS_ENABLED === 'true',
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000 // หมดอายุใน 1 วัน
     });
 

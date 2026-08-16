@@ -31,7 +31,7 @@ export function CartProvider({ children }) {
         method: 'POST',
         body: JSON.stringify({
           menu_item_id: menuItem.id,
-          dressing_id: dressing ? dressing.id : null,
+          dressing_id: dressing && dressing.id !== 0 ? dressing.id : null,
           quantity: 1,
           item_notes: notes
         })
@@ -46,6 +46,9 @@ export function CartProvider({ children }) {
 
   // ปรับจำนวนสินค้าพร้อมระบบ Optimistic Update และ Debounce ป้องกัน API ทำงานหนัก
   const updateQuantity = async (cartItemId, newQty) => {
+    if (newQty <= 0) {
+      return removeItem(cartItemId);
+    }
     // อัปเดต UI ทันทีโดยไม่ต้องรอ API (Optimistic Update)
     setCartItems(prevItems => prevItems.map(item => {
       if (item.cart_item_id === cartItemId) {
