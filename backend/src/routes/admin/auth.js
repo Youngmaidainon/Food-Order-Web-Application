@@ -3,17 +3,14 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { executeQuery } from '../../config/database.js';
 import { authenticateAdminSession } from '../../middleware/auth.js';
+import { validate } from '../../shared/middleware/validate.js';
+import { adminLoginSchema } from '../../shared/validators/index.js';
 
 const authRouter = express.Router();
 
 // POST /api/admin/login - Login admin
-authRouter.post('/login', async (request, response) => {
-  const username = (request.body.username || '').trim();
-  const password = (request.body.password || '').trim();
-
-  if (!username || !password) {
-    return response.status(400).json({ success: false, message: 'กรุณากรอก Username และ Password' });
-  }
+authRouter.post('/login', validate(adminLoginSchema), async (request, response) => {
+  const { username, password } = request.body;
 
   try {
     let adminQueryResult = await executeQuery('SELECT id, username, password_hash, password_rotated_at FROM admin_users WHERE username = $1', [username]);

@@ -1,6 +1,9 @@
-﻿import express from 'express';
+import express from 'express';
 import { OrdersRepository } from './orders_repository.js';
 import { OrdersService } from './orders_service.js';
+import rateLimit from 'express-rate-limit';
+import { validate } from '../shared/middleware/validate.js';
+import { createOrderSchema, cancelOrderSchema } from '../shared/validators/index.js';
 
 const ordersRouter = express.Router();
 const ordersRepository = new OrdersRepository();
@@ -8,8 +11,33 @@ const ordersService = new OrdersService(ordersRepository);
 
 export { ordersService, ordersRepository };
 
+// Rate limiter ป้องกันการสแปมสั่งอาหาร (10 ครั้ง / 15 นาที)
+const createOrderRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, message: 'คุณทำรายการสั่งซื้อบ่อยเกินไป กรุณารอสักครู่ (Too many orders)' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const trackOrderRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { success: false, message: 'คุณตรวจสอบสถานะบ่อยเกินไป กรุณารอสักครู่' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const cancelOrderRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { success: false, message: 'คุณยกเลิกรายการบ่อยเกินไป กรุณารอสักครู่' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // POST /api/orders - Create new order
-ordersRouter.post('/', async (req, res, next) => {
+ordersRouter.post('/', createOrderRateLimiter, validate(createOrderSchema), async (req, res, next) => {
   try {
     const data = await ordersService.createOrder(req.body, req.ip, req.cookies?.springroll_cart_session);
     return res.status(201).json({
@@ -28,7 +56,7 @@ ordersRouter.post('/', async (req, res, next) => {
 });
 
 // GET /api/orders/track/:order_number - Track order status by order number
-ordersRouter.get('/track/:order_number', async (req, res, next) => {
+ordersRouter.get('/track/:order_number', trackOrderRateLimiter, async (req, res, next) => {
   try {
     const data = await ordersService.trackOrder(req.params.order_number.trim());
     return res.json({ success: true, data });
@@ -38,7 +66,7 @@ ordersRouter.get('/track/:order_number', async (req, res, next) => {
 });
 
 // PATCH /api/orders/:id/status - Cancel order by customer
-ordersRouter.patch('/:id/status', async (req, res, next) => {
+ordersRouter.patch('/:id/status', cancelOrderRateLimiter, validate(cancelOrderSchema), async (req, res, next) => {
   try {
     const data = await ordersService.cancelOrderCustomer(req.params.id, req.body.status, req.body.cancel_reason);
     return res.json({ success: true, message: 'ยกเลิกออเดอร์เรียบร้อยแล้ว', data });

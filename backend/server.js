@@ -94,7 +94,7 @@ async function runDatabaseMigrations() {
 
       if (!passwordRotatedAt && initialAdminPassword) {
         const bcryptModule = await import('bcryptjs');
-        const hashedPassword = await bcryptModule.default.hash(initialAdminPassword, 10);
+        const hashedPassword = await bcryptModule.default.hash(initialAdminPassword, 12);
         await executeQuery(`
           UPDATE admin_users 
           SET password_hash = $1, password_rotated_at = NOW() 
