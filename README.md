@@ -355,9 +355,6 @@ Food-Order-Web-Application/
    - **Headers / Body**: *ปล่อยว่าง*
 4. กดปุ่ม **CREATE** ด้านล่างสุด
 
-> [!TIP]
-> ตอนนี้ระบบทั้งหมด (ฐานข้อมูล Neon + Backend Render + Frontend Vercel + Keep-Alive) พร้อมให้บริการออนไลน์แบบสมบูรณ์ 24/7 โดยไม่มีค่าใช้จ่ายใดๆ ทั้งสิ้น! สามารถเข้าใช้งานหน้าร้านได้ที่โดเมน Vercel และเข้าสู่ระบบจัดการได้ที่ `https://<your-vercel-domain>/admin`
-
 ---
 
 ## 📜 ใบอนุญาตการใช้งาน (License)
