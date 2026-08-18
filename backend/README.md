@@ -32,10 +32,6 @@ backend/
     ├── config/                     # ฟีเจอร์: การตั้งค่าและการเชื่อมต่อฐานข้อมูล
     │   ├── config.js               # Centralized Config พร้อมระบบตรวจสอบ Fail-Fast
     │   └── database.js             # ตัวจัดการ Connection Pool เชื่อมต่อ PostgreSQL (pg.Pool)
-    ├── cron/                       # ฟีเจอร์: งานบำรุงรักษาระบบอัตโนมัติ
-    │   ├── cron_controller.js      # ตัวควบคุม Endpoint สำหรับรับคำขอจาก Cron Job (/internal/cron)
-    │   ├── cron_repository.js      # คำสั่ง SQL ล้างเซสชันและข้อมูลที่หมดอายุ
-    │   └── cron_service.js         # ตรรกะการทำความสะอาดฐานข้อมูลประจำวัน
     ├── dressings/                  # ฟีเจอร์: การดึงข้อมูลน้ำสลัดฝั่งลูกค้า
     │   ├── dressings_controller.js # ตัวควบคุมรับคำขอดึงรายการน้ำสลัดที่เปิดให้บริการ (/api/dressings)
     │   ├── dressings_repository.js # คำสั่ง SQL ดึงข้อมูลจากตาราง dressings
@@ -118,17 +114,12 @@ backend/
 | `PUT` | `/api/admin/dressings/:id` | แก้ไขข้อมูลน้ำสลัด | คุกกี้แอดมิน |
 | `DELETE` | `/api/admin/dressings/:id` | ลบรายการน้ำสลัด | คุกกี้แอดมิน |
 
-### 7. ระบบ Cron Job ภายใน (Internal Cron)
-| Method | Endpoint | คำอธิบาย | การตรวจสอบสิทธิ์ |
-|---|---|---|---|
-| `POST` | `/internal/cron/maintenance` | ล้างเซสชันตะกร้าและเซสชันแอดมินที่หมดอายุ | Header: `Authorization: Bearer <CRON_SECRET>` |
-
 ---
 
 ## 🛡️ ชั้นความปลอดภัยและการจัดการข้อผิดพลาด (Security & Error Standards)
 
 1. **การตั้งค่าส่วนกลางพร้อมระบบ Fail-Fast (`src/config/config.js`)**
-   - ตรวจสอบความถูกต้องของ Environment Variables สำคัญทั้งหมด (`DATABASE_URL`, `JWT_SECRET`, `CRON_SECRET`) ตั้งแต่เริ่มบูตเซิร์ฟเวอร์ และหยุดการทำงานทันทีหากพบว่าค่าสำคัญขาดหายไป
+   - ตรวจสอบความถูกต้องของ Environment Variables สำคัญทั้งหมด (`DATABASE_URL`, `JWT_SECRET`) ตั้งแต่เริ่มบูตเซิร์ฟเวอร์ และหยุดการทำงานทันทีหากพบว่าค่าสำคัญขาดหายไป
 
 2. **โครงสร้างคลาส Error เฉพาะทาง (มาตรฐาน RFC 9457 Problem Details)**
    - คลาสข้อผิดพลาดเฉพาะทางใน `src/shared/errors.js`:
@@ -174,7 +165,6 @@ backend/
 | `NODE_ENV` | `production` | สำคัญ (Required) | โหมดการทำงาน (`development` หรือ `production`) |
 | `DATABASE_URL` | `postgres://user:pass@host/db?sslmode=require` | สำคัญมาก (Required) | Connection String ฐานข้อมูล PostgreSQL |
 | `JWT_SECRET` | `your_super_secret_jwt_key_here` | สำคัญมาก (Required) | กุญแจลับสำหรับลงนาม JWT Session |
-| `CRON_SECRET` | `your_super_secret_cron_token_here` | สำคัญมาก (Required) | โทเค็นความปลอดภัยสำหรับ Endpoint บำรุงรักษาระบบ |
 | `CORS_ORIGIN` | `https://your-app.vercel.app,http://localhost:5173` | สำคัญมาก (Required) | โดเมน Frontend ที่อนุญาตให้เชื่อมต่อ (คั่นด้วยจุลภาค) |
 | `ADMIN_INIT_USERNAME` | `admin` | ตัวเลือก (Optional) | ชื่อผู้ใช้งานแอดมินเริ่มต้น |
 | `ADMIN_INIT_PASSWORD` | `adminpassword` | ตัวเลือก (Optional) | รหัสผ่านแอดมินเริ่มต้น |

@@ -43,13 +43,12 @@ flowchart TD
     subgraph Layer_Backend ["⚙️ 3. บริการเซิร์ฟเวอร์หลังบ้าน (Express.js Backend API)"]
         API["🚀 Express API Core (Feature-First Architecture)<br/>ระบบเซสชันแอดมิน • Smart Cache (ETag/304) • RFC 9457"]:::backendStyle
         Discord["🤖 Discord Webhook Engine<br/>แจ้งเตือนออเดอร์ & รายงานยอดขาย"]:::backendStyle
-        Cron["⏱️ Cron Maintenance Service<br/>ล้างเซสชันขยะที่หมดอายุอัตโนมัติ"]:::backendStyle
     end
 
     subgraph Layer_Data ["🗄️ 4. ฐานข้อมูลและบริการภายนอก (Database & External)"]
         DB[("🐘 PostgreSQL 15+ Database<br/>จัดเก็บเมนู, ออเดอร์, เซสชัน (B-Tree Indexed)")]:::dbStyle
         DiscordApp["💬 Discord Channels<br/>#orders • #cancels • #reports"]:::extStyle
-        CronTrigger["⏰ cron-job.org Scheduler<br/>ระบบยิงคำขอบำรุงรักษาระบบอัตโนมัติ"]:::extStyle
+        CronTrigger["⏰ cron-job.org Scheduler<br/>ยิงคำขอ Ping /api/health ป้องกันเซิร์ฟเวอร์หลับ"]:::extStyle
     end
 
     %% เส้นทางการเชื่อมต่อ (Data Flow & Interactions)
@@ -61,8 +60,7 @@ flowchart TD
     API -->|บันทึกและดึงข้อมูลผ่าน Pool พร้อม Indexes| DB
     API -->|ตอบกลับข้อมูลสด หรือ 304 Not Modified| Proxy
     API -->|ส่งต่อข้อมูลแจ้งเตือน| Discord
-    CronTrigger -->|ยิงคำขอบำรุงรักษาตามเวลา| Cron
-    Cron -->|ล้างเซสชันขยะที่หมดอายุ| DB
+    CronTrigger -->|ยิง Ping ทุก 10-14 นาที| API
 
     Discord ==>|ส่งการ์ดแจ้งเตือนเข้าห้องแชท| DiscordApp
 ```
@@ -100,7 +98,6 @@ flowchart TD
 - **การตรวจสอบสิทธิ์ด้วยเซสชัน (Session Auth)**: ตรวจสอบสิทธิ์แอดมินผ่านคุกกี้ที่ปลอดภัย `HttpOnly` และ `SameSite` ป้องกันการโจมตีแบบ XSS
 - **การจำกัดอัตราคำขอที่เข้มงวด (Strict Rate Limits)**:
   - `POST /api/admin/login`: จำกัด 5 ครั้ง / 15 นาที (ป้องกัน Brute Force)
-  - `POST /internal/cron/*`: จำกัด 20 ครั้ง / 15 นาที พร้อมตรวจสอบ `CRON_SECRET`
   - `GET /api/orders/track/:order_number`: จำกัด 300 ครั้ง / 15 นาที (รองรับ Customer Smart Polling)
   - `/api/store/*`: จำกัด 300 ครั้ง / 15 นาที (รองรับ Store Status Polling)
   - `/api/*` ทั่วไป: จำกัด 600 ครั้ง / 15 นาที (ป้องกัน DoS และ Scraper)
@@ -152,10 +149,6 @@ Food-Order-Web-Application/
 │       ├── config/                 # ฟีเจอร์: Centralized Config & Database Pool
 │       │   ├── config.js
 │       │   └── database.js
-│       ├── cron/                   # ฟีเจอร์: ระบบงานบำรุงรักษาและล้างข้อมูลอัตโนมัติ
-│       │   ├── cron_controller.js
-│       │   ├── cron_repository.js
-│       │   └── cron_service.js
 │       ├── dressings/              # ฟีเจอร์: การดึงข้อมูลน้ำสลัดสำหรับลูกค้า
 │       │   ├── dressings_controller.js
 │       │   ├── dressings_repository.js
@@ -250,7 +243,7 @@ Food-Order-Web-Application/
 | **ฐานข้อมูล (Database)** | **Neon.tech** | PostgreSQL Serverless (Free Tier) |
 | **เซิร์ฟเวอร์ (Backend)** | **Render.com** | Node.js Web Service (Free Tier) |
 | **ส่วนติดต่อผู้ใช้ (Frontend)** | **Vercel.com** | React SPA + API Rewrites Proxy (Free Tier) |
-| **ระบบรักษาสถานะ & Cron** | **cron-job.org** | ส่งคำขอ Ping ป้องกันเซิร์ฟเวอร์หลับ และรันงานบำรุงรักษารายวัน |
+| **ระบบรักษาสถานะ (Keep-Alive)** | **cron-job.org** | ส่งคำขอ Ping ป้องกันเซิร์ฟเวอร์ Sleep (Free Tier) |
 
 #### 1. สร้างฐานข้อมูลบน Neon
 - สมัครและสร้างโปรเจกต์บน [Neon.tech](https://neon.tech)
@@ -263,7 +256,6 @@ Food-Order-Web-Application/
   - `NODE_ENV`: `production`
   - `JWT_SECRET`: รหัสลับสำหรับ JWT
   - `CORS_ORIGIN`: URL ของ Frontend บน Vercel (เช่น `https://your-app.vercel.app`)
-  - `CRON_SECRET`: รหัสลับสำหรับ Cron Endpoint
   - `DISCORD_WEBHOOK_URL`: (ไม่บังคับ) URL ของ Discord Webhook สำหรับรับการแจ้งเตือน
 
 #### 3. Deploy Frontend บน Vercel
@@ -272,8 +264,7 @@ Food-Order-Web-Application/
 - กด Deploy เพื่อรับโดเมนหน้าร้านค้าทันที
 
 #### 4. ตั้งค่า cron-job.org (ป้องกัน Render Sleep)
-- สร้าง Job ยิง HTTP GET ไปที่ `https://your-backend.onrender.com/api/health` ทุก **10-14 นาที**
-- สร้าง Job รายวันยิง HTTP POST ไปที่ `https://your-backend.onrender.com/internal/cron/maintenance` พร้อมแนบ Header `Authorization: Bearer <CRON_SECRET>`
+- สร้าง Job ยิง **HTTP GET** ไปที่ `https://your-backend.onrender.com/api/health` ทุก **10-14 นาที** เพื่อให้เซิร์ฟเวอร์ตื่นตัวตลอดเวลาโดยไม่ต้องใส่ Header ใดๆ
 
 ---
 

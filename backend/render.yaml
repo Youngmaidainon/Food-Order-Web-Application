@@ -15,8 +15,6 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: CRON_SECRET
-        generateValue: true
       - key: ADMIN_INIT_USERNAME
         sync: false
       - key: ADMIN_INIT_PASSWORD

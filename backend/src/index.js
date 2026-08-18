@@ -10,7 +10,6 @@ import { storeRouter } from './store/store_controller.js';
 import { ordersRouter } from './orders/orders_controller.js';
 import { adminRouter } from './admin/admin_controller.js';
 import { cartRouter } from './cart/cart_controller.js';
-import { cronRouter } from './cron/cron_controller.js';
 
 import { requestContext } from './shared/middleware/requestContext.js';
 import { globalErrorHandler } from './shared/middleware/errorHandler.js';
@@ -90,14 +89,6 @@ const adminLoginRateLimiter = rateLimit({
 app.use('/api/', generalApiRateLimiter);
 app.use('/api/admin/login', adminLoginRateLimiter);
 
-const cronRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { success: false, message: 'มีการเรียกใช้ระบบอัตโนมัติมากเกินไป' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // API Route Endpoints
 app.use('/api/menu', menuRouter);
 app.use('/api/dressings', dressingsRouter);
@@ -105,7 +96,6 @@ app.use('/api/store', storeRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
-app.use('/internal/cron', cronRateLimiter, cronRouter);
 
 // System Health Check Endpoint
 app.get('/api/health', (request, response) => {
