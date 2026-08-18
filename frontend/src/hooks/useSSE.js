@@ -1,72 +1,122 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
+/**
+ * Enterprise-grade Server-Sent Events (SSE) Hook
+ * - Manages EventSource lifecycle with automatic reconnection & exponential backoff + jitter
+ * - Tracks connection health status (isConnected) to support Smart Fallback strategies
+ * - Supports custom domain events and message payloads with safe JSON parsing
+ */
 export function useSSE(url) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [lastEventTime, setLastEventTime] = useState(null);
+
   const eventSourceRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+  const reconnectAttemptsRef = useRef(0);
+
+  const cleanup = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
-    let reconnectAttempts = 0;
+    if (!url) {
+      setIsConnected(false);
+      setData(null);
+      setError(null);
+      cleanup();
+      return;
+    }
+
+    let isMounted = true;
+
+    const safeParse = (raw) => {
+      try {
+        return JSON.parse(raw);
+      } catch (err) {
+        console.warn('[SSE] JSON parse warning:', err);
+        return raw;
+      }
+    };
+
+    const handleEventData = (eventType, eventRawData) => {
+      if (!isMounted) return;
+      const parsed = safeParse(eventRawData);
+      const timestamp = Date.now();
+      setLastEventTime(timestamp);
+      setData({ event: eventType, payload: parsed, timestamp });
+    };
 
     const connect = () => {
-      eventSourceRef.current = new EventSource(url, { withCredentials: true });
+      cleanup();
 
-      eventSourceRef.current.onopen = () => {
-        setIsConnected(true);
-        setError(null);
-        reconnectAttempts = 0;
-      };
+      try {
+        const es = new EventSource(url, { withCredentials: true });
+        eventSourceRef.current = es;
 
-      eventSourceRef.current.onmessage = (event) => {
-        try {
-          const parsedData = JSON.parse(event.data);
-          setData({ event: event.type, payload: parsedData });
-        } catch (err) {
-          console.error('Failed to parse SSE data', err);
-        }
-      };
+        es.onopen = () => {
+          if (!isMounted) return;
+          setIsConnected(true);
+          setError(null);
+          reconnectAttemptsRef.current = 0;
+        };
 
-      // Listen for custom events
-      eventSourceRef.current.addEventListener('store_status', (event) => {
-        const parsedData = JSON.parse(event.data);
-        setData({ event: 'store_status', payload: parsedData });
-      });
+        es.onmessage = (event) => {
+          handleEventData(event.type || 'message', event.data);
+        };
 
-      eventSourceRef.current.addEventListener('new_order', (event) => {
-        const parsedData = JSON.parse(event.data);
-        setData({ event: 'new_order', payload: parsedData });
-      });
+        // Custom domain event listeners
+        const eventNames = ['store_status', 'new_order', 'order_status_updated', 'ping', 'heartbeat'];
+        eventNames.forEach((name) => {
+          es.addEventListener(name, (event) => {
+            handleEventData(name, event.data);
+          });
+        });
 
-      eventSourceRef.current.addEventListener('order_status_updated', (event) => {
-        const parsedData = JSON.parse(event.data);
-        setData({ event: 'order_status_updated', payload: parsedData });
-      });
+        es.onerror = (err) => {
+          if (!isMounted) return;
+          setIsConnected(false);
+          setError(err);
 
-      eventSourceRef.current.onerror = (err) => {
+          // Close existing instance before scheduling reconnect
+          es.close();
+          eventSourceRef.current = null;
+
+          // Exponential backoff with random jitter (1s - 15s)
+          const attempts = reconnectAttemptsRef.current;
+          const baseDelay = Math.min(1000 * Math.pow(1.5, attempts), 15000);
+          const jitter = Math.random() * 1000;
+          const delay = Math.round(baseDelay + jitter);
+
+          reconnectAttemptsRef.current += 1;
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (isMounted) {
+              connect();
+            }
+          }, delay);
+        };
+      } catch (err) {
+        if (!isMounted) return;
         setIsConnected(false);
         setError(err);
-        eventSourceRef.current.close();
-        
-        // Exponential backoff reconnect
-        const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-        reconnectAttempts++;
-        reconnectTimeoutRef.current = setTimeout(connect, timeout);
-      };
+      }
     };
 
     connect();
 
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
+      isMounted = false;
+      cleanup();
     };
-  }, [url]);
+  }, [url, cleanup]);
 
-  return { data, isConnected, error };
+  return { data, isConnected, error, lastEventTime };
 }

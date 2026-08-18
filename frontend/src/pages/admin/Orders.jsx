@@ -25,8 +25,8 @@ export default function Orders() {
     localStorage.setItem('admin_orders_view', mode);
   };
 
-  // Real-time SSE Events
-  const { data: sseData } = useSSE(getApiUrl('/admin/events'));
+  // Real-time SSE Events (Primary Channel)
+  const { data: sseData, isConnected: isSSEConnected } = useSSE(getApiUrl('/admin/events'));
 
   useEffect(() => {
     if (sseData) {
@@ -35,6 +35,19 @@ export default function Orders() {
       }
     }
   }, [sseData]);
+
+  // Smart Fallback Polling (Activated only when SSE connection is interrupted)
+  useEffect(() => {
+    let fallbackTimer = null;
+    if (!isSSEConnected) {
+      fallbackTimer = setInterval(() => {
+        fetchOrders(false);
+      }, 10000); // Poll every 10s when SSE is disconnected
+    }
+    return () => {
+      if (fallbackTimer) clearInterval(fallbackTimer);
+    };
+  }, [isSSEConnected, statusFilter]);
 
   useEffect(() => {
     fetchOrders();

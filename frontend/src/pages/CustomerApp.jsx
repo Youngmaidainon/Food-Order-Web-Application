@@ -38,9 +38,9 @@ export default function CustomerApp() {
   const [activeOrder, setActiveOrder] = useState(() => localStorage.getItem('activeOrder'));
   const [activeOrderStatus, setActiveOrderStatus] = useState(null);
 
-  // Real-time SSE updates for Store Open/Close Status & Announcement
+  // Real-time SSE updates for Store Open/Close Status & Announcement (Primary Channel)
   const storeSseUrl = getApiUrl('/store/events');
-  const { data: storeSseData } = useSSE(storeSseUrl);
+  const { data: storeSseData, isConnected: isStoreSseConnected } = useSSE(storeSseUrl);
 
   useEffect(() => {
     if (storeSseData && storeSseData.event === 'store_status' && storeSseData.payload) {
@@ -53,6 +53,25 @@ export default function CustomerApp() {
     }
   }, [storeSseData, showToast]);
 
+  // Smart Fallback Polling for Store Status (Only active if SSE disconnected)
+  useEffect(() => {
+    let timer = null;
+    if (!isStoreSseConnected) {
+      timer = setInterval(() => {
+        sendApiRequest('/store/status')
+          .then(res => {
+            if (res.success && res.data) {
+              setLiveStoreStatus(res.data);
+            }
+          })
+          .catch(() => {});
+      }, 30000); // 30s fallback poll
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isStoreSseConnected]);
+
   // Check URL param for ?track=ORD-...
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -63,22 +82,55 @@ export default function CustomerApp() {
     }
   }, []);
 
-  // Poll once on startup if activeOrder exists
-  useEffect(() => {
-    if (activeOrder && !activeOrderStatus) {
-      sendApiRequest(`/orders/track/${activeOrder}`)
-        .then(res => {
-          if (res.success && res.data) {
-            setActiveOrderStatus(res.data.status);
-          }
-        })
-        .catch(err => console.error('Initial track error:', err));
-    }
-  }, [activeOrder, activeOrderStatus]);
+  // Helper function to track active order status
+  const pollActiveOrder = (orderNum) => {
+    if (!orderNum) return;
+    sendApiRequest(`/orders/track/${orderNum}`)
+      .then(res => {
+        if (res.success && res.data) {
+          const newStatus = res.data.status;
+          if (newStatus) {
+            setActiveOrderStatus(prev => {
+              if (prev && newStatus !== prev) {
+                customerSoundAlert.playStatusUpdateChime();
+                showToast(`ออเดอร์ ${orderNum} อัปเดตสถานะเป็น "${newStatus}"`, 'info');
+              }
+              return newStatus;
+            });
 
-  // Real-time SSE updates for Active Customer Order
+            if (newStatus === 'เสร็จสิ้น' || newStatus === 'ยกเลิก' || newStatus === 'รับอาหารแล้ว' || newStatus === 'จัดส่งแล้ว') {
+              localStorage.removeItem('activeOrder');
+              setActiveOrder(null);
+              setActiveOrderStatus(null);
+            }
+          }
+        }
+      })
+      .catch(err => console.error('Track error:', err));
+  };
+
+  // Poll once on startup & on tab visibility change
+  useEffect(() => {
+    if (activeOrder) {
+      pollActiveOrder(activeOrder);
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (activeOrder) pollActiveOrder(activeOrder);
+        sendApiRequest('/store/status')
+          .then(res => res.success && setLiveStoreStatus(res.data))
+          .catch(() => {});
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [activeOrder]);
+
+  // Real-time SSE updates for Active Customer Order (Primary Channel)
   const sseUrl = activeOrder ? getApiUrl(`/orders/events/${activeOrder}`) : null;
-  const { data: sseData } = useSSE(sseUrl);
+  const { data: sseData, isConnected: isOrderSseConnected } = useSSE(sseUrl);
 
   useEffect(() => {
     if (sseData && sseData.event === 'order_status_updated') {
@@ -98,6 +150,19 @@ export default function CustomerApp() {
       }
     }
   }, [sseData, activeOrder, activeOrderStatus, showToast]);
+
+  // Smart Fallback Polling for Active Customer Order (10s if SSE disconnected)
+  useEffect(() => {
+    let orderTimer = null;
+    if (activeOrder && !isOrderSseConnected) {
+      orderTimer = setInterval(() => {
+        pollActiveOrder(activeOrder);
+      }, 10000); // 10s fallback poll
+    }
+    return () => {
+      if (orderTimer) clearInterval(orderTimer);
+    };
+  }, [activeOrder, isOrderSseConnected]);
 
   // Add Item to Cart Flow
   const handleAddItem = (item) => {

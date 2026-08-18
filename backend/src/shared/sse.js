@@ -3,6 +3,29 @@ class SSEManager {
     this.adminClients = new Set();
     this.generalClients = new Set();
     this.customerClients = new Map(); // orderNumber -> Set of clients
+
+    // Heartbeat ping ทุก 25 วินาที ป้องกัน Cloudflare / Nginx ตัดการเชื่อมต่อ (Idle Timeout)
+    this.heartbeatTimer = setInterval(() => {
+      this.sendHeartbeat();
+    }, 25000);
+    if (this.heartbeatTimer.unref) {
+      this.heartbeatTimer.unref();
+    }
+  }
+
+  sendHeartbeat() {
+    const pingPayload = ': ping\n\n';
+    for (const res of this.adminClients) {
+      try { res.write(pingPayload); } catch (_) {}
+    }
+    for (const res of this.generalClients) {
+      try { res.write(pingPayload); } catch (_) {}
+    }
+    for (const clients of this.customerClients.values()) {
+      for (const res of clients) {
+        try { res.write(pingPayload); } catch (_) {}
+      }
+    }
   }
 
   addAdminClient(res) {

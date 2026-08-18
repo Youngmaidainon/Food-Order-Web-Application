@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { sendApiRequest } from '../../api/api.js';
+import { sendApiRequest, getApiUrl } from '../../api/api.js';
+import { useSSE } from '../../hooks/useSSE.js';
 
 export default function Dashboard() {
   const [analytics, setAnalytics] = useState(null);
@@ -7,11 +8,45 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // SSE Primary Real-time updates
+  const { data: sseData, isConnected: isSSEConnected } = useSSE(getApiUrl('/admin/events'));
+
+  useEffect(() => {
+    if (sseData) {
+      if (['new_order', 'order_status_updated', 'store_status'].includes(sseData.event)) {
+        fetchData(false);
+      }
+    }
+  }, [sseData]);
+
+  // Smart Fallback Polling (30s if SSE is disconnected)
+  useEffect(() => {
+    let fallbackTimer = null;
+    if (!isSSEConnected) {
+      fallbackTimer = setInterval(() => {
+        fetchData(false);
+      }, 30000);
+    }
+    return () => {
+      if (fallbackTimer) clearInterval(fallbackTimer);
+    };
+  }, [isSSEConnected]);
+
+  // Initial load and tab visibility revalidation
   useEffect(() => {
     fetchData();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     try {
       const [analyticsRes, statusRes] = await Promise.all([
         sendApiRequest('/admin/analytics'),
@@ -23,7 +58,7 @@ export default function Dashboard() {
       console.error('Failed to load dashboard data', err);
       setError(err.message || 'โหลดข้อมูลไม่สำเร็จ');
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   };
 

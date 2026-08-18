@@ -54,18 +54,31 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
     }
   }, [orderNum]);
 
-  // SSE Live Updates (Active on tracked order)
+  // SSE Live Updates (Active on tracked order - Primary Channel)
   const currentTrackNum = trackingData?.order_number || (orderNum && orderNum.trim() ? orderNum.trim() : null);
   const sseUrl = (isOpen && currentTrackNum)
     ? getApiUrl(`/orders/events/${currentTrackNum}`)
     : null;
-  const { data: sseData } = useSSE(sseUrl);
+  const { data: sseData, isConnected: isSSEConnected } = useSSE(sseUrl);
 
   useEffect(() => {
     if (sseData && sseData.event === 'order_status_updated' && currentTrackNum) {
       handleSearch(currentTrackNum);
     }
   }, [sseData, handleSearch, currentTrackNum]);
+
+  // Smart Fallback Polling (Active when modal is open and SSE is disconnected)
+  useEffect(() => {
+    let pollTimer = null;
+    if (isOpen && currentTrackNum && !isSSEConnected) {
+      pollTimer = setInterval(() => {
+        handleSearch(currentTrackNum);
+      }, 10000); // 10s fallback poll
+    }
+    return () => {
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, [isOpen, currentTrackNum, isSSEConnected, handleSearch]);
 
   const handleCopyOrderNumber = () => {
     if (!trackingData?.order_number) return;
