@@ -20,54 +20,120 @@
 
 ---
 
-## 📐 สถาปัตยกรรมระบบ (System Architecture)
+## 🗄️ แผนภาพความสัมพันธ์ของข้อมูล (Entity-Relationship Diagram)
 
 ```mermaid
-flowchart TD
-    %% กำหนดชุดสีและสไตล์ของแต่ละเลเยอร์
-    classDef clientStyle fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc,rx:8px
-    classDef edgeStyle fill:#1e293b,stroke:#06b6d4,stroke-width:2px,color:#f8fafc,rx:8px
-    classDef backendStyle fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#f8fafc,rx:8px
-    classDef dbStyle fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc
-    classDef extStyle fill:#2a1b4e,stroke:#a855f7,stroke-width:2px,color:#f8fafc,rx:8px
+erDiagram
+    categories ||--o{ menu_items : "contains"
+    orders ||--|{ order_items : "contains"
+    menu_items ||--o{ order_items : "referenced_in"
+    dressings ||--o{ order_items : "selected_in"
+    
+    cart_sessions ||--o{ cart_items : "holds"
+    menu_items ||--o{ cart_items : "added_to"
+    dressings ||--o{ cart_items : "chosen_for"
 
-    subgraph Step1 ["1️⃣ ฝั่งผู้ใช้งาน (Frontend Clients)"]
-        Customer["📱 ลูกค้า (Customer Web App)<br/>สั่งซื้ออาหาร • ตะกร้าสินค้า • ติดตามสถานะออเดอร์"]:::clientStyle
-        Admin["💻 ผู้ดูแลระบบ (Admin Portal)<br/>กระดานจัดการออเดอร์ KDS • สถิติยอดขาย • เมนูอาหาร"]:::clientStyle
-    end
+    admin_users ||--o{ admin_sessions : "authenticates"
 
-    subgraph Step2 ["2️⃣ ทางผ่านคำขอและเว็บเซิร์ฟเวอร์ (Web Server & Proxy)"]
-        Proxy["🌐 Vercel / Nginx Reverse Proxy<br/>จัดการ HTTPS, Static Files และส่งต่อคำขอไปยัง Backend (/api)"]:::edgeStyle
-    end
+    categories {
+        int id PK
+        varchar name
+        int display_order
+    }
 
-    subgraph Step3 ["3️⃣ เซิร์ฟเวอร์บริการหลังบ้าน (Express.js Backend API)"]
-        API["⚙️ Express API Server (Feature-First Architecture)<br/>ระบบตรวจสอบสิทธิ์ • จำกัดอัตราคำขอ • จัดการข้อผิดพลาด RFC 9457"]:::backendStyle
-        SSE["📡 SSE Real-Time Hub<br/>สตรีมสถานะร้านและออเดอร์สด"]:::backendStyle
-        Discord["🤖 Discord Webhook Engine<br/>ส่งการ์ดแจ้งเตือนและรายงานยอดขาย"]:::backendStyle
-        Cron["⏱️ Cron Maintenance Service<br/>ล้างเซสชันขยะที่หมดอายุอัตโนมัติ"]:::backendStyle
-    end
+    menu_items {
+        int id PK
+        int category_id FK
+        varchar name
+        text description
+        int price
+        text image_url
+        boolean is_available
+        timestamp created_at
+    }
 
-    subgraph Step4 ["4️⃣ ฐานข้อมูลและบริการภายนอก (Database & External Services)"]
-        DB[("🐘 PostgreSQL 15+ Database<br/>จัดเก็บเมนู, ออเดอร์, ลูกค้า และเซสชัน (pg.Pool)")]:::dbStyle
-        DiscordApp["💬 Discord Channels<br/>ห้องแจ้งเตือนออเดอร์ • ยกเลิก • สรุปยอดขาย"]:::extStyle
-        CronTrigger["⏰ cron-job.org Scheduler<br/>ระบบยิงคำขอบำรุงรักษาระบบอัตโนมัติ"]:::extStyle
-    end
+    dressings {
+        int id PK
+        varchar name
+        boolean is_available
+    }
 
-    %% เส้นทางการเชื่อมต่อ (Data Flow & Interactions)
-    Customer -->|ยิงคำขอสั่งซื้อ / ติดตามออเดอร์| Proxy
-    Admin -->|ส่งคุกกี้เซสชันจัดการหลังบ้าน| Proxy
+    orders {
+        int id PK
+        varchar order_number UK
+        varchar customer_name
+        varchar customer_phone
+        delivery_type_enum delivery_type
+        text address
+        order_status_enum status
+        int total_amount
+        text cancel_reason
+        text canceled_by
+        varchar discord_message_id
+        varchar discord_cancel_message_id
+        int sequence_number
+        varchar ip_address
+        varchar session_id
+        order_status_enum previous_status
+        timestamp cancelled_at
+        timestamp deleted_at
+        timestamp created_at
+    }
 
-    Proxy -->|ส่งต่อคำขอผ่าน Proxy Pass (/api)| API
+    order_items {
+        int id PK
+        int order_id FK
+        int menu_item_id FK
+        int dressing_id FK
+        int quantity
+        int unit_price
+        text item_notes
+    }
 
-    API -->|บันทึกและดึงข้อมูลผ่าน Pool| DB
-    API -->|กระจายเหตุการณ์ Real-time| SSE
-    API -->|ส่งต่อข้อมูลแจ้งเตือน| Discord
-    CronTrigger -->|ยิงคำขอบำรุงรักษาตามรอบเวลา| Cron
-    Cron -->|ล้างเซสชันขยะที่หมดอายุ| DB
+    store_status {
+        int id PK
+        boolean is_open
+        text announcement_message
+        varchar restaurant_name
+        int current_sequence
+    }
 
-    SSE -.->|สตรีมสถานะร้านค้าและออเดอร์สด| Customer
-    SSE -.->|สตรีมออเดอร์เข้าใหม่แบบสดๆ| Admin
-    Discord ==>|ส่งการ์ด Embed แจ้งเตือน| DiscordApp
+    admin_users {
+        int id PK
+        varchar username UK
+        text password_hash
+        timestamp password_rotated_at
+        timestamp created_at
+    }
+
+    admin_sessions {
+        uuid session_id PK
+        int admin_id FK
+        timestamp expires_at
+        timestamp created_at
+    }
+
+    cart_sessions {
+        uuid session_id PK
+        timestamp created_at
+        timestamp last_accessed_at
+    }
+
+    cart_items {
+        int id PK
+        uuid session_id FK
+        int menu_item_id FK
+        int dressing_id FK
+        int quantity
+        text item_notes
+        timestamp created_at
+    }
+
+    daily_reports {
+        int id PK
+        varchar discord_message_id
+        timestamp created_at
+    }
 ```
 
 ---
