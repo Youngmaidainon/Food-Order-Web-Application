@@ -133,6 +133,8 @@ DISCORD_REPORT_WEBHOOK_URL=https://discord.com/api/webhooks/...
 | `GET` | `/api/health` | ตรวจสอบสถานะการทำงานของระบบ (Health Check) | สาธารณะ (Public) |
 | `GET` | `/api/menu` | ดึงรายการอาหารทั้งหมด | สาธารณะ (Public) |
 | `GET` | `/api/dressings` | ดึงรายการน้ำสลัด | สาธารณะ (Public) |
+| `GET` | `/api/store/status` | ดึงสถานะเปิด/ปิดร้าน, ชื่อร้าน, และประกาศ | สาธารณะ (Public) |
+| `GET` | `/api/store/events` | ช่องทางสตรีมสถานะร้านค้าและประกาศแบบเรียลไทม์ (SSE) | สาธารณะ (Public) |
 | `POST` | `/api/orders` | สั่งซื้อสินค้า | สาธารณะ (Public) |
 | `GET` | `/api/orders/track/:order_number` | ติดตามสถานะออเดอร์ | สาธารณะ (Public) |
 | `GET` | `/api/orders/events/:order_number` | ช่องทางสตรีมข้อมูลสถานะออเดอร์แบบเรียลไทม์ (SSE) | สาธารณะ (Public) |

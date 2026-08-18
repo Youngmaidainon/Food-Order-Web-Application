@@ -19,8 +19,8 @@
 
 ## 📐 สถาปัตยกรรมระบบ (System Architecture)
 
-1. **ฝั่งผู้ใช้งาน (Frontend)**: React 18 + Vite + Tailwind CSS สไตล์ Glassmorphism รองรับการใช้งานทั้งบนมือถือ แท็บเล็ต และคอมพิวเตอร์, ระบบ `CartContext` (Optimistic UI + Debounce), `TrackingModal` (สตรีมสถานะเรียลไทม์ด้วย SSE + เสียงกระดิ่งแจ้งเตือน)
-2. **ฝั่งเซิร์ฟเวอร์ (Backend)**: Express.js จัดโครงสร้างแบบ **Feature-First** (`admin`, `cart`, `dressings`, `menu`, `orders`, `store`, `cron`), ตรวจสอบการตั้งค่าตั้งแต่เริ่มบูต (Fail-Fast), ระบบจัดการ Error ตามมาตรฐาน RFC 9457, ระบบบันทึก Log แบบ JSON ด้วย Pino และระบบ Auto-Migration อัตโนมัติเมื่อเริ่มระบบ
+1. **ฝั่งผู้ใช้งาน (Frontend)**: React 18 + Vite + Tailwind CSS สไตล์ Glassmorphism รองรับการใช้งานทั้งบนมือถือ แท็บเล็ต และคอมพิวเตอร์, ระบบ `CartContext` (Optimistic UI + Debounce), `TrackingModal` (ค้นหาออเดอร์ล่าสุดอัตโนมัติ + สตรีมสถานะสดเรียลไทม์ด้วย SSE + เสียงกระดิ่งแจ้งเตือน) และระบบตรวจจับสถานะร้านเปิด/ปิดแบบสดผ่าน `/api/store/events`
+2. **ฝั่งเซิร์ฟเวอร์ (Backend)**: Express.js จัดโครงสร้างแบบ **Feature-First** (`admin`, `cart`, `dressings`, `menu`, `orders`, `store`, `cron`), ตรวจสอบการตั้งค่าตั้งแต่เริ่มบูต (Fail-Fast), ระบบจัดการ Error ตามมาตรฐาน RFC 9457, ระบบบันทึก Log แบบ JSON ด้วย Pino, ระบบสตรีมข้อมูลสองทิศทาง (SSE Store Events & Order Events) และระบบ Auto-Migration อัตโนมัติเมื่อเริ่มระบบ
 3. **ระบบฐานข้อมูล (Database)**: PostgreSQL พร้อม Custom ENUMs, Foreign Key Cascades, ข้อกำหนด Composite Unique Constraints และดัชนี (Indexes) ประสิทธิภาพสูง
 4. **ระบบแจ้งเตือน Discord อัตโนมัติ (Discord Webhook)**: แจ้งเตือนใบออเดอร์เข้าห้อง Discord ทันที, แก้ไขและสั่งลบข้อความเดิมอัตโนมัติเมื่อลูกค้ายกเลิกออเดอร์ พร้อมส่งรายงานยอดขายประจำวันเมื่อปิดร้าน
 5. **ระบบบำรุงรักษาพื้นหลัง (Background Maintenance)**: Endpoint `/api/health` สำหรับตรวจสอบสถานะการทำงาน และ `/internal/cron/maintenance` สำหรับล้างเซสชันขยะที่หมดอายุ
@@ -43,7 +43,10 @@
 ### 🚀 ด้านการเพิ่มประสิทธิภาพ (Optimization)
 - **Optimistic UI และการหน่วงเวลา Debounce**: อัปเดต UI ทันที และหน่วงเวลา 500 มิลลิวินาที ก่อนส่งคำขออัปเดตตะกร้าสินค้าไปยังเซิร์ฟเวอร์
 - **การจัดการ Connection Pooling**: ควบคุมการเชื่อมต่อฐานข้อมูลผ่าน `pg.Pool` รองรับการทำงานพร้อมกันได้สูง
-- **การสตรีมข้อมูลเรียลไทม์ผ่าน SSE**: สตรีมข้อมูลการเปลี่ยนแปลงสถานะออเดอร์แบบ Event-Driven ใช้ทรัพยากรน้อยกว่าระบบ Polling แบบเดิม
+- **การสตรีมข้อมูลสดเรียลไทม์ผ่าน SSE (Server-Sent Events)**:
+  - สตรีมสถานะร้านเปิด/ปิด และประกาศร้านค้าสด (`/api/store/events`) ให้ลูกค้าเห็นการเปลี่ยนแปลงทันทีโดยไม่ต้องกดรีเฟรช
+  - สตรีมสถานะคำสั่งซื้อสด (`/api/orders/events/:order_number`) พร้อมเสียงแจ้งเตือนแบบ Harmonic Bell Chime
+  - ระบบค้นหาอัจฉริยะ (Instant Auto-Track) โหลดสถานะออเดอร์ล่าสุดของลูกค้าทันทีที่เปิดหน้าต่างติดตาม 0 คลิก
 
 ---
 
