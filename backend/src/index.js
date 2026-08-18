@@ -57,7 +57,14 @@ app.use(cors({
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 
-// (ลบการบังคับ HTTPS Redirect ออก เนื่องจาก Render จัดการให้ที่ Edge Layer แล้ว และทำให้เกิดปัญหากับการจำลอง Proxy ภายใน Docker)
+// ปิด Browser & Proxy Cache สำหรับ API ทุกเส้น ป้องกันการจำข้อมูลเก่า
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+  next();
+});
 
 // Global Rate Limiter: ป้องกัน DoS ระดับ API ทั้งระบบ
 const generalApiRateLimiter = rateLimit({

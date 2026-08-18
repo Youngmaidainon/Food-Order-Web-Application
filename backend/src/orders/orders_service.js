@@ -141,6 +141,9 @@ export class OrdersService {
         await this.ordersRepository.updateOrderDiscordMessageId(createdOrderRecord.id, messageId);
       }
 
+      // ส่ง Real-time SSE ให้ Admin หน้าเว็บอัปเดตทันทีแบบไม่ต้องสลับแท็บ/หน้าต่าง
+      sseManager.emitToAdmin('new_order', completeOrderPayload);
+
       return completeOrderPayload;
     } catch (error) {
       // ยกเลิกการเปลี่ยนแปลงทั้งหมดใน Transaction หากมี Error เกิดขึ้น (Rollback)

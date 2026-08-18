@@ -67,7 +67,7 @@ export default function Orders() {
   const fetchOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
-      const res = await sendApiRequest(`/admin/orders?status=${statusFilter}&limit=100`);
+      const res = await sendApiRequest(`/admin/orders?status=${statusFilter}&limit=100&_t=${Date.now()}`);
       if (res.success && res.data) {
         setOrders(res.data);
       }

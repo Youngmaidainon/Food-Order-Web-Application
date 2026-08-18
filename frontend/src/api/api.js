@@ -19,11 +19,15 @@ export class ApiError extends Error {
 export async function sendApiRequest(apiEndpointUrl, requestOptions = {}) {
   const requestHeaders = {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
     ...requestOptions.headers,
   };
 
   try {
     const httpResponse = await fetch(`${API_BASE_URL}${apiEndpointUrl.startsWith('/') ? '' : '/'}${apiEndpointUrl}`, {
+      cache: 'no-store',
       ...requestOptions,
       headers: requestHeaders,
       credentials: 'include', // สำคัญมากสำหรับการส่ง Cookies หรือข้อมูลเซสชันไปกับ API

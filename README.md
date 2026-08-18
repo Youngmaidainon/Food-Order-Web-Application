@@ -108,13 +108,18 @@ flowchart TD
 - **Header ความปลอดภัยและ CORS**: ติดตั้ง `Helmet` และจำกัด `CORS_ORIGIN` เฉพาะ Whitelist Domains ในโหมด Production
 - **คำสั่ง SQL ปลอดภัย 100%**: ใช้ Parameterized Queries (`$1, $2, ...`) ทุกจุด ป้องกัน SQL Injection อย่างสมบูรณ์
 
-### 🚀 ด้านการเพิ่มประสิทธิภาพ (Optimization)
-- **Optimistic UI และการหน่วงเวลา Debounce**: อัปเดต UI ทันที และหน่วงเวลา 500 มิลลิวินาที ก่อนส่งคำขออัปเดตตะกร้าสินค้าไปยังเซิร์ฟเวอร์
-- **การจัดการ Connection Pooling**: ควบคุมการเชื่อมต่อฐานข้อมูลผ่าน `pg.Pool` รองรับการทำงานพร้อมกันได้สูง
+### 🚀 ด้านการเพิ่มประสิทธิภาพและการจัดการแคช (Optimization & Caching Strategy)
+- **สถาปัตยกรรม Hybrid Caching Strategy (Zero-Stale-Cache Policy)**:
+  - **No-Cache (Dynamic APIs & HTML)**: บังคับ `Cache-Control: no-store, no-cache, must-revalidate` บน `index.html` และ `/api/*` ทั้งหมด ป้องกันเบราว์เซอร์หรือ CDN/Cloudflare แอบจำข้อมูลเก่า มั่นใจได้ว่าข้อมูลออเดอร์และเวอร์ชันหน้าเว็บสดใหม่เสมอ
+  - **Long-term Cache (Static Assets)**: แคชไฟล์ใน `/assets/` (JS/CSS ที่มี Hash กำกับ) นาน 1 ปี (`public, max-age=31536000, immutable`) โหลดเว็บเร็วระดับเสี้ยววินาทีและประหยัด Bandwidth สูงสุด
 - **การสตรีมข้อมูลสดเรียลไทม์ผ่าน SSE (Server-Sent Events)**:
   - สตรีมสถานะร้านเปิด/ปิด และประกาศร้านค้าสด (`/api/store/events`) ให้ลูกค้าเห็นการเปลี่ยนแปลงทันทีโดยไม่ต้องกดรีเฟรช
   - สตรีมสถานะคำสั่งซื้อสด (`/api/orders/events/:order_number`) พร้อมเสียงแจ้งเตือนแบบ Harmonic Bell Chime
-  - ระบบค้นหาอัจฉริยะ (Instant Auto-Track) โหลดสถานะออเดอร์ล่าสุดของลูกค้าทันทีที่เปิดหน้าต่างติดตาม 0 คลิก
+  - สตรีมออเดอร์เข้าใหม่แบบ Real-Time สู่หน้าจัดการออเดอร์ของแอดมิน (`/api/admin/events`) แบบ Sub-second โดยไม่ต้องกดสลับหน้าต่าง
+  - ระบบ **Heartbeat Ping (25s)** ป้องกัน Cloudflare Tunnel หรือ Reverse Proxy ตัดการเชื่อมต่อเมื่อไม่มีข้อมูลส่ง
+  - ระบบ **Smart Fallback Polling (10s)** อัตโนมัติเมื่อการเชื่อมต่อ SSE ขาดหาย
+- **Optimistic UI และการหน่วงเวลา Debounce**: อัปเดต UI ทันที และหน่วงเวลา 500 มิลลิวินาที ก่อนส่งคำขออัปเดตตะกร้าสินค้าไปยังเซิร์ฟเวอร์
+- **การจัดการ Connection Pooling**: ควบคุมการเชื่อมต่อฐานข้อมูลผ่าน `pg.Pool` รองรับการทำงานพร้อมกันได้สูง
 
 ---
 
@@ -231,8 +236,8 @@ Food Order System/
 3. เข้าใช้งานระบบ:
    - **หน้าร้านค้าลูกค้า (Storefront)**: `http://localhost`
    - **ระบบจัดการแอดมิน (Admin Portal)**: `http://localhost/admin`
-   - **Backend API**: `http://localhost:8000/api`
-   - **ตรวจสอบสถานะเซิร์ฟเวอร์ (Health Check)**: `http://localhost:8000/api/health`
+   - **Backend API**: `http://localhost/api`
+   - **ตรวจสอบสถานะเซิร์ฟเวอร์ (Health Check)**: `http://localhost/api/health`
 
 ### การทดสอบแบบออนไลน์ผ่าน Cloudflare Tunnel (ทดสอบ Webhook และอุปกรณ์จริง 100%)
 

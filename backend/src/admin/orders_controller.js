@@ -195,6 +195,9 @@ ordersRouter.post('/reset-queue', authenticateAdminSession, async (request, resp
     await databaseClient.query('UPDATE store_status SET current_sequence = 0 WHERE id = 1');
     await databaseClient.query('COMMIT');
 
+    // แจ้งเตือน Real-time SSE ให้อัปเดตรายการออเดอร์ทันที
+    sseManager.emitToAdmin('order_status_updated', { type: 'queue_reset' });
+
     return response.json({
       success: true,
       message: 'รีเซ็ตลำดับคิวเรียบร้อยแล้ว! คิวถัดไปจะเริ่มต้นที่ คิวที่ #1'
