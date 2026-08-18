@@ -236,35 +236,127 @@ Food-Order-Web-Application/
 
 ---
 
-### วิธีที่ 2: Deploy ฟรีผ่าน Cloud (Neon + Render + Vercel + cron-job.org)
+### วิธีที่ 2: คู่มือการ Deploy ฟรีผ่าน Cloud แบบละเอียด 100% (Neon + Render + Vercel + cron-job.org)
 
-| ส่วนประกอบ | แพลตฟอร์ม | หน้าที่ |
-|---|---|---|
-| **ฐานข้อมูล (Database)** | **Neon.tech** | PostgreSQL Serverless (Free Tier) |
-| **เซิร์ฟเวอร์ (Backend)** | **Render.com** | Node.js Web Service (Free Tier) |
-| **ส่วนติดต่อผู้ใช้ (Frontend)** | **Vercel.com** | React SPA + API Rewrites Proxy (Free Tier) |
-| **ระบบรักษาสถานะ (Keep-Alive)** | **cron-job.org** | ส่งคำขอ Ping ป้องกันเซิร์ฟเวอร์ Sleep (Free Tier) |
+สถาปัตยกรรมคลาวด์ฟรีระดับ Production โดยแยกส่วนการทำงานอย่างเป็นอิสระ:
 
-#### 1. สร้างฐานข้อมูลบน Neon
-- สมัครและสร้างโปรเจกต์บน [Neon.tech](https://neon.tech)
-- คัดลอก `DATABASE_URL` (Connection String ที่มี `sslmode=require`)
+| ส่วนประกอบ | แพลตฟอร์ม | แผนบริการ (Tier) | หน้าที่และความรับผิดชอบ |
+|---|---|---|---|
+| 🐘 **ฐานข้อมูล (Database)** | [Neon.tech](https://neon.tech) | Free Tier (0.5 GiB) | PostgreSQL Serverless เก็บข้อมูลเมนู, ออเดอร์, และคิว |
+| ⚙️ **เซิร์ฟเวอร์ (Backend API)** | [Render.com](https://render.com) | Free Web Service | Node.js + Express API, ประมวลผลคำสั่งซื้อและรายงาน Discord |
+| 🌐 **ส่วนติดต่อผู้ใช้ (Frontend)** | [Vercel.com](https://vercel.com) | Free Hobby | React 18 SPA + Reverse Proxy ส่งต่อคำขอ API ไปยัง Render |
+| ⏰ **ระบบปลุกเซิร์ฟเวอร์ (Keep-Alive)** | [cron-job.org](https://cron-job.org) | Free 100% | ยิงคำขอ Ping ทุก 10 นาที ป้องกันไม่ให้ Render เข้าสู่โหมด Sleep |
 
-#### 2. Deploy Backend บน Render
-- สร้าง Web Service บน [Render.com](https://render.com) ชี้ไปยังโฟลเดอร์ `backend`
-- ตั้งค่า Environment Variables สำคัญ:
-  - `DATABASE_URL`: Connection String จาก Neon
-  - `NODE_ENV`: `production`
-  - `JWT_SECRET`: รหัสลับสำหรับ JWT
-  - `CORS_ORIGIN`: URL ของ Frontend บน Vercel (เช่น `https://your-app.vercel.app`)
-  - `DISCORD_WEBHOOK_URL`: (ไม่บังคับ) URL ของ Discord Webhook สำหรับรับการแจ้งเตือน
+---
 
-#### 3. Deploy Frontend บน Vercel
-- สร้างโปรเจกต์บน [Vercel.com](https://vercel.com) ผูกกับโฟลเดอร์ `frontend`
-- แก้ไขไฟล์ `frontend/vercel.json` ปรับ URL ปลายทางให้ชี้ไปยัง Backend บน Render
-- กด Deploy เพื่อรับโดเมนหน้าร้านค้าทันที
+#### 🐘 ขั้นตอนที่ 1: เตรียมฐานข้อมูล PostgreSQL บน Neon.tech
 
-#### 4. ตั้งค่า cron-job.org (ป้องกัน Render Sleep)
-- สร้าง Job ยิง **HTTP GET** ไปที่ `https://your-backend.onrender.com/api/health` ทุก **10-14 นาที** เพื่อให้เซิร์ฟเวอร์ตื่นตัวตลอดเวลาโดยไม่ต้องใส่ Header ใดๆ
+1. **สร้างโปรเจกต์ฐานข้อมูล**:
+   - เข้าสู่ระบบ [Neon.tech](https://neon.tech) แล้วกด **Create Project**
+   - ตั้งชื่อโปรเจกต์ (เช่น `springroll-db`)
+   - เลือก **Region**: `Singapore (ap-southeast-1)` (แนะนำเพื่อความเร็วในการเชื่อมต่อจากไทย)
+   - กด **Create Project**
+2. **รันคำสั่งสร้างตารางและข้อมูลเริ่มต้น (Schema & Seeds)**:
+   - ไปที่เมนู **SQL Editor** บนแถบด้านซ้ายของ Neon Console
+   - เปิดไฟล์ [database/schema.sql](file:///d:/Food-Order-Web-Application/database/schema.sql) ในโปรเจกต์นี้ คัดลอกโค้ด SQL ทั้งหมดมาวางในช่อง Editor
+   - กดปุ่ม **Run** เพื่อสร้างตาราง, ENUMs, Indexes, Triggers และข้อมูลเริ่มต้น (เมนูอาหารและน้ำสลัด)
+3. **คัดลอก Connection String**:
+   - ไปที่หน้า **Dashboard** ของ Neon
+   - คัดลอกค่า **Connection string** (เลือกแท็บ `Pooled connection` หรือ `Direct connection` ที่มี `?sslmode=require`)
+   - *ตัวอย่าง*: `postgres://username:password@ep-xyz.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`
+
+---
+
+#### ⚙️ ขั้นตอนที่ 2: Deploy Backend API บน Render.com
+
+1. **สร้าง Web Service ใหม่**:
+   - เข้าสู่ระบบ [Render.com](https://render.com) แล้วกด **New +** -> **Web Service**
+   - เลือกเชื่อมต่อกับ Repository GitHub ของโปรเจกต์นี้ (`Food-Order-Web-Application`)
+2. **กำหนดการตั้งค่าหลัก (Build & Deploy Settings)**:
+   - **Name**: `springroll-backend` (หรือชื่อตามต้องการ)
+   - **Region**: `Singapore (Southeast Asia)` (เลือกให้ตรงกับภูมิภาคของ Neon)
+   - **Branch**: `main`
+   - **Root Directory**: `backend` *(⚠️ สำคัญมาก: ต้องระบุ `backend`)*
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+   - **Instance Type**: `Free`
+3. **เพิ่มตัวแปร Environment Variables**:
+   - เลื่อนลงมาที่หัวข้อ **Environment Variables** และกด **Add Environment Variable** ตามตารางนี้:
+
+   | Key | Value ตัวอย่าง / คำแนะนำ | ความจำเป็น |
+   |---|---|---|
+   | `NODE_ENV` | `production` | จำเป็น |
+   | `DATABASE_URL` | *วาง Connection string ที่คัดลอกมาจาก Neon* | จำเป็น |
+   | `JWT_SECRET` | *กดปุ่ม **Generate** หรือพิมพ์สุ่ม 32 ตัวอักษรขึ้นไป* | จำเป็น |
+   | `CORS_ORIGIN` | `https://your-app.vercel.app` *(ใส่โดเมน Vercel หลัง Deploy หรือใส่ `*` ก่อนได้)* | จำเป็น |
+   | `ADMIN_INIT_USERNAME` | `admin` *(กำหนดชื่อผู้ใช้แอดมิน)* | ตัวเลือก |
+   | `ADMIN_INIT_PASSWORD` | `YourStrongAdminPassword123` *(กำหนดรหัสผ่านแอดมิน)* | ตัวเลือก |
+   | `DISCORD_WEBHOOK_URL` | `https://discord.com/api/webhooks/...` | ตัวเลือก |
+   | `DISCORD_CANCEL_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | ตัวเลือก |
+   | `DISCORD_REPORT_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | ตัวเลือก |
+
+4. **เริ่ม Deploy และทดสอบ**:
+   - กดปุ่ม **Deploy Web Service** ด้านล่างสุด แล้วรอ 1-2 นาทีจนขึ้นสถานะ `Live`
+   - คัดลอก URL ของ Backend ที่ Render สร้างให้ เช่น `https://springroll-backend.onrender.com`
+   - ทดสอบเปิด Browser ไปที่ `https://springroll-backend.onrender.com/api/health` หากได้ผลลัพธ์ `{"status":"ok",...}` แสดงว่า Backend พร้อมทำงาน 100%
+
+---
+
+#### 🌐 ขั้นตอนที่ 3: Deploy Frontend บน Vercel.com
+
+1. **ปรับแต่ง Proxy Rewrites ในโค้ดก่อน Deploy**:
+   - เปิดไฟล์ [frontend/vercel.json](file:///d:/Food-Order-Web-Application/frontend/vercel.json) ในเครื่องของคุณ
+   - แก้ไขบรรทัด `destination` ในส่วน `/api/(.*)` ให้ชี้ไปยัง URL ของ Render Backend ที่ได้จากขั้นตอนที่ 2:
+     ```json
+     "rewrites": [
+       {
+         "source": "/api/(.*)",
+         "destination": "https://springroll-backend.onrender.com/api/$1"
+       },
+       {
+         "source": "/(.*)",
+         "destination": "/index.html"
+       }
+     ]
+     ```
+   - บันทึกไฟล์ ทำการ Commit และ Push ขึ้น GitHub:
+     ```bash
+     git add frontend/vercel.json
+     git commit -m "Update backend API proxy URL in vercel.json"
+     git push
+     ```
+2. **สร้างโปรเจกต์บน Vercel**:
+   - เข้าสู่ระบบ [Vercel.com](https://vercel.com) แล้วกด **Add New...** -> **Project**
+   - เลือก **Import** จาก Repository GitHub ของโปรเจกต์
+3. **กำหนดการตั้งค่าโปรเจกต์ (Project Configuration)**:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: กดปุ่ม **Edit** แล้วเลือกโฟลเดอร์ `frontend` *(⚠️ สำคัญมาก: ต้องเลือก `frontend`)*
+   - **Build and Output Settings**: ใช้ค่าเริ่มต้น (`npm run build` และ Output directory: `dist`)
+   - กดปุ่ม **Deploy**
+4. **ผูก CORS Domain กลับไปยัง Render**:
+   - เมื่อ Vercel Deploy เสร็จสิ้น จะได้ Domain หน้าร้านค้า เช่น `https://springroll-store.vercel.app`
+   - กลับไปที่ [Render.com](https://render.com) -> เลือก Service `springroll-backend` -> ไปที่เมนู **Environment**
+   - อัปเดตตัวแปร `CORS_ORIGIN` เป็น `https://springroll-store.vercel.app` แล้วกด **Save Changes** (Render จะรีสตาร์ตอัตโนมัติ)
+
+---
+
+#### ⏰ ขั้นตอนที่ 4: ตั้งค่า cron-job.org ป้องกัน Render Sleep (Keep-Alive 24/7)
+
+เนื่องจาก Render Free Tier จะเข้าสู่โหมด Sleep หากไม่มีคำขอเข้ามานานเกิน 15 นาที จึงใช้บริการฟรีของ **cron-job.org** เพื่อส่งคำขอ Ping คอยกระตุ้นเซิร์ฟเวอร์ไว้ตลอดเวลา:
+
+1. สมัครและเข้าสู่ระบบที่ [cron-job.org](https://cron-job.org)
+2. ไปที่หน้า **Cronjobs** แล้วกดปุ่ม **CREATE CRONJOB**
+3. กรอกข้อมูลตั้งค่าดังนี้:
+   - **Title**: `Springroll Backend Keep-Alive`
+   - **URL**: `https://springroll-backend.onrender.com/api/health` *(เปลี่ยนเป็น URL จริงของคุณ)*
+   - **Execution Schedule**: เลือก **Every 10 minutes** หรือ **Every 12 minutes**
+   - **Request Method**: `GET`
+   - **Headers / Body**: *ปล่อยว่าง*
+4. กดปุ่ม **CREATE** ด้านล่างสุด
+
+> [!TIP]
+> ตอนนี้ระบบทั้งหมด (ฐานข้อมูล Neon + Backend Render + Frontend Vercel + Keep-Alive) พร้อมให้บริการออนไลน์แบบสมบูรณ์ 24/7 โดยไม่มีค่าใช้จ่ายใดๆ ทั้งสิ้น! สามารถเข้าใช้งานหน้าร้านได้ที่โดเมน Vercel และเข้าสู่ระบบจัดการได้ที่ `https://<your-vercel-domain>/admin`
 
 ---
 
