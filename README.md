@@ -20,120 +20,54 @@
 
 ---
 
-## 🗄️ แผนภาพความสัมพันธ์ของข้อมูล (Entity-Relationship Diagram)
+## 📐 สถาปัตยกรรมระบบ (System Architecture)
 
 ```mermaid
-erDiagram
-    categories ||--o{ menu_items : "contains"
-    orders ||--|{ order_items : "contains"
-    menu_items ||--o{ order_items : "referenced_in"
-    dressings ||--o{ order_items : "selected_in"
-    
-    cart_sessions ||--o{ cart_items : "holds"
-    menu_items ||--o{ cart_items : "added_to"
-    dressings ||--o{ cart_items : "chosen_for"
+flowchart TD
+    %% กำหนดชุดสีและสไตล์ของแต่ละเลเยอร์ (GitHub Dark & Light Compatible)
+    classDef clientStyle fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc,rx:8px
+    classDef proxyStyle fill:#1e293b,stroke:#06b6d4,stroke-width:2px,color:#f8fafc,rx:8px
+    classDef backendStyle fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#f8fafc,rx:8px
+    classDef dbStyle fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc
+    classDef extStyle fill:#2a1b4e,stroke:#a855f7,stroke-width:2px,color:#f8fafc,rx:8px
 
-    admin_users ||--o{ admin_sessions : "authenticates"
+    subgraph Layer_Client ["🌐 1. ส่วนติดต่อผู้ใช้ (Frontend Clients)"]
+        Customer["📱 ลูกค้า (Customer Web App)<br/>React 18 • Tailwind CSS • Glassmorphism"]:::clientStyle
+        Admin["💻 ผู้ดูแลระบบ (Admin Portal)<br/>Real-time KDS Kanban • Analytics Dashboard"]:::clientStyle
+    end
 
-    categories {
-        int id PK
-        varchar name
-        int display_order
-    }
+    subgraph Layer_Proxy ["🛡️ 2. ทางผ่านและกระจายโหลด (Edge & Reverse Proxy)"]
+        Proxy["🌐 Vercel Edge / Nginx Web Server<br/>จัดการ HTTPS, Static Files และ Proxy Pass /api"]:::proxyStyle
+    end
 
-    menu_items {
-        int id PK
-        int category_id FK
-        varchar name
-        text description
-        int price
-        text image_url
-        boolean is_available
-        timestamp created_at
-    }
+    subgraph Layer_Backend ["⚙️ 3. บริการเซิร์ฟเวอร์หลังบ้าน (Express.js Backend API)"]
+        API["🚀 Express API Core (Feature-First Architecture)<br/>ระบบเซสชันแอดมิน • จัดการข้อผิดพลาด RFC 9457"]:::backendStyle
+        SSE["📡 SSE Real-Time Hub<br/>สตรีมสถานะร้านค้าและออเดอร์สด"]:::backendStyle
+        Discord["🤖 Discord Webhook Engine<br/>แจ้งเตือนออเดอร์ & รายงานยอดขาย"]:::backendStyle
+        Cron["⏱️ Cron Maintenance Service<br/>ล้างเซสชันขยะที่หมดอายุอัตโนมัติ"]:::backendStyle
+    end
 
-    dressings {
-        int id PK
-        varchar name
-        boolean is_available
-    }
+    subgraph Layer_Data ["🗄️ 4. ฐานข้อมูลและบริการภายนอก (Database & External)"]
+        DB[("🐘 PostgreSQL 15+ Database<br/>จัดเก็บเมนู, ออเดอร์, เซสชัน (pg.Pool)")]:::dbStyle
+        DiscordApp["💬 Discord Channels<br/>#orders • #cancels • #reports"]:::extStyle
+        CronTrigger["⏰ cron-job.org Scheduler<br/>ระบบยิงคำขอบำรุงรักษาระบบอัตโนมัติ"]:::extStyle
+    end
 
-    orders {
-        int id PK
-        varchar order_number UK
-        varchar customer_name
-        varchar customer_phone
-        delivery_type_enum delivery_type
-        text address
-        order_status_enum status
-        int total_amount
-        text cancel_reason
-        text canceled_by
-        varchar discord_message_id
-        varchar discord_cancel_message_id
-        int sequence_number
-        varchar ip_address
-        varchar session_id
-        order_status_enum previous_status
-        timestamp cancelled_at
-        timestamp deleted_at
-        timestamp created_at
-    }
+    %% เส้นทางการเชื่อมต่อ (Data Flow & Interactions)
+    Customer -->|ส่งคำสั่งซื้อ / ติดตามสถานะ| Proxy
+    Admin -->|ส่งคุกกี้เซสชันแอดมิน| Proxy
 
-    order_items {
-        int id PK
-        int order_id FK
-        int menu_item_id FK
-        int dressing_id FK
-        int quantity
-        int unit_price
-        text item_notes
-    }
+    Proxy -->|ส่งต่อคำขอผ่าน Proxy Pass| API
 
-    store_status {
-        int id PK
-        boolean is_open
-        text announcement_message
-        varchar restaurant_name
-        int current_sequence
-    }
+    API -->|บันทึกและดึงข้อมูลผ่าน Pool| DB
+    API -->|กระจายเหตุการณ์สด| SSE
+    API -->|ส่งต่อข้อมูลแจ้งเตือน| Discord
+    CronTrigger -->|ยิงคำขอบำรุงรักษาตามเวลา| Cron
+    Cron -->|ล้างเซสชันขยะที่หมดอายุ| DB
 
-    admin_users {
-        int id PK
-        varchar username UK
-        text password_hash
-        timestamp password_rotated_at
-        timestamp created_at
-    }
-
-    admin_sessions {
-        uuid session_id PK
-        int admin_id FK
-        timestamp expires_at
-        timestamp created_at
-    }
-
-    cart_sessions {
-        uuid session_id PK
-        timestamp created_at
-        timestamp last_accessed_at
-    }
-
-    cart_items {
-        int id PK
-        uuid session_id FK
-        int menu_item_id FK
-        int dressing_id FK
-        int quantity
-        text item_notes
-        timestamp created_at
-    }
-
-    daily_reports {
-        int id PK
-        varchar discord_message_id
-        timestamp created_at
-    }
+    SSE -.->|สตรีมสถานะร้านค้าและออเดอร์สด| Customer
+    SSE -.->|สตรีมออเดอร์เข้าใหม่แบบสดๆ| Admin
+    Discord ==>|ส่งการ์ดแจ้งเตือนเข้าห้องแชท| DiscordApp
 ```
 
 ---
