@@ -25,44 +25,46 @@
 ```mermaid
 flowchart TD
     %% กำหนดชุดสีและสไตล์ของแต่ละเลเยอร์ (GitHub Dark & Light Compatible)
-    classDef clientStyle fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc,rx:8px
-    classDef proxyStyle fill:#1e293b,stroke:#06b6d4,stroke-width:2px,color:#f8fafc,rx:8px
-    classDef backendStyle fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#f8fafc,rx:8px
-    classDef dbStyle fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc
-    classDef extStyle fill:#2a1b4e,stroke:#a855f7,stroke-width:2px,color:#f8fafc,rx:8px
+    classDef client fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc,rx:8px
+    classDef proxy fill:#1e293b,stroke:#06b6d4,stroke-width:2px,color:#f8fafc,rx:8px
+    classDef backend fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#f8fafc,rx:8px
+    classDef db fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc,rx:8px
+    classDef ext fill:#2a1b4e,stroke:#c084fc,stroke-width:2px,color:#f8fafc,rx:8px
 
-    subgraph Layer_Client ["🌐 1. ส่วนติดต่อผู้ใช้ (Frontend Clients)"]
-        Customer["📱 ลูกค้า (Customer Web App)<br/>React 18 • TanStack Query • Glassmorphism"]:::clientStyle
-        Admin["💻 ผู้ดูแลระบบ (Admin Portal)<br/>Smart Polling KDS Kanban • Analytics Dashboard"]:::clientStyle
+    subgraph CLIENTS ["🌐 1. ส่วนติดต่อผู้ใช้ (Frontend Clients)"]
+        Customer["📱 ลูกค้า (Customer Storefront)<br/>• React 18 & TanStack Query<br/>• Smart Polling & Auto-Tracking"]:::client
+        Admin["💻 แอดมิน (Admin Management Portal)<br/>• Smart Polling KDS Kanban (4s)<br/>• Real-time Analytics Dashboard"]:::client
     end
 
-    subgraph Layer_Proxy ["🛡️ 2. ทางผ่านและกระจายโหลด (Edge & Reverse Proxy)"]
-        Proxy["🌐 Vercel Edge / Nginx Web Server<br/>จัดการ HTTPS, Static Files, ETag และ Proxy Pass /api"]:::proxyStyle
+    subgraph GATEWAY ["🛡️ 2. ทางผ่านและกระจายโหลด (Edge & Reverse Proxy)"]
+        Proxy["🌐 Vercel Edge / Nginx Server<br/>• จัดการ HTTPS & Static Assets (Cache 1y)<br/>• Reverse Proxy ส่งต่อคำขอ /api"]:::proxy
     end
 
-    subgraph Layer_Backend ["⚙️ 3. บริการเซิร์ฟเวอร์หลังบ้าน (Express.js Backend API)"]
-        API["🚀 Express API Core (Feature-First Architecture)<br/>ระบบเซสชันแอดมิน • Smart Cache (ETag/304) • RFC 9457"]:::backendStyle
-        Discord["🤖 Discord Webhook Engine<br/>แจ้งเตือนออเดอร์ & รายงานยอดขาย"]:::backendStyle
+    subgraph BACKEND ["⚙️ 3. เซิร์ฟเวอร์และตรรกะระบบ (Backend Engine)"]
+        API["🚀 Express.js API Core<br/>• สถาปัตยกรรมแบบ Feature-First<br/>• Smart Cache (HTTP 304 ETag)<br/>• เซสชันปลอดภัย & Rate Limiting"]:::backend
+        DiscordModule["🤖 Discord Webhook Engine<br/>• แจ้งเตือนออเดอร์ใหม่ & ยกเลิก<br/>• ส่งรายงานสรุปยอดขายอัตโนมัติ"]:::backend
     end
 
-    subgraph Layer_Data ["🗄️ 4. ฐานข้อมูลและบริการภายนอก (Database & External)"]
-        DB[("🐘 PostgreSQL 15+ Database<br/>จัดเก็บเมนู, ออเดอร์, เซสชัน (B-Tree Indexed)")]:::dbStyle
-        DiscordApp["💬 Discord Channels<br/>#orders • #cancels • #reports"]:::extStyle
-        CronTrigger["⏰ cron-job.org Scheduler<br/>ยิงคำขอ Ping /api/health ป้องกันเซิร์ฟเวอร์หลับ"]:::extStyle
+    subgraph STORAGE ["🗄️ 4. แหล่งจัดเก็บข้อมูล (Database Layer)"]
+        Database[("🐘 PostgreSQL 15+ Database<br/>• เมนูอาหาร, ออเดอร์, เซสชัน<br/>• B-Tree Indexes & Connection Pool")]:::db
     end
 
-    %% เส้นทางการเชื่อมต่อ (Data Flow & Interactions)
-    Customer -->|Smart Polling ออเดอร์/สถานะร้าน & ส่งคำสั่งซื้อ| Proxy
-    Admin -->|Smart Polling คิวออเดอร์ 4s & ส่งคุกกี้เซสชัน| Proxy
+    subgraph EXTERNAL ["☁️ 5. บริการภายนอก (External Cloud Services)"]
+        CronBot["⏰ cron-job.org (Keep-Alive)<br/>• ยิง Ping /api/health ทุก 10-12 นาที<br/>• ป้องกัน Render Sleep"]:::ext
+        DiscordApp["💬 Discord Channels<br/>• #orders • #cancels • #reports"]:::ext
+    end
 
-    Proxy -->|ส่งต่อคำขอพร้อม ETag If-None-Match| API
+    %% เส้นทางการเชื่อมต่อและการไหลของข้อมูล (Data Flow & Interactions)
+    Customer -->|"ส่งคำสั่งซื้อ / Polling สถานะ (4s)"| Proxy
+    Admin -->|"จัดการออเดอร์ / ดูสถิติ (4s & 15s)"| Proxy
 
-    API -->|บันทึกและดึงข้อมูลผ่าน Pool พร้อม Indexes| DB
-    API -->|ตอบกลับข้อมูลสด หรือ 304 Not Modified| Proxy
-    API -->|ส่งต่อข้อมูลแจ้งเตือน| Discord
-    CronTrigger -->|ยิง Ping ทุก 10-14 นาที| API
+    Proxy -->|"Proxy Pass /api (พร้อม ETag If-None-Match)"| API
 
-    Discord ==>|ส่งการ์ดแจ้งเตือนเข้าห้องแชท| DiscordApp
+    API <-->|"Query & Mutate Data (pg.Pool + Indexes)"| Database
+    API -->|"Trigger Webhook Events"| DiscordModule
+
+    DiscordModule ==>|"ส่งการ์ดแจ้งเตือน Embeds"| DiscordApp
+    CronBot -.->|"HTTP GET Ping ปลุกเซิร์ฟเวอร์"| API
 ```
 
 ---
