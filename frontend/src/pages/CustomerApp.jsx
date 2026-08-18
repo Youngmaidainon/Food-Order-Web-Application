@@ -155,14 +155,14 @@ export default function CustomerApp() {
         <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 p-3 sm:px-6 lg:py-8 lg:px-[5%] max-w-[1400px] mx-auto items-start">
           <div className="flex-1 min-w-0 w-full">
             {/* Hero Section */}
-            <div className="bg-gradient-to-br from-white/[0.07] via-white/[0.03] to-transparent border border-white/10 rounded-2xl lg:rounded-3xl p-4 sm:p-6 lg:p-7 text-center mb-4 sm:mb-6 shadow-md relative overflow-hidden backdrop-blur-md">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-teal-500/10 opacity-30 pointer-events-none"></div>
+            <div className="bg-gradient-to-br from-white/[0.08] via-white/[0.03] to-transparent border border-white/10 rounded-2xl lg:rounded-3xl p-4 sm:p-5 lg:p-6 text-center mb-4 sm:mb-6 shadow-md relative overflow-hidden backdrop-blur-md">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-emerald-500/10 opacity-40 pointer-events-none"></div>
               <div className="relative z-10 flex flex-col items-center">
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight">
-                  {storeStatus.restaurant_name || 'ร้านสปริงโรลออนไลน์'}
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight flex items-center justify-center gap-2">
+                  <span className="text-primary">🥗</span> เมนูเพื่อสุขภาพสดใหม่
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-300 font-light max-w-md mx-auto mt-1 leading-relaxed">
-                  ผักสดกรอบ อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์
+                  ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์
                 </p>
               </div>
             </div>
