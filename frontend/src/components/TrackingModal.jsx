@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSSE } from '../hooks/useSSE.js';
-import { sendApiRequest, getApiUrl } from '../api/api.js';
+import { sendApiRequest } from '../api/api.js';
 import { useAlert } from '../context/AlertContext';
 import { useToast } from '../context/ToastContext';
 import { customerSoundAlert } from '../utils/audio.js';
@@ -54,31 +53,26 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
     }
   }, [orderNum]);
 
-  // SSE Live Updates (Active on tracked order - Primary Channel)
+  // Smart Polling (Active when modal is open and order number is present)
   const currentTrackNum = trackingData?.order_number || (orderNum && orderNum.trim() ? orderNum.trim() : null);
-  const sseUrl = (isOpen && currentTrackNum)
-    ? getApiUrl(`/orders/events/${currentTrackNum}`)
-    : null;
-  const { data: sseData, isConnected: isSSEConnected } = useSSE(sseUrl);
 
-  useEffect(() => {
-    if (sseData && sseData.event === 'order_status_updated' && currentTrackNum) {
-      handleSearch(currentTrackNum);
-    }
-  }, [sseData, handleSearch, currentTrackNum]);
-
-  // Smart Fallback Polling (Active when modal is open and SSE is disconnected)
   useEffect(() => {
     let pollTimer = null;
-    if (isOpen && currentTrackNum && !isSSEConnected) {
+    const terminalStatuses = ['เสร็จสิ้น', 'ยกเลิก', 'รับอาหารแล้ว', 'จัดส่งแล้ว'];
+    const isTerminal = trackingData && terminalStatuses.includes(trackingData.status);
+
+    if (isOpen && currentTrackNum && !isTerminal) {
       pollTimer = setInterval(() => {
-        handleSearch(currentTrackNum);
-      }, 10000); // 10s fallback poll
+        if (document.visibilityState === 'visible') {
+          handleSearch(currentTrackNum);
+        }
+      }, 4000); // 4s smart poll
     }
+
     return () => {
       if (pollTimer) clearInterval(pollTimer);
     };
-  }, [isOpen, currentTrackNum, isSSEConnected, handleSearch]);
+  }, [isOpen, currentTrackNum, trackingData?.status, handleSearch]);
 
   const handleCopyOrderNumber = () => {
     if (!trackingData?.order_number) return;

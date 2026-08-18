@@ -2,7 +2,7 @@ import { ValidationError, AppError } from '../shared/errors.js';
 import { getDatabaseClient } from '../config/database.js';
 import { applicationConfig } from '../config/config.js';
 import { sendDiscordDailySummary } from '../discord.js';
-import { sseManager } from '../shared/sse.js';
+
 
 export class StoreService {
   constructor(storeRepository) {
@@ -90,8 +90,7 @@ export class StoreService {
       // Execute outside transaction to not block DB
       this._asyncCleanupDiscordMessages(cancelMessages, orderMessages);
 
-      // SSE Broadcast
-      sseManager.broadcast('store_status', updateResult);
+
 
       return updateResult;
     } catch (error) {

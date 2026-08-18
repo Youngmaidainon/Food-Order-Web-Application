@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import MenuGrid from '../components/MenuGrid';
 import CartSidebar from '../components/CartSidebar';
@@ -8,9 +8,7 @@ import CheckoutModal from '../components/CheckoutModal';
 import TrackingModal from '../components/TrackingModal';
 import CartModal from '../components/CartModal';
 import { useCart } from '../context/CartContext';
-import { useStoreStatus, useMenu } from '../hooks/queries.js';
-import { useSSE } from '../hooks/useSSE.js';
-import { sendApiRequest, getApiUrl } from '../api/api.js';
+import { useStoreStatus, useMenu, useActiveOrderTracking } from '../hooks/queries.js';
 import { useToast } from '../context/ToastContext';
 import { customerSoundAlert } from '../utils/audio.js';
 
@@ -26,51 +24,34 @@ export default function CustomerApp() {
   const [selectedMenuItem, setSelectedMenuItem] = useState(null);
   const [selectedDressing, setSelectedDressing] = useState(null);
 
-  // Queries from React Query
-  const { data: storeStatusData, isLoading: isStoreLoading } = useStoreStatus();
-  const { data: menuData, isLoading: isMenuLoading } = useMenu();
+  // Queries from React Query (Smart Polling + Smart Cache)
+  const { data: storeStatusData } = useStoreStatus();
+  const { data: menuData } = useMenu();
 
-  const [liveStoreStatus, setLiveStoreStatus] = useState(null);
-  const storeStatus = liveStoreStatus || storeStatusData || { is_open: true, restaurant_name: 'ร้านสปริงโรลออนไลน์' };
+  const storeStatus = storeStatusData || { is_open: true, restaurant_name: 'ร้านสปริงโรลออนไลน์' };
   const menuItems = menuData?.menuItems || [];
   const dressings = menuData?.dressings || [];
 
   const [activeOrder, setActiveOrder] = useState(() => localStorage.getItem('activeOrder'));
   const [activeOrderStatus, setActiveOrderStatus] = useState(null);
 
-  // Real-time SSE updates for Store Open/Close Status & Announcement (Primary Channel)
-  const storeSseUrl = getApiUrl('/store/events');
-  const { data: storeSseData, isConnected: isStoreSseConnected } = useSSE(storeSseUrl);
+  // Smart Polling query for Active Order
+  const { data: activeOrderData } = useActiveOrderTracking(activeOrder);
 
+  // Store status change detection & Toast notification
+  const prevIsOpenRef = useRef();
   useEffect(() => {
-    if (storeSseData && storeSseData.event === 'store_status' && storeSseData.payload) {
-      setLiveStoreStatus(storeSseData.payload);
-      if (storeSseData.payload.is_open === false) {
-        showToast('ขณะนี้ร้านปิดรับออเดอร์ชั่วคราว', 'warning');
-      } else if (storeSseData.payload.is_open === true) {
-        showToast('ขณะนี้ร้านเปิดรับออเดอร์แล้ว ยินดีต้อนรับครับ!', 'success');
+    if (storeStatusData && typeof storeStatusData.is_open === 'boolean') {
+      if (prevIsOpenRef.current !== undefined && prevIsOpenRef.current !== storeStatusData.is_open) {
+        if (storeStatusData.is_open === false) {
+          showToast('ขณะนี้ร้านปิดรับออเดอร์ชั่วคราว', 'warning');
+        } else if (storeStatusData.is_open === true) {
+          showToast('ขณะนี้ร้านเปิดรับออเดอร์แล้ว ยินดีต้อนรับครับ!', 'success');
+        }
       }
+      prevIsOpenRef.current = storeStatusData.is_open;
     }
-  }, [storeSseData, showToast]);
-
-  // Smart Fallback Polling for Store Status (Only active if SSE disconnected)
-  useEffect(() => {
-    let timer = null;
-    if (!isStoreSseConnected) {
-      timer = setInterval(() => {
-        sendApiRequest('/store/status')
-          .then(res => {
-            if (res.success && res.data) {
-              setLiveStoreStatus(res.data);
-            }
-          })
-          .catch(() => {});
-      }, 30000); // 30s fallback poll
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [isStoreSseConnected]);
+  }, [storeStatusData, showToast]);
 
   // Check URL param for ?track=ORD-...
   useEffect(() => {
@@ -82,87 +63,29 @@ export default function CustomerApp() {
     }
   }, []);
 
-  // Helper function to track active order status
-  const pollActiveOrder = (orderNum) => {
-    if (!orderNum) return;
-    sendApiRequest(`/orders/track/${orderNum}`)
-      .then(res => {
-        if (res.success && res.data) {
-          const newStatus = res.data.status;
-          if (newStatus) {
-            setActiveOrderStatus(prev => {
-              if (prev && newStatus !== prev) {
-                customerSoundAlert.playStatusUpdateChime();
-                showToast(`ออเดอร์ ${orderNum} อัปเดตสถานะเป็น "${newStatus}"`, 'info');
-              }
-              return newStatus;
-            });
-
-            if (newStatus === 'เสร็จสิ้น' || newStatus === 'ยกเลิก' || newStatus === 'รับอาหารแล้ว' || newStatus === 'จัดส่งแล้ว') {
-              localStorage.removeItem('activeOrder');
-              setActiveOrder(null);
-              setActiveOrderStatus(null);
-            }
-          }
-        }
-      })
-      .catch(err => console.error('Track error:', err));
-  };
-
-  // Poll once on startup & on tab visibility change
+  // Active Order tracking & Audio alert
+  const prevOrderStatusRef = useRef();
   useEffect(() => {
-    if (activeOrder) {
-      pollActiveOrder(activeOrder);
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        if (activeOrder) pollActiveOrder(activeOrder);
-        sendApiRequest('/store/status')
-          .then(res => res.success && setLiveStoreStatus(res.data))
-          .catch(() => {});
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [activeOrder]);
-
-  // Real-time SSE updates for Active Customer Order (Primary Channel)
-  const sseUrl = activeOrder ? getApiUrl(`/orders/events/${activeOrder}`) : null;
-  const { data: sseData, isConnected: isOrderSseConnected } = useSSE(sseUrl);
-
-  useEffect(() => {
-    if (sseData && sseData.event === 'order_status_updated') {
-      const newStatus = sseData.payload?.status;
+    if (activeOrderData) {
+      const newStatus = activeOrderData.status;
       if (newStatus) {
-        if (activeOrderStatus && newStatus !== activeOrderStatus) {
+        setActiveOrderStatus(newStatus);
+        if (prevOrderStatusRef.current && prevOrderStatusRef.current !== newStatus) {
           customerSoundAlert.playStatusUpdateChime();
           showToast(`ออเดอร์ ${activeOrder} อัปเดตสถานะเป็น "${newStatus}"`, 'info');
         }
-        setActiveOrderStatus(newStatus);
-        
-        if (newStatus === 'เสร็จสิ้น' || newStatus === 'ยกเลิก' || newStatus === 'รับอาหารแล้ว' || newStatus === 'จัดส่งแล้ว') {
+        prevOrderStatusRef.current = newStatus;
+
+        const terminalStatuses = ['เสร็จสิ้น', 'ยกเลิก', 'รับอาหารแล้ว', 'จัดส่งแล้ว'];
+        if (terminalStatuses.includes(newStatus)) {
           localStorage.removeItem('activeOrder');
           setActiveOrder(null);
           setActiveOrderStatus(null);
+          prevOrderStatusRef.current = null;
         }
       }
     }
-  }, [sseData, activeOrder, activeOrderStatus, showToast]);
-
-  // Smart Fallback Polling for Active Customer Order (10s if SSE disconnected)
-  useEffect(() => {
-    let orderTimer = null;
-    if (activeOrder && !isOrderSseConnected) {
-      orderTimer = setInterval(() => {
-        pollActiveOrder(activeOrder);
-      }, 10000); // 10s fallback poll
-    }
-    return () => {
-      if (orderTimer) clearInterval(orderTimer);
-    };
-  }, [activeOrder, isOrderSseConnected]);
+  }, [activeOrderData, activeOrder, showToast]);
 
   // Add Item to Cart Flow
   const handleAddItem = (item) => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { sendApiRequest, getApiUrl } from '../../api/api.js';
+import { sendApiRequest } from '../../api/api.js';
 import { useAlert } from '../../context/AlertContext';
-import { useSSE } from '../../hooks/useSSE.js';
+
 export default function Orders() {
   const { showAlert, showPrompt } = useAlert();
   const [orders, setOrders] = useState([]);
@@ -25,33 +25,16 @@ export default function Orders() {
     localStorage.setItem('admin_orders_view', mode);
   };
 
-  // Real-time SSE Events (Primary Channel)
-  const { data: sseData, isConnected: isSSEConnected } = useSSE(getApiUrl('/admin/events'));
-
+  // Smart Polling (4s) with Tab Visibility Optimization & Window Focus Revalidation
   useEffect(() => {
-    if (sseData) {
-      if (sseData.event === 'new_order' || sseData.event === 'order_status_updated') {
+    fetchOrders(true);
+
+    const pollTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
         fetchOrders(false);
       }
-    }
-  }, [sseData]);
+    }, 4000);
 
-  // Smart Fallback Polling (Activated only when SSE connection is interrupted)
-  useEffect(() => {
-    let fallbackTimer = null;
-    if (!isSSEConnected) {
-      fallbackTimer = setInterval(() => {
-        fetchOrders(false);
-      }, 10000); // Poll every 10s when SSE is disconnected
-    }
-    return () => {
-      if (fallbackTimer) clearInterval(fallbackTimer);
-    };
-  }, [isSSEConnected, statusFilter]);
-
-  useEffect(() => {
-    fetchOrders();
-    
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         fetchOrders(false);
@@ -60,6 +43,7 @@ export default function Orders() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      clearInterval(pollTimer);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [statusFilter]);

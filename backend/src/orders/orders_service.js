@@ -2,7 +2,7 @@ import { ValidationError, AppError } from '../shared/errors.js';
 import { getDatabaseClient } from '../config/database.js';
 import { storeService } from '../store/store_controller.js';
 import { sendDiscordOrderNotification, deleteDiscordOrderNotification, sendDiscordCancelNotification } from '../discord.js';
-import { sseManager } from '../shared/sse.js';
+
 
 export class OrdersService {
   constructor(ordersRepository) {
@@ -141,8 +141,7 @@ export class OrdersService {
         await this.ordersRepository.updateOrderDiscordMessageId(createdOrderRecord.id, messageId);
       }
 
-      // ส่ง Real-time SSE ให้ Admin หน้าเว็บอัปเดตทันทีแบบไม่ต้องสลับแท็บ/หน้าต่าง
-      sseManager.emitToAdmin('new_order', completeOrderPayload);
+
 
       return completeOrderPayload;
     } catch (error) {
@@ -213,8 +212,7 @@ export class OrdersService {
 
       const updatedOrderPayload = { id: parseInt(orderId, 10), order_number: currentOrderRecord.order_number, status: 'ยกเลิก' };
 
-      // Broadcast to admin
-      sseManager.emitToAdmin('order_status_updated', updatedOrderPayload);
+
 
       if (currentOrderRecord.discord_message_id) {
         deleteDiscordOrderNotification(currentOrderRecord.discord_message_id, currentOrderRecord, 'ลูกค้า');

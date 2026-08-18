@@ -245,10 +245,12 @@ erDiagram
 
 ---
 
-## ⚡ ดัชนีและการเพิ่มประสิทธิภาพการคิวรี่ (B-Tree Indexes)
+## ⚡ ดัชนีและการเพิ่มประสิทธิภาพการคิวรี่ (B-Tree Indexes for High-Frequency Polling)
+
+ออกแบบและปรับแต่งเพื่อรองรับ High-Frequency Polling Queries จากทั้งฝั่งลูกค้า (Smart Polling 4s) และฝั่งแอดมิน (Kitchen KDS Kanban 4s) ได้อย่างเต็มประสิทธิภาพโดยไม่มีปัญหาคอขวด (Zero Bottleneck)
 
 ```sql
--- 1. ค้นหาและกรองสถานะออเดอร์ในหน้าแอดมินได้ทันที
+-- 1. ค้นหาและกรองสถานะออเดอร์ในหน้าแอดมินได้ทันที (รองรับ Admin Polling ทุก 4s)
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 
 -- 2. เรียงลำดับออเดอร์ล่าสุดได้รวดเร็ว (ORDER BY created_at DESC)
@@ -257,7 +259,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
 -- 3. ตรวจสอบสถานะ Soft Delete ได้อย่างรวดเร็ว
 CREATE INDEX IF NOT EXISTS idx_orders_deleted_at ON orders(deleted_at);
 
--- 4. เร่งความเร็วการ JOIN รายการอาหารในออเดอร์
+-- 4. เร่งความเร็วการ JOIN รายการอาหารในออเดอร์ (ดึงรายการอาหารแต่ละบิลทันที)
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 
 -- 5. เร่งความเร็วให้ Cron Job ล้างตะกร้าสินค้าที่ไม่ได้ใช้งานนานเกินกำหนด
@@ -266,10 +268,10 @@ CREATE INDEX IF NOT EXISTS idx_cart_sessions_last_active ON cart_sessions(last_a
 -- 6. เร่งความเร็วให้ Cron Job ล้างเซสชันแอดมินที่หมดอายุ
 CREATE INDEX IF NOT EXISTS idx_admin_sessions_expires_at ON admin_sessions(expires_at);
 
--- 7. Composite Index กรองสถานะพร้อมเรียงลำดับเวลา
+-- 7. Composite Index กรองสถานะพร้อมเรียงลำดับเวลา (หัวใจหลักของ Admin Kitchen Kanban Polling)
 CREATE INDEX IF NOT EXISTS idx_orders_status_created ON orders(status, created_at DESC);
 
--- 8. Partial Index กรองออเดอร์ของเซสชันที่ยังไม่ถูกลบ
+-- 8. Partial Index กรองออเดอร์ของเซสชันที่ยังไม่ถูกลบ (รองรับ Customer Auto-Track Polling)
 CREATE INDEX IF NOT EXISTS idx_orders_session_active ON orders(session_id) WHERE deleted_at IS NULL;
 
 -- 9. Composite Index ป้องกันการสแกนตารางแบบ Full Scan เมื่อ JOIN

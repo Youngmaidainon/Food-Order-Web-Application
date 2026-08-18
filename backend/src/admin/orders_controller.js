@@ -2,7 +2,7 @@ import express from 'express';
 import { executeQuery, getDatabaseClient } from '../config/database.js';
 import { authenticateAdminSession } from '../shared/middleware/auth.js';
 import { deleteDiscordOrderNotification, sendDiscordCancelNotification } from '../discord.js';
-import { sseManager } from '../shared/sse.js';
+
 
 const ordersRouter = express.Router();
 
@@ -172,9 +172,7 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
 
     const updatedOrderPayload = { id: parseInt(orderId, 10), order_number: orderQueryResult.rows[0].order_number, status: newTargetStatus, previousStatus };
     
-    // Broadcast to admin and customer
-    sseManager.emitToAdmin('order_status_updated', updatedOrderPayload);
-    sseManager.emitToCustomer(orderQueryResult.rows[0].order_number, 'order_status_updated', updatedOrderPayload);
+
 
     return response.json({ success: true, message: `อัปเดตสถานะออเดอร์เป็น "${newTargetStatus}" เรียบร้อยแล้ว`, data: updatedOrderPayload });
   } catch (updateOrderStatusError) {
@@ -195,8 +193,7 @@ ordersRouter.post('/reset-queue', authenticateAdminSession, async (request, resp
     await databaseClient.query('UPDATE store_status SET current_sequence = 0 WHERE id = 1');
     await databaseClient.query('COMMIT');
 
-    // แจ้งเตือน Real-time SSE ให้อัปเดตรายการออเดอร์ทันที
-    sseManager.emitToAdmin('order_status_updated', { type: 'queue_reset' });
+
 
     return response.json({
       success: true,

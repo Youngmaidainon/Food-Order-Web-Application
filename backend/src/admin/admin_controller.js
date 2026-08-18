@@ -7,7 +7,7 @@ import menuRouter from './menu_controller.js';
 import categoriesRouter from './categories_controller.js';
 import dressingsRouter from './dressings_controller.js';
 import analyticsRouter from './analytics_controller.js';
-import { eventsRouter } from './events_controller.js';
+
 import { storeRouter } from '../store/store_controller.js';
 
 const adminRouter = express.Router();
@@ -29,6 +29,6 @@ adminRouter.use('/categories', categoriesRouter);
 adminRouter.use('/dressings', dressingsRouter);
 adminRouter.use('/store', storeRouter);
 adminRouter.use('/analytics', analyticsRouter);
-adminRouter.use('/events', eventsRouter);
+
 
 export { adminRouter };

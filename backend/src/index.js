@@ -57,11 +57,13 @@ app.use(cors({
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 
-// ปิด Browser & Proxy Cache สำหรับ API ทุกเส้น ป้องกันการจำข้อมูลเก่า
+// เปิด ETag สำหรับ Smart Cache (HTTP 304 Not Modified) เพื่อประหยัด Bandwidth ขณะ Polling
+app.set('etag', 'strong');
+
+// ตั้งค่า Cache Headers สำหรับ Dynamic API: ป้องกัน Browser/Proxy Cache แต่อนุญาต Conditional Requests (ETag/If-None-Match)
 app.use('/api', (req, res, next) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Cache-Control', 'no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
   res.set('Surrogate-Control', 'no-store');
   next();
 });
@@ -69,7 +71,7 @@ app.use('/api', (req, res, next) => {
 // Global Rate Limiter: ป้องกัน DoS ระดับ API ทั้งระบบ
 const generalApiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 600,
   message: { success: false, message: 'คำขอมากเกินไป กรุณารอสักครู่ (Too many requests)' },
   standardHeaders: true,
   legacyHeaders: false,

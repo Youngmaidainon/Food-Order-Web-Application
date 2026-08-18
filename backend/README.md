@@ -1,6 +1,6 @@
 <div align="center">
   <h1>⚙️ ระบบบริการส่วนหลังบ้าน (Backend API Architecture)</h1>
-  <p><strong>พัฒนาด้วย Node.js + Express.js ตามสถาปัตยกรรมแบบ Feature-First, ระบบตรวจสอบสิทธิ์ด้วยคุกกี้เซสชันปลอดภัย, การจำกัดอัตราคำขอ (Rate Limiting), ระบบ Connection Pool และการสตรีมข้อมูลแบบเรียลไทม์ (SSE) สองทิศทาง</strong></p>
+  <p><strong>พัฒนาด้วย Node.js + Express.js ตามสถาปัตยกรรมแบบ Feature-First, ระบบตรวจสอบสิทธิ์ด้วยคุกกี้เซสชันปลอดภัย, การจำกัดอัตราคำขอ (Rate Limiting), ระบบ Connection Pool และสถาปัตยกรรม Smart Cache (HTTP 304 ETag)</strong></p>
 </div>
 
 ---
@@ -22,7 +22,6 @@ backend/
     │   ├── auth_controller.js      # จัดการ Login, Logout และตรวจสอบเซสชันแอดมิน
     │   ├── categories_controller.js# จัดการเพิ่ม ลบ แก้ไข หมวดหมู่อาหาร (CRUD)
     │   ├── dressings_controller.js # จัดการเพิ่ม ลบ แก้ไข รายการน้ำสลัด (CRUD)
-    │   ├── events_controller.js    # สตรีม SSE สำหรับแจ้งเตือนออเดอร์ใหม่เข้าแอดมิน
     │   ├── menu_controller.js      # จัดการเพิ่ม ลบ แก้ไข รายการเมนูอาหาร (CRUD)
     │   └── orders_controller.js    # จัดการเปลี่ยนสถานะออเดอร์และรายงานสรุปยอด
     ├── cart/                       # ฟีเจอร์: ตะกร้าสินค้าของลูกค้า
@@ -46,14 +45,12 @@ backend/
     │   ├── menu_repository.js      # คำสั่ง SQL ดึงข้อมูลจากตาราง menu_items และ categories
     │   └── menu_service.js         # ตรรกะการจัดกลุ่มเมนูตามหมวดหมู่
     ├── orders/                     # ฟีเจอร์: คำสั่งซื้อและการติดตามสถานะ
-    │   ├── events_controller.js    # สตรีม SSE อัปเดตสถานะออเดอร์แบบเรียลไทม์ส่งตรงถึงลูกค้า
     │   ├── orders_controller.js    # ตัวควบคุมรับคำสั่งซื้อและค้นหาสถานะออเดอร์ (/api/orders)
     │   ├── orders_repository.js    # คำสั่ง SQL จัดการตาราง orders และ order_items
     │   └── orders_service.js       # ตรรกะการสร้างออเดอร์, คิว, และแจ้งเตือน Discord
     ├── shared/                     # ส่วนประกอบและมิดเดิลแวร์ที่ใช้ร่วมกันทั่วทั้งระบบ
     │   ├── errors.js               # โครงสร้างคลาส Error เฉพาะทาง (มาตรฐาน RFC 9457)
     │   ├── logger.js               # ระบบ Structured JSON Logger ด้วย Pino
-    │   ├── sse.js                  # SSE Manager จัดการการเชื่อมต่อและบรอดแคสต์ข้อมูล
     │   ├── middleware/             # มิดเดิลแวร์ส่วนกลาง
     │   │   ├── auth.js             # ตรวจสอบความถูกต้องของคุกกี้เซสชันแอดมิน
     │   │   ├── errorHandler.js     # มิดเดิลแวร์ดักจับข้อผิดพลาดและจัดรูปแบบ Response
@@ -62,7 +59,7 @@ backend/
     │   └── validators/             # สคีมาตรวจสอบโครงสร้างข้อมูลนำเข้า
     │       └── index.js            # กำหนดกฎเกณฑ์ความถูกต้องของข้อมูลแต่ละคำขอ
     └── store/                      # ฟีเจอร์: สถานะร้านค้าและคิวคำสั่งซื้อ
-        ├── store_controller.js     # ตัวควบคุมรับคำขอดึง อัปเดตสถานะร้านค้า และสตรีม SSE (/api/store)
+        ├── store_controller.js     # ตัวควบคุมรับคำขอดึงและอัปเดตสถานะร้านค้า (/api/store)
         ├── store_repository.js     # คำสั่ง SQL จัดการตาราง store_status และ sequence คิว
         └── store_service.js        # ตรรกะเปิด/ปิดร้าน, รีเซ็ตคิว และคำนวณยอดขายประจำวัน
 ```
@@ -82,11 +79,10 @@ backend/
 | `GET` | `/api/menu` | ดึงรายการเมนูอาหารทั้งหมดที่เปิดจำหน่าย | สาธารณะ | - |
 | `GET` | `/api/dressings` | ดึงรายการน้ำสลัดทั้งหมดที่เปิดให้บริการ | สาธารณะ | - |
 
-### 3. สถานะร้านค้า (Store Status & Events)
+### 3. สถานะร้านค้า (Store Status)
 | Method | Endpoint | คำอธิบาย | การตรวจสอบสิทธิ์ | Request Body |
 |---|---|---|---|---|
 | `GET` | `/api/store/status` | ดึงสถานะเปิด/ปิดร้าน, ชื่อร้าน, ข้อความประกาศ | สาธารณะ | - |
-| `GET` | `/api/store/events` | สตรีม SSE สถานะร้านค้าและประกาศแบบเรียลไทม์ | สาธารณะ | - |
 
 ### 4. ตะกร้าสินค้า (Cart Sessions)
 | Method | Endpoint | คำอธิบาย | การตรวจสอบสิทธิ์ | Request Body ตัวอย่าง |
@@ -97,12 +93,11 @@ backend/
 | `DELETE` | `/api/cart/items/:id` | ลบสินค้าออกจากตะกร้า | Cart Session Cookie | - |
 | `DELETE` | `/api/cart` | ล้างสินค้าทั้งหมดในตะกร้า | Cart Session Cookie | - |
 
-### 5. คำสั่งซื้อและการติดตามสถานะ (Orders & Live Tracking)
+### 5. คำสั่งซื้อและการติดตามสถานะ (Orders & Tracking)
 | Method | Endpoint | คำอธิบาย | การตรวจสอบสิทธิ์ | Request Body ตัวอย่าง |
 |---|---|---|---|---|
 | `POST` | `/api/orders` | สร้างคำสั่งซื้อใหม่ | สาธารณะ | `{"customer_name":"สมชาย","customer_phone":"0812345678","delivery_type":"รับเองที่ร้าน","items":[...]}` |
-| `GET` | `/api/orders/track/:order_number` | ค้นหาและดูสถานะคำสั่งซื้อ | สาธารณะ (Masked PII) | - |
-| `GET` | `/api/orders/events/:order_number` | สตรีม SSE อัปเดตสถานะออเดอร์แบบสดๆ | สาธารณะ | - |
+| `GET` | `/api/orders/track/:order_number` | ค้นหาและดูสถานะคำสั่งซื้อ (Smart Polling 4s) | สาธารณะ (Masked PII) | - |
 | `PATCH` | `/api/orders/:id/status` | ลูกค้ายกเลิกคำสั่งซื้อของตนเอง | สาธารณะ | `{"status":"ยกเลิก","cancel_reason":"ติดธุระด่วน"}` |
 
 ### 6. ระบบผู้ดูแลระบบ (Admin Portal Endpoints)
@@ -111,10 +106,9 @@ backend/
 | `POST` | `/api/admin/login` | เข้าสู่ระบบผู้ดูแลระบบ | Rate Limited (5 ครั้ง / 15 นาที) |
 | `POST` | `/api/admin/logout` | ออกจากระบบผู้ดูแลระบบและลบเซสชัน | คุกกี้แอดมิน |
 | `GET` | `/api/admin/me` | ตรวจสอบข้อมูลผู้ดูแลระบบปัจจุบัน | คุกกี้แอดมิน |
-| `GET` | `/api/admin/analytics` | ดึงสถิติยอดขายวันนี้/เดือนนี้/ทั้งหมด | คุกกี้แอดมิน |
-| `GET` | `/api/admin/orders` | ดึงรายการคำสั่งซื้อทั้งหมด | คุกกี้แอดมิน |
+| `GET` | `/api/admin/analytics` | ดึงสถิติยอดขายวันนี้/เดือนนี้/ทั้งหมด (Smart Polling 15s) | คุกกี้แอดมิน |
+| `GET` | `/api/admin/orders` | ดึงรายการคำสั่งซื้อทั้งหมด (Smart Polling 4s) | คุกกี้แอดมิน |
 | `PATCH` | `/api/admin/orders/:id/status` | อัปเดตสถานะคำสั่งซื้อ (เช่น กำลังเตรียม, จัดส่งแล้ว) | คุกกี้แอดมิน |
-| `GET` | `/api/admin/events` | สตรีม SSE แจ้งเตือนออเดอร์ใหม่เข้าแอดมิน | คุกกี้แอดมิน |
 | `PATCH` | `/api/admin/store/status` | เปิด/ปิดร้านค้า, แก้ไขชื่อร้าน และข้อความประกาศ | คุกกี้แอดมิน |
 | `POST` | `/api/admin/store/reset-queue` | สรุปรายงานยอดขาย ส่งเข้า Discord และรีเซ็ตคิว | คุกกี้แอดมิน |
 | `POST` | `/api/admin/menu` | เพิ่มรายการเมนูอาหารใหม่ | คุกกี้แอดมิน |
@@ -152,16 +146,18 @@ backend/
    - `Helmet`: ป้องกัน Clickjacking, XSS, MIME Sniffing และกำหนดนโยบายความปลอดภัย
    - `CORS`: กำหนด Whitelist เฉพาะโดเมนที่ระบุใน `CORS_ORIGIN`
    - `Admin Login Rate Limiter`: จำกัด 5 ครั้ง / 15 นาที ป้องกัน Brute-Force Password
-   - `General API Rate Limiter`: จำกัด 300 ครั้ง / 15 นาที ป้องกันการยิง DoS และ Web Scraper
+   - `Track Order Rate Limiter`: จำกัด 300 ครั้ง / 15 นาที รองรับการ Polling สถานะออเดอร์
+   - `Store Status Rate Limiter`: จำกัด 300 ครั้ง / 15 นาที รองรับการ Polling สถานะร้าน
+   - `General API Rate Limiter`: จำกัด 600 ครั้ง / 15 นาที ป้องกัน DoS และ Scraper
 
 ---
 
-## 🤖 ระบบสตรีมข้อมูลเรียลไทม์และการแจ้งเตือน (Real-Time & Discord Engine)
+## 🤖 ระบบ Smart Cache และการแจ้งเตือน Discord (Smart Cache & Discord Engine)
 
-### 1. Server-Sent Events Manager (`src/shared/sse.js`)
-- **Admin Clients**: รับอีเวนต์ `new_order` เมื่อมีลูกค้าสั่งซื้อ และ `order_status_updated`
-- **Customer Clients**: รับอีเวนต์ `order_status_updated` เฉพาะของออเดอร์ตนเอง
-- **General Clients**: รับอีเวนต์ `store_status` เมื่อร้านเปลี่ยนสถานะเปิด/ปิด หรือแก้ไขประกาศ
+### 1. สถาปัตยกรรม Smart Cache (HTTP 304 Not Modified & ETag)
+- เปิดใช้งาน `ETag` (`app.set('etag', 'strong')`)
+- เมื่อเบราว์เซอร์ส่งคำขอ Polling พร้อม `If-None-Match: <etag>` หากข้อมูลในฐานข้อมูลยังไม่มีการเปลี่ยนแปลง Express จะส่งกลับสถานะ `304 Not Modified` ทันทีโดยไม่ต้องส่ง Body ซ้ำ
+- ลดทราฟฟิกเครือข่ายและประหยัดซีพียูเซิร์ฟเวอร์อย่างมีนัยสำคัญ
 
 ### 2. Discord Webhook Notifications (`src/discord.js`)
 - **แจ้งเตือนออเดอร์ใหม่**: ส่งการ์ด Embed แสดงรายการอาหาร, น้ำสลัด, ยอดเงิน, รูปแบบการจัดส่ง และเบอร์โทร
@@ -185,3 +181,4 @@ backend/
 | `DISCORD_WEBHOOK_URL` | `https://discord.com/api/webhooks/...` | ตัวเลือก (Optional) | Webhook แจ้งเตือนออเดอร์ใหม่ |
 | `DISCORD_CANCEL_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | ตัวเลือก (Optional) | Webhook แจ้งเตือนยกเลิกออเดอร์ |
 | `DISCORD_REPORT_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | ตัวเลือก (Optional) | Webhook ส่งสรุปยอดขายประจำวัน |
+

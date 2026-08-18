@@ -1,13 +1,13 @@
 <div align="center">
   <h1>🥗 ระบบสั่งอาหารออนไลน์ (Spring Roll Online Store)</h1>
-  <p><strong>เว็บแอปพลิเคชันสั่งซื้ออาหารออนไลน์ระดับ Production สไตล์ Glassmorphism สำหรับร้านสปริงโรลและอาหารเพื่อสุขภาพ ออกแบบตามสถาปัตยกรรมแบบ Feature-First, สตรีมข้อมูลเรียลไทม์ผ่าน SSE สองทิศทาง, ระบบตะกร้าสินค้าแบบ Optimistic UI, การแจ้งเตือนและส่งรายงานอัตโนมัติผ่าน Discord Webhook พร้อมรองรับการ Deploy บน Cloud แบบฟรี 100%</strong></p>
+  <p><strong>เว็บแอปพลิเคชันสั่งซื้ออาหารออนไลน์ระดับ Production สไตล์ Glassmorphism สำหรับร้านสปริงโรลและอาหารเพื่อสุขภาพ ออกแบบตามสถาปัตยกรรมแบบ Feature-First, ซิงค์ข้อมูลเรียลไทม์ผ่าน Smart Polling + Smart Cache (HTTP 304 ETag), ระบบตะกร้าสินค้าแบบ Optimistic UI, การแจ้งเตือนและส่งรายงานอัตโนมัติผ่าน Discord Webhook พร้อมรองรับการ Deploy บน Cloud แบบฟรี 100%</strong></p>
 
   <br />
 
   <img src="https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%20%7C%20TailwindCSS-00f2fe?style=flat-square&logo=react&logoColor=white" alt="Frontend" />
   <img src="https://img.shields.io/badge/Backend-Node.js%20%7C%20Express-43e97b?style=flat-square&logo=node.js&logoColor=white" alt="Backend" />
   <img src="https://img.shields.io/badge/Database-PostgreSQL%2015%2B-336791?style=flat-square&logo=postgresql&logoColor=white" alt="Database" />
-  <img src="https://img.shields.io/badge/Realtime-Server--Sent%20Events%20(SSE)-ff0844?style=flat-square" alt="Realtime SSE" />
+  <img src="https://img.shields.io/badge/Realtime-Smart%20Polling%20%26%20Intelligent%20Cache-ff0844?style=flat-square" alt="Smart Polling & Cache" />
   <img src="https://img.shields.io/badge/Container-Docker%20%7C%20Docker%20Compose-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
   <img src="https://img.shields.io/badge/Cloud%20Hosting-Render%20%7C%20Vercel%20%7C%20Neon-000000?style=flat-square&logo=vercel&logoColor=white" alt="Cloud Hosting" />
   <img src="https://img.shields.io/badge/Integration-Discord%20Webhook-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord" />
@@ -32,41 +32,38 @@ flowchart TD
     classDef extStyle fill:#2a1b4e,stroke:#a855f7,stroke-width:2px,color:#f8fafc,rx:8px
 
     subgraph Layer_Client ["🌐 1. ส่วนติดต่อผู้ใช้ (Frontend Clients)"]
-        Customer["📱 ลูกค้า (Customer Web App)<br/>React 18 • Tailwind CSS • Glassmorphism"]:::clientStyle
-        Admin["💻 ผู้ดูแลระบบ (Admin Portal)<br/>Real-time KDS Kanban • Analytics Dashboard"]:::clientStyle
+        Customer["📱 ลูกค้า (Customer Web App)<br/>React 18 • TanStack Query • Glassmorphism"]:::clientStyle
+        Admin["💻 ผู้ดูแลระบบ (Admin Portal)<br/>Smart Polling KDS Kanban • Analytics Dashboard"]:::clientStyle
     end
 
     subgraph Layer_Proxy ["🛡️ 2. ทางผ่านและกระจายโหลด (Edge & Reverse Proxy)"]
-        Proxy["🌐 Vercel Edge / Nginx Web Server<br/>จัดการ HTTPS, Static Files และ Proxy Pass /api"]:::proxyStyle
+        Proxy["🌐 Vercel Edge / Nginx Web Server<br/>จัดการ HTTPS, Static Files, ETag และ Proxy Pass /api"]:::proxyStyle
     end
 
     subgraph Layer_Backend ["⚙️ 3. บริการเซิร์ฟเวอร์หลังบ้าน (Express.js Backend API)"]
-        API["🚀 Express API Core (Feature-First Architecture)<br/>ระบบเซสชันแอดมิน • จัดการข้อผิดพลาด RFC 9457"]:::backendStyle
-        SSE["📡 SSE Real-Time Hub<br/>สตรีมสถานะร้านค้าและออเดอร์สด"]:::backendStyle
+        API["🚀 Express API Core (Feature-First Architecture)<br/>ระบบเซสชันแอดมิน • Smart Cache (ETag/304) • RFC 9457"]:::backendStyle
         Discord["🤖 Discord Webhook Engine<br/>แจ้งเตือนออเดอร์ & รายงานยอดขาย"]:::backendStyle
         Cron["⏱️ Cron Maintenance Service<br/>ล้างเซสชันขยะที่หมดอายุอัตโนมัติ"]:::backendStyle
     end
 
     subgraph Layer_Data ["🗄️ 4. ฐานข้อมูลและบริการภายนอก (Database & External)"]
-        DB[("🐘 PostgreSQL 15+ Database<br/>จัดเก็บเมนู, ออเดอร์, เซสชัน (pg.Pool)")]:::dbStyle
+        DB[("🐘 PostgreSQL 15+ Database<br/>จัดเก็บเมนู, ออเดอร์, เซสชัน (B-Tree Indexed)")]:::dbStyle
         DiscordApp["💬 Discord Channels<br/>#orders • #cancels • #reports"]:::extStyle
         CronTrigger["⏰ cron-job.org Scheduler<br/>ระบบยิงคำขอบำรุงรักษาระบบอัตโนมัติ"]:::extStyle
     end
 
     %% เส้นทางการเชื่อมต่อ (Data Flow & Interactions)
-    Customer -->|ส่งคำสั่งซื้อ / ติดตามสถานะ| Proxy
-    Admin -->|ส่งคุกกี้เซสชันแอดมิน| Proxy
+    Customer -->|Smart Polling ออเดอร์/สถานะร้าน & ส่งคำสั่งซื้อ| Proxy
+    Admin -->|Smart Polling คิวออเดอร์ 4s & ส่งคุกกี้เซสชัน| Proxy
 
-    Proxy -->|ส่งต่อคำขอผ่าน Proxy Pass| API
+    Proxy -->|ส่งต่อคำขอพร้อม ETag If-None-Match| API
 
-    API -->|บันทึกและดึงข้อมูลผ่าน Pool| DB
-    API -->|กระจายเหตุการณ์สด| SSE
+    API -->|บันทึกและดึงข้อมูลผ่าน Pool พร้อม Indexes| DB
+    API -->|ตอบกลับข้อมูลสด หรือ 304 Not Modified| Proxy
     API -->|ส่งต่อข้อมูลแจ้งเตือน| Discord
     CronTrigger -->|ยิงคำขอบำรุงรักษาตามเวลา| Cron
     Cron -->|ล้างเซสชันขยะที่หมดอายุ| DB
 
-    SSE -.->|สตรีมสถานะร้านค้าและออเดอร์สด| Customer
-    SSE -.->|สตรีมออเดอร์เข้าใหม่แบบสดๆ| Admin
     Discord ==>|ส่งการ์ดแจ้งเตือนเข้าห้องแชท| DiscordApp
 ```
 
@@ -78,13 +75,13 @@ flowchart TD
 - **ดีไซน์ระดับพรีเมียม (Glassmorphism & Fluid Typography)**: รองรับการใช้งานอย่างลื่นไหลบนทุกขนาดหน้าจอ ทั้งมือถือ แท็บเล็ต และคอมพิวเตอร์
 - **การเลือกน้ำสลัดที่ยืดหยุ่น (Dressing Selection)**: สามารถเลือกน้ำสลัดที่ต้องการ หรือเลือกตัวเลือก "ไม่รับน้ำสลัด" ได้อย่างอิสระ
 - **ตะกร้าสินค้าตอบสนองทันที (Optimistic UI & 500ms Debounce)**: ปรับจำนวนสินค้าได้ทันทีโดยไม่ต้องรอโหลด พร้อมการหน่วงเวลาส่งข้อมูลเพื่อประหยัดทรัพยากร
-- **การติดตามคำสั่งซื้ออัจฉริยะ (Instant Auto-Track)**: ดึงข้อมูลออเดอร์ล่าสุดของลูกค้ามาแสดงผลทันที 0 คลิก พร้อมแถบสถานะภาพ 5 สเต็ป
+- **การติดตามคำสั่งซื้ออัจฉริยะ (Smart Polling Auto-Track)**: ดึงข้อมูลออเดอร์ล่าสุดของลูกค้ามาแสดงผลทันที 0 คลิก พร้อมแถบสถานะภาพ 5 สเต็ป ซิงค์ทุก 4 วินาที และหยุดอัตโนมัติเมื่อออเดอร์เสร็จสิ้น
 - **การแจ้งเตือนด้วยเสียง (Harmonic Bell Chime)**: เสียงแจ้งเตือนนุ่มนวลผ่าน Web Audio Context API เมื่อสถานะออเดอร์มีการเปลี่ยนแปลง
 - **สลิปคำสั่งซื้ออิเล็กทรอนิกส์ (E-Receipt)**: หน้าต่างสรุปสลิปคำสั่งซื้ออย่างเป็นทางการ พร้อมเงื่อนไขแสดงค่าจัดส่งที่ถูกต้องตามรูปแบบการรับอาหาร
 
 ### ⚙️ ฝั่งผู้ดูแลระบบ (Admin Management Portal)
-- **กระดานจัดการออเดอร์แบบสด (Real-time KDS Kanban & Table View)**: อัปเดตออเดอร์เข้าใหม่ทันทีผ่านท่อ SSE โดยไม่ต้องกดรีเฟรชหน้าจอ
-- **แดชบอร์ดสถิติและยอดขาย (Analytics Dashboard)**: แสดงสรุปยอดขายวันนี้/เดือนนี้/ทั้งหมด, อัตราการยกเลิก และเมนูขายดี 5 อันดับแรก
+- **กระดานจัดการออเดอร์แบบสด (Smart Polling KDS Kanban & Table View)**: อัปเดตออเดอร์เข้าใหม่ทุก 4 วินาที พร้อมระบบหยุด Polling อัตโนมัติเมื่อยุบจอเพื่อประหยัดทรัพยากร
+- **แดชบอร์ดสถิติและยอดขาย (Analytics Dashboard)**: แสดงสรุปยอดขายวันนี้/เดือนนี้/ทั้งหมด, อัตราการยกเลิก และเมนูขายดี 5 อันดับแรก พร้อมซิงค์ทุก 15 วินาที
 - **ระบบจัดการเมนูและน้ำสลัด (Full Menu & Dressing CRUD)**: เพิ่ม ลบ แก้ไข รายการอาหาร รูปภาพ ราคา และสถานะเปิด/ปิดจำหน่าย
 - **การเปิด/ปิดร้านและข้อความประกาศ (Store Settings)**: สลับสถานะร้านและพิมพ์ประกาศเพื่อส่งต่อข้อมูลไปยังหน้าร้านลูกค้าแบบเรียลไทม์ทันที
 - **การปิดรอบและรีเซ็ตคิวประจำวัน (Daily Closing & Reset Queue)**: ส่งสรุปยอดขายเข้า Discord ทันทีเมื่อปิดร้าน พร้อมรีเซ็ตลำดับคิวใหม่อัตโนมัติ
@@ -104,22 +101,21 @@ flowchart TD
 - **การจำกัดอัตราคำขอที่เข้มงวด (Strict Rate Limits)**:
   - `POST /api/admin/login`: จำกัด 5 ครั้ง / 15 นาที (ป้องกัน Brute Force)
   - `POST /internal/cron/*`: จำกัด 20 ครั้ง / 15 นาที พร้อมตรวจสอบ `CRON_SECRET`
-  - `/api/*` ทั่วไป: จำกัด 300 ครั้ง / 15 นาที (ป้องกัน DoS และ Scraper)
+  - `GET /api/orders/track/:order_number`: จำกัด 300 ครั้ง / 15 นาที (รองรับ Customer Smart Polling)
+  - `/api/store/*`: จำกัด 300 ครั้ง / 15 นาที (รองรับ Store Status Polling)
+  - `/api/*` ทั่วไป: จำกัด 600 ครั้ง / 15 นาที (ป้องกัน DoS และ Scraper)
 - **Header ความปลอดภัยและ CORS**: ติดตั้ง `Helmet` และจำกัด `CORS_ORIGIN` เฉพาะ Whitelist Domains ในโหมด Production
 - **คำสั่ง SQL ปลอดภัย 100%**: ใช้ Parameterized Queries (`$1, $2, ...`) ทุกจุด ป้องกัน SQL Injection อย่างสมบูรณ์
 
 ### 🚀 ด้านการเพิ่มประสิทธิภาพและการจัดการแคช (Optimization & Caching Strategy)
-- **สถาปัตยกรรม Hybrid Caching Strategy (Zero-Stale-Cache Policy)**:
-  - **No-Cache (Dynamic APIs & HTML)**: บังคับ `Cache-Control: no-store, no-cache, must-revalidate` บน `index.html` และ `/api/*` ทั้งหมด ป้องกันเบราว์เซอร์หรือ CDN/Cloudflare แอบจำข้อมูลเก่า มั่นใจได้ว่าข้อมูลออเดอร์และเวอร์ชันหน้าเว็บสดใหม่เสมอ
-  - **Long-term Cache (Static Assets)**: แคชไฟล์ใน `/assets/` (JS/CSS ที่มี Hash กำกับ) นาน 1 ปี (`public, max-age=31536000, immutable`) โหลดเว็บเร็วระดับเสี้ยววินาทีและประหยัด Bandwidth สูงสุด
-- **การสตรีมข้อมูลสดเรียลไทม์ผ่าน SSE (Server-Sent Events)**:
-  - สตรีมสถานะร้านเปิด/ปิด และประกาศร้านค้าสด (`/api/store/events`) ให้ลูกค้าเห็นการเปลี่ยนแปลงทันทีโดยไม่ต้องกดรีเฟรช
-  - สตรีมสถานะคำสั่งซื้อสด (`/api/orders/events/:order_number`) พร้อมเสียงแจ้งเตือนแบบ Harmonic Bell Chime
-  - สตรีมออเดอร์เข้าใหม่แบบ Real-Time สู่หน้าจัดการออเดอร์ของแอดมิน (`/api/admin/events`) แบบ Sub-second โดยไม่ต้องกดสลับหน้าต่าง
-  - ระบบ **Heartbeat Ping (25s)** ป้องกัน Cloudflare Tunnel หรือ Reverse Proxy ตัดการเชื่อมต่อเมื่อไม่มีข้อมูลส่ง
-  - ระบบ **Smart Fallback Polling (10s)** อัตโนมัติเมื่อการเชื่อมต่อ SSE ขาดหาย
+- **สถาปัตยกรรม Smart Polling & Intelligent Cache (HTTP 304 + TanStack Query)**:
+  - **Dynamic API Smart Caching**: เซิร์ฟเวอร์เปิดใช้งาน `ETag` (Strong ETag) เมื่อไคลเอนต์ส่งคำขอ Polling พร้อม `If-None-Match` หากข้อมูลไม่มีการเปลี่ยนแปลง เซิร์ฟเวอร์จะตอบกลับด้วย `HTTP 304 Not Modified` ทันทีโดยไม่ต้องส่ง Body ซ้ำ ช่วยลดภาระ CPU และประหยัด Bandwidth กว่า 95%
+  - **Adaptive Polling Intervals**: ปรับความถี่ตามบริบทการใช้งาน — หน้าออเดอร์แอดมิน 4s, หน้าติดตามออเดอร์ลูกค้า 4s, สถานะร้านค้า 15s, แดชบอร์ดสถิติ 15s
+  - **Tab Visibility Auto-Pause**: หยุด Polling อัตโนมัติเมื่อผู้ใช้สลับไปแท็บอื่นหรือยุบหน้าต่าง (`document.visibilityState === 'hidden'`) เพื่อประหยัดแบตเตอรี่และ Bandwidth
+  - **Window Focus & Tab Revalidation**: ดึงข้อมูลสดล่าสุดทันทีเมื่อผู้ใช้สลับกลับมาเปิดหน้าเว็บ (`refetchOnWindowFocus: true`)
+  - **Long-term Cache (Static Assets)**: แคชไฟล์ใน `/assets/` (JS/CSS ที่มี Hash กำกับ) นาน 1 ปี (`public, max-age=31536000, immutable`) โหลดเว็บเร็วระดับเสี้ยววินาที
 - **Optimistic UI และการหน่วงเวลา Debounce**: อัปเดต UI ทันที และหน่วงเวลา 500 มิลลิวินาที ก่อนส่งคำขออัปเดตตะกร้าสินค้าไปยังเซิร์ฟเวอร์
-- **การจัดการ Connection Pooling**: ควบคุมการเชื่อมต่อฐานข้อมูลผ่าน `pg.Pool` รองรับการทำงานพร้อมกันได้สูง
+- **การจัดการ Connection Pooling & Indexes**: ควบคุมการเชื่อมต่อฐานข้อมูลผ่าน `pg.Pool` พร้อมดัชนี B-Tree ที่ครอบคลุมคิวรี่ Polling ทั้งหมด
 
 ---
 
@@ -146,7 +142,6 @@ Food-Order-Web-Application/
 │       │   ├── auth_controller.js
 │       │   ├── categories_controller.js
 │       │   ├── dressings_controller.js
-│       │   ├── events_controller.js
 │       │   ├── menu_controller.js
 │       │   └── orders_controller.js
 │       ├── cart/                   # ฟีเจอร์: ตะกร้าสินค้าและการจัดการเซสชัน
@@ -169,15 +164,13 @@ Food-Order-Web-Application/
 │       │   ├── menu_controller.js
 │       │   ├── menu_repository.js
 │       │   └── menu_service.js
-│       ├── orders/                 # ฟีเจอร์: คำสั่งซื้อ, การสตรีมข้อมูล SSE, และการติดตาม
-│       │   ├── events_controller.js
+│       ├── orders/                 # ฟีเจอร์: คำสั่งซื้อและการติดตามสถานะ
 │       │   ├── orders_controller.js
 │       │   ├── orders_repository.js
 │       │   └── orders_service.js
 │       ├── shared/                 # โมดูลและมิดเดิลแวร์ส่วนกลาง
 │       │   ├── errors.js           # โครงสร้างคลาส Error (RFC 9457)
 │       │   ├── logger.js           # ระบบบันทึก Log JSON (Pino)
-│       │   ├── sse.js              # SSE Real-time Manager
 │       │   ├── middleware/         # auth.js, errorHandler.js, requestContext.js, validate.js
 │       │   └── validators/         # index.js (Validation Schemas)
 │       └── store/                  # ฟีเจอร์: สถานะเปิด/ปิดร้าน, ลำดับคิว, และประกาศ
@@ -208,9 +201,9 @@ Food-Order-Web-Application/
 │       │   ├── MenuGrid.jsx        # การ์ดแสดงเมนูอาหารและตัวกรองหมวดหมู่
 │       │   ├── MobileCartBar.jsx   # แถบตะกร้าสินค้าลอยตัวสำหรับ Mobile
 │       │   ├── OrderSlipModal.jsx  # หน้าต่างสลิปใบเสร็จอิเล็กทรอนิกส์ (E-Receipt)
-│       │   └── TrackingModal.jsx   # หน้าต่างค้นหาและติดตามสถานะออเดอร์แบบเรียลไทม์
+│       │   └── TrackingModal.jsx   # หน้าต่างค้นหาและติดตามสถานะออเดอร์ (Smart Polling)
 │       ├── context/                # AdminContext, AlertContext, AuthContext, CartContext, ToastContext
-│       ├── hooks/                  # queries.js, useSSE.js (SSE Real-time Hook)
+│       ├── hooks/                  # queries.js (Smart Polling & React Query Hooks)
 │       ├── pages/                  # CustomerApp.jsx, AdminApp.jsx
 │       │   └── admin/              # Dashboard.jsx, Dressings.jsx, Login.jsx, Menu.jsx, Orders.jsx, Settings.jsx
 │       └── utils/                  # audio.js (Web Audio Context Bell Chime)

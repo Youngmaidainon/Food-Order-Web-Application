@@ -4,10 +4,10 @@ import { OrdersService } from './orders_service.js';
 import rateLimit from 'express-rate-limit';
 import { validate } from '../shared/middleware/validate.js';
 import { createOrderSchema, cancelOrderSchema } from '../shared/validators/index.js';
-import { eventsRouter } from './events_controller.js';
+
 
 const ordersRouter = express.Router();
-ordersRouter.use('/events', eventsRouter);
+
 
 const ordersRepository = new OrdersRepository();
 const ordersService = new OrdersService(ordersRepository);
@@ -25,7 +25,7 @@ const createOrderRateLimiter = rateLimit({
 
 const trackOrderRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 300,
   message: { success: false, message: 'คุณตรวจสอบสถานะบ่อยเกินไป กรุณารอสักครู่' },
   standardHeaders: true,
   legacyHeaders: false,
