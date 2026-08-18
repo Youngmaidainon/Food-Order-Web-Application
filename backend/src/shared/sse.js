@@ -1,6 +1,7 @@
 class SSEManager {
   constructor() {
     this.adminClients = new Set();
+    this.generalClients = new Set();
     this.customerClients = new Map(); // orderNumber -> Set of clients
   }
 
@@ -8,6 +9,13 @@ class SSEManager {
     this.adminClients.add(res);
     res.on('close', () => {
       this.adminClients.delete(res);
+    });
+  }
+
+  addGeneralClient(res) {
+    this.generalClients.add(res);
+    res.on('close', () => {
+      this.generalClients.delete(res);
     });
   }
 
@@ -48,6 +56,9 @@ class SSEManager {
   broadcast(event, data) {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
     for (const res of this.adminClients) {
+      res.write(payload);
+    }
+    for (const res of this.generalClients) {
       res.write(payload);
     }
     for (const clients of this.customerClients.values()) {

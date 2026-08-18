@@ -30,12 +30,28 @@ export default function CustomerApp() {
   const { data: storeStatusData, isLoading: isStoreLoading } = useStoreStatus();
   const { data: menuData, isLoading: isMenuLoading } = useMenu();
 
-  const storeStatus = storeStatusData || { is_open: true, restaurant_name: 'ร้านสปริงโรลออนไลน์' };
+  const [liveStoreStatus, setLiveStoreStatus] = useState(null);
+  const storeStatus = liveStoreStatus || storeStatusData || { is_open: true, restaurant_name: 'ร้านสปริงโรลออนไลน์' };
   const menuItems = menuData?.menuItems || [];
   const dressings = menuData?.dressings || [];
 
   const [activeOrder, setActiveOrder] = useState(() => localStorage.getItem('activeOrder'));
   const [activeOrderStatus, setActiveOrderStatus] = useState(null);
+
+  // Real-time SSE updates for Store Open/Close Status & Announcement
+  const storeSseUrl = getApiUrl('/store/events');
+  const { data: storeSseData } = useSSE(storeSseUrl);
+
+  useEffect(() => {
+    if (storeSseData && storeSseData.event === 'store_status' && storeSseData.payload) {
+      setLiveStoreStatus(storeSseData.payload);
+      if (storeSseData.payload.is_open === false) {
+        showToast('ขณะนี้ร้านปิดรับออเดอร์ชั่วคราว', 'warning');
+      } else if (storeSseData.payload.is_open === true) {
+        showToast('ขณะนี้ร้านเปิดรับออเดอร์แล้ว ยินดีต้อนรับครับ!', 'success');
+      }
+    }
+  }, [storeSseData, showToast]);
 
   // Check URL param for ?track=ORD-...
   useEffect(() => {
@@ -118,6 +134,7 @@ export default function CustomerApp() {
     await clearCart();
     
     localStorage.setItem('activeOrder', order.order_number);
+    localStorage.setItem('lastTrackedOrder', order.order_number);
     setActiveOrder(order.order_number);
     setActiveOrderStatus(order.status || 'รอดำเนินการ');
     setIsTrackingModalOpen(true);

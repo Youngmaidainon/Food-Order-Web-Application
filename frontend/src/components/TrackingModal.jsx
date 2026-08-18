@@ -16,13 +16,14 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
   const [isSlipOpen, setIsSlipOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Update order number when opened
+  // Update order number when opened and automatically fetch latest state
   useEffect(() => {
     if (isOpen) {
-      const targetNum = initialOrderNum || '';
-      setOrderNum(targetNum);
-      if (targetNum) {
-        handleSearch(targetNum);
+      const targetNum = initialOrderNum || localStorage.getItem('activeOrder') || localStorage.getItem('lastTrackedOrder') || '';
+      const cleanNum = targetNum.trim();
+      setOrderNum(cleanNum);
+      if (cleanNum) {
+        handleSearch(cleanNum);
       } else {
         setTrackingData(null);
         setError('');
@@ -40,6 +41,7 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
       const res = await sendApiRequest(`/orders/track/${numToSearch}`);
       if (res.success && res.data) {
         setTrackingData(res.data);
+        localStorage.setItem('lastTrackedOrder', res.data.order_number);
       } else {
         setError(res.message || 'ไม่พบออเดอร์ที่ระบุ');
         setTrackingData(null);
@@ -52,17 +54,18 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
     }
   }, [orderNum]);
 
-  // SSE Live Updates
-  const sseUrl = (isOpen && trackingData?.order_number)
-    ? getApiUrl(`/orders/events/${trackingData.order_number}`)
+  // SSE Live Updates (Active on tracked order)
+  const currentTrackNum = trackingData?.order_number || (orderNum && orderNum.trim() ? orderNum.trim() : null);
+  const sseUrl = (isOpen && currentTrackNum)
+    ? getApiUrl(`/orders/events/${currentTrackNum}`)
     : null;
   const { data: sseData } = useSSE(sseUrl);
 
   useEffect(() => {
-    if (sseData && sseData.event === 'order_status_updated' && trackingData) {
-      handleSearch(trackingData.order_number);
+    if (sseData && sseData.event === 'order_status_updated' && currentTrackNum) {
+      handleSearch(currentTrackNum);
     }
-  }, [sseData, handleSearch, trackingData]);
+  }, [sseData, handleSearch, currentTrackNum]);
 
   const handleCopyOrderNumber = () => {
     if (!trackingData?.order_number) return;
