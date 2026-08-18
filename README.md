@@ -126,7 +126,7 @@ flowchart TD
 ## 📁 โครงสร้างโปรเจกต์ (Repository Structure)
 
 ```
-Food Order System/
+Food-Order-Web-Application/
 ├── .env.example                    # ไฟล์ตัวอย่างการตั้งค่า Environment Variables
 ├── docker-compose.yml              # ตัวควบคุม Container Orchestration ทั้งระบบ (Full-Stack)
 ├── LICENSE                         # ใบอนุญาตการใช้งานซอฟต์แวร์ (MIT)
@@ -286,4 +286,5 @@ Food Order System/
 
 ## 📜 ใบอนุญาตการใช้งาน (License)
 
-โปรเจกต์นี้เผยแพร่ภายใต้ใบอนุญาต [MIT License](file:///d:/Food%20Order%20System/LICENSE) สามารถนำไปพัฒนาต่อยอด ใช้งานเชิงพาณิชย์ หรือปรับแต่งได้อย่างอิสระ
+โปรเจกต์นี้เผยแพร่ภายใต้ใบอนุญาต [MIT License](LICENSE) สามารถนำไปพัฒนาต่อยอด ใช้งานเชิงพาณิชย์ หรือปรับแต่งได้อย่างอิสระ
+
