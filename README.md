@@ -114,35 +114,94 @@
 
 ```
 Food Order System/
-├── backend/                  # ซอร์สโค้ดฝั่ง Backend (Node.js + Express)
-│   ├── src/
-│   │   ├── admin/            # ฟีเจอร์: การยืนยันตัวตนแอดมิน, แดชบอร์ด, รายงาน
-│   │   ├── cart/             # ฟีเจอร์: เซสชันตะกร้าสินค้าและการจัดการรายการ
-│   │   ├── config/           # การตั้งค่าระบบส่วนกลาง และระบบ Fail-Fast
-│   │   ├── cron/             # ฟีเจอร์: งานบำรุงรักษาระบบและล้างข้อมูลเก่า
-│   │   ├── dressings/        # ฟีเจอร์: จัดการรายการน้ำสลัด
-│   │   ├── menu/             # ฟีเจอร์: จัดการรายการอาหารและหมวดหมู่
-│   │   ├── orders/           # ฟีเจอร์: วงจรออเดอร์, สตรีม SSE, ติดตามสถานะ
-│   │   ├── shared/           # ฟังก์ชันส่วนกลาง, AppError, Logger, SSE Manager
-│   │   └── store/            # ฟีเจอร์: สถานะร้าน, ลำดับคิว, ข้อความประกาศ
-│   ├── Dockerfile
-│   ├── render.yaml           # ไฟล์ Infrastructure-as-Code สำหรับ Render
-│   ├── server.js             # ตัวเริ่มต้นระบบและ Auto-Migration
-│   └── package.json
-├── frontend/                 # ซอร์สโค้ดฝั่ง Frontend (React 18 + Vite)
-│   ├── src/
-│   │   ├── api/              # ตัวจัดการเชื่อมต่อ API (Fetch Client)
-│   │   ├── components/       # คอมโพเนนต์ UI (ตะกร้า, เมนู, แอดมิน, Modals)
-│   │   ├── context/          # ตัวจัดการ State ส่วนกลาง (Auth, Cart, Toast, Alert)
-│   │   ├── pages/            # หน้าหลักของระบบ (CustomerApp, หน้าระบบแอดมิน)
-│   │   ├── utils/            # ฟังก์ชันสร้างเสียงแจ้งเตือน
-│   │   └── index.css         # ธีมหลัก, Tailwind และ Glassmorphism
-│   ├── vercel.json           # การตั้งค่า Deploy และ API Proxy บน Vercel
-│   ├── Dockerfile
-│   └── package.json
-├── database/                 # ซอร์สโค้ดระบบฐานข้อมูล PostgreSQL
-│   ├── schema.sql            # โครงสร้างตาราง, ENUMs, Indexes และ Seed Data
-│   └── README.md
-├── docker-compose.yml        # ตัวควบคุม Container ทั้งระบบ (Full-Stack)
-└── README.md
+├── .env.example                    # ไฟล์ตัวอย่างการตั้งค่า Environment Variables
+├── docker-compose.yml              # ตัวควบคุม Container Orchestration ทั้งระบบ (Full-Stack)
+├── LICENSE                         # ใบอนุญาตการใช้งานซอฟต์แวร์ (MIT)
+├── README.md                       # เอกสารคู่มือหลักของโปรเจกต์
+├── backend/                        # ซอร์สโค้ดและระบบเซิร์ฟเวอร์หลังบ้าน (Node.js + Express)
+│   ├── Dockerfile                  # คำสั่งสร้าง Docker Image สำหรับ Backend
+│   ├── package.json                # รายการ Dependencies และ Scripts ของ Backend
+│   ├── README.md                   # เอกสารคู่มือสถาปัตยกรรมและ API ของ Backend
+│   ├── render.yaml                 # คอนฟิก Infrastructure-as-Code สำหรับ Render
+│   ├── server.js                   # บูตเซิร์ฟเวอร์, เชื่อมต่อ Database และ Auto-Migration
+│   └── src/                        # ซอร์สโค้ดจัดโครงสร้างแบบ Feature-First
+│       ├── discord.js              # โมดูลส่ง Webhook แจ้งเตือนและจัดการข้อความใน Discord
+│       ├── index.js                # จุดรวม Express App, Middlewares, Rate Limiting และ Routes
+│       ├── admin/                  # ฟีเจอร์: ระบบจัดการแอดมินหลังบ้าน
+│       │   ├── admin_controller.js
+│       │   ├── analytics_controller.js
+│       │   ├── auth_controller.js
+│       │   ├── categories_controller.js
+│       │   ├── dressings_controller.js
+│       │   ├── events_controller.js
+│       │   ├── menu_controller.js
+│       │   └── orders_controller.js
+│       ├── cart/                   # ฟีเจอร์: ตะกร้าสินค้าและการจัดการเซสชัน
+│       │   ├── cart_controller.js
+│       │   ├── cart_middleware.js
+│       │   ├── cart_repository.js
+│       │   └── cart_service.js
+│       ├── config/                 # ฟีเจอร์: Centralized Config & Database Pool
+│       │   ├── config.js
+│       │   └── database.js
+│       ├── cron/                   # ฟีเจอร์: ระบบงานบำรุงรักษาและล้างข้อมูลอัตโนมัติ
+│       │   ├── cron_controller.js
+│       │   ├── cron_repository.js
+│       │   └── cron_service.js
+│       ├── dressings/              # ฟีเจอร์: การดึงข้อมูลน้ำสลัดสำหรับลูกค้า
+│       │   ├── dressings_controller.js
+│       │   ├── dressings_repository.js
+│       │   └── dressings_service.js
+│       ├── menu/                   # ฟีเจอร์: การดึงข้อมูลเมนูอาหารและหมวดหมู่
+│       │   ├── menu_controller.js
+│       │   ├── menu_repository.js
+│       │   └── menu_service.js
+│       ├── orders/                 # ฟีเจอร์: คำสั่งซื้อ, การสตรีมข้อมูล SSE, และการติดตาม
+│       │   ├── events_controller.js
+│       │   ├── orders_controller.js
+│       │   ├── orders_repository.js
+│       │   └── orders_service.js
+│       ├── shared/                 # โมดูลและมิดเดิลแวร์ส่วนกลาง
+│       │   ├── errors.js           # โครงสร้างคลาส Error (RFC 9457)
+│       │   ├── logger.js           # ระบบบันทึก Log JSON (Pino)
+│       │   ├── sse.js              # SSE Real-time Manager
+│       │   ├── middleware/         # auth.js, errorHandler.js, requestContext.js, validate.js
+│       │   └── validators/         # index.js (Validation Schemas)
+│       └── store/                  # ฟีเจอร์: สถานะเปิด/ปิดร้าน, ลำดับคิว, และประกาศ
+│           ├── store_controller.js
+│           ├── store_repository.js
+│           └── store_service.js
+├── frontend/                       # ซอร์สโค้ดส่วนติดต่อผู้ใช้หน้าร้านและหลังบ้าน (React 18 + Vite)
+│   ├── Dockerfile                  # คำสั่งสร้าง Docker Image สำหรับ Frontend (Nginx)
+│   ├── index.html                  # ไฟล์ HTML หลักของ React SPA
+│   ├── nginx.conf                  # คอนฟิก Web Server Nginx และ API Reverse Proxy
+│   ├── package.json                # รายการ Dependencies และ Scripts ของ Frontend
+│   ├── postcss.config.js           # คอนฟิก PostCSS สำหรับ Tailwind CSS
+│   ├── README.md                   # เอกสารคู่มือสถาปัตยกรรมและเทคนิค UX/UI ของ Frontend
+│   ├── tailwind.config.js          # คอนฟิกธีมและสไตล์สี Tailwind CSS
+│   ├── vercel.json                 # คอนฟิก Reverse Proxy และ Rewrites สำหรับ Vercel
+│   ├── vite.config.js              # คอนฟิก Vite Build Tool
+│   └── src/
+│       ├── App.jsx                 # คอมโพเนนต์หลักและระบบจัดการ Routing
+│       ├── index.css               # สไตล์ธีม Glassmorphism, Animations และ Fluid Typography
+│       ├── main.jsx                # จุดเริ่มต้น React DOM Render
+│       ├── api/                    # api.js (Fetch Wrapper จัดการ Request & Error)
+│       ├── components/             # คอมโพเนนต์ UI หน้าร้านและ Modals
+│       │   ├── CartModal.jsx       # หน้าต่างตะกร้าสินค้าแบบ Bottom Sheet
+│       │   ├── CartSidebar.jsx     # แถบตะกร้าสินค้าด้านข้างสำหรับ Desktop
+│       │   ├── CheckoutModal.jsx   # หน้าต่างตรวจสอบรายการและกรอกข้อมูลจัดส่ง
+│       │   ├── DressingModal.jsx   # หน้าต่างเลือกน้ำสลัด
+│       │   ├── Header.jsx          # แถบเมนูด้านบน, โลโก้, สถานะร้าน, ปุ่มติดตาม, และตะกร้า
+│       │   ├── MenuGrid.jsx        # การ์ดแสดงเมนูอาหารและตัวกรองหมวดหมู่
+│       │   ├── MobileCartBar.jsx   # แถบตะกร้าสินค้าลอยตัวสำหรับ Mobile
+│       │   ├── OrderSlipModal.jsx  # หน้าต่างสลิปใบเสร็จอิเล็กทรอนิกส์ (E-Receipt)
+│       │   └── TrackingModal.jsx   # หน้าต่างค้นหาและติดตามสถานะออเดอร์แบบเรียลไทม์
+│       ├── context/                # AdminContext, AlertContext, AuthContext, CartContext, ToastContext
+│       ├── hooks/                  # queries.js, useSSE.js (SSE Real-time Hook)
+│       ├── pages/                  # CustomerApp.jsx, AdminApp.jsx
+│       │   └── admin/              # Dashboard.jsx, Dressings.jsx, Login.jsx, Menu.jsx, Orders.jsx, Settings.jsx
+│       └── utils/                  # audio.js (Web Audio Context Bell Chime)
+└── database/                       # ซอร์สโค้ดและสคีมาฐานข้อมูล PostgreSQL
+    ├── README.md                   # เอกสารคู่มือโครงสร้าง Database, ENUMs และ Indexes
+    └── schema.sql                  # สคริปต์สร้างตาราง, ENUMs, Foreign Keys, Indexes และ Seed Data
 ```

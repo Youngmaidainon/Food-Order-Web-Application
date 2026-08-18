@@ -8,38 +8,52 @@
 ## 🎨 โครงสร้างและการจัดระเบียบซอร์สโค้ด (Source Code Overview)
 
 ```
-frontend/src/
-├── api/
-│   └── api.js              # ตัวจัดการ Fetch API (sendApiRequest) จัดการ Request, Error และ Cookies
-├── components/             # คอมโพเนนต์ UI ที่นำกลับมาใช้ซ้ำได้
-│   ├── Header.jsx          # แถบเมนูด้านบน, สถานะร้าน, ปุ่มติดตามออเดอร์, ปุ่มตะกร้ามือถือ
-│   ├── MenuGrid.jsx        # การ์ดแสดงเมนูอาหาร, ป้ายสถานะ, ตัวกรองหมวดหมู่
-│   ├── CartSidebar.jsx     # แถบตะกร้าสินค้าด้านข้างสำหรับหน้าจอคอมพิวเตอร์
-│   ├── MobileCartBar.jsx   # แถบลอยสรุปตะกร้าสินค้าด้านล่างสำหรับมือถือ
-│   ├── CartModal.jsx       # หน้าต่างตะกร้าสินค้าแบบเลื่อนขึ้นจากด้านล่าง (Bottom Sheet)
-│   ├── DressingModal.jsx   # หน้าต่างเลือกน้ำสลัดก่อนเพิ่มลงตะกร้า
-│   ├── CheckoutModal.jsx   # หน้าต่างตรวจสอบรายการและกรอกข้อมูลจัดส่ง
-│   ├── TrackingModal.jsx   # หน้าต่างติดตามสถานะคำสั่งซื้อแบบเรียลไทม์ + ปุ่มดูสลิป
-│   ├── OrderSlipModal.jsx  # หน้าต่างแสดงสลิปใบเสร็จอิเล็กทรอนิกส์ (E-Receipt)
-│   └── admin/              # คอมโพเนนต์เฉพาะสำหรับระบบจัดการหลังบ้าน
-├── context/                # ระบบจัดการ State ส่วนกลาง (Global State)
-│   ├── AlertContext.jsx    # กล่องข้อความแจ้งเตือนและยืนยัน (Alert / Confirm Dialog)
-│   ├── AuthContext.jsx     # สถานะการเข้าสู่ระบบของผู้ดูแลระบบ
-│   ├── CartContext.jsx     # ข้อมูลตะกร้าสินค้า (Optimistic UI + การหน่วงเวลา Debounce)
-│   └── ToastContext.jsx    # การแจ้งเตือนแบบป๊อปอัปสั้น (Toast Notifications)
-├── pages/                  # หน้าแสดงผลหลักของระบบ
-│   ├── CustomerApp.jsx     # หน้าร้านค้าหลักสำหรับลูกค้าสั่งซื้อ
-│   └── admin/              # หน้าควบคุมสำหรับผู้ดูแลระบบ
-│       ├── Dashboard.jsx   # แดชบอร์ดสรุปยอดขายและเมนูยอดนิยม
-│       ├── Menu.jsx        # ระบบเพิ่ม ลบ แก้ไข เมนูอาหารและหมวดหมู่
-│       ├── Dressings.jsx   # ระบบจัดการรายการน้ำสลัด
-│       ├── Orders.jsx      # กระดานจัดการและเปลี่ยนสถานะออเดอร์ (Kanban / Table)
-│       ├── Settings.jsx    # ตั้งค่าชื่อร้าน, ข้อความประกาศ และสวิตช์เปิด/ปิดร้าน
-│       ├── Reports.jsx     # รายงานสรุปยอดประจำวันและส่งข้อมูลเข้า Discord
-│       └── Login.jsx       # หน้าเข้าสู่ระบบแอดมิน
-├── utils/
-│   └── audio.js            # ระบบสร้างเสียงกระดิ่งแจ้งเตือนผ่าน Web Audio Context
-└── index.css               # ค่าตัวแปรกำหนดธีม, สไตล์ Glassmorphism และ Tailwind CSS
+frontend/
+├── Dockerfile                      # คำสั่งสร้าง Docker Image สำหรับ Build และ Serve ด้วย Nginx
+├── index.html                      # ไฟล์ HTML หลักของ React SPA
+├── nginx.conf                      # คอนฟิก Nginx ปลอดภัยแบบ Non-root และ Reverse Proxy
+├── package.json                    # รายการไลบรารีและ Dependencies ฝั่ง Frontend
+├── postcss.config.js               # คอนฟิก PostCSS สำหรับ Tailwind CSS
+├── tailwind.config.js              # คอนฟิกชุดสี ธีม และ Custom Utility Classes
+├── vercel.json                     # คอนฟิก Reverse Proxy และ Rewrites สำหรับ Vercel
+├── vite.config.js                  # คอนฟิก Vite Build Tool และ Development Server
+└── src/
+    ├── App.jsx                     # คอมโพเนนต์หลัก จัดการ Routing ระหว่างฝั่งลูกค้าและแอดมิน
+    ├── index.css                   # สไตล์หลัก, ธีม Glassmorphism, Animation และ Fluid Typography
+    ├── main.jsx                    # จุดเริ่มต้น React DOM Render และ Wrap บริบท Contexts
+    ├── api/                        # ตัวจัดการเชื่อมต่อ Backend API
+    │   └── api.js                  # Wrapper ส่งคำขอ (sendApiRequest) จัดการ Error และ Cookies
+    ├── components/                 # คอมโพเนนต์ UI ฝั่งหน้าร้านและหน้าต่าง Modals
+    │   ├── CartModal.jsx           # หน้าต่างสรุปตะกร้าสินค้าแบบเลื่อนเปิดจากด้านล่าง (Bottom Sheet)
+    │   ├── CartSidebar.jsx         # แถบตะกร้าสินค้าแบบคงที่ด้านขวาสำหรับหน้าจอคอมพิวเตอร์
+    │   ├── CheckoutModal.jsx       # หน้าต่างตรวจสอบรายการ สรุปยอดเงิน และกรอกข้อมูลจัดส่ง
+    │   ├── DressingModal.jsx       # หน้าต่างตัวเลือกน้ำสลัดสำหรับเมนูที่ต้องเลือกน้ำสลัด
+    │   ├── Header.jsx              # แถบเมนูด้านบน, โลโก้, สถานะร้าน, ปุ่มติดตามออเดอร์ และปุ่มตะกร้า
+    │   ├── MenuGrid.jsx            # การ์ดแสดงรายการเมนูอาหาร, ป้ายสถานะ และตัวกรองหมวดหมู่
+    │   ├── MobileCartBar.jsx       # แถบตะกร้าสินค้าแบบลอยตัวด้านล่างสุดสำหรับหน้าจอมือถือ
+    │   ├── OrderSlipModal.jsx      # หน้าต่างแสดงสลิปใบเสร็จรับเงินอิเล็กทรอนิกส์ (E-Receipt)
+    │   └── TrackingModal.jsx       # หน้าต่างค้นหาและติดตามสถานะออเดอร์แบบเรียลไทม์ (SSE)
+    ├── context/                    # ระบบจัดการสถานะส่วนกลาง (Global State Management)
+    │   ├── AdminContext.jsx        # ตัวจัดการ State ข้อมูลหมวดหมู่และน้ำสลัดสำหรับหน้าแอดมิน
+    │   ├── AlertContext.jsx        # ระบบกล่องข้อความแจ้งเตือนและยืนยัน (Custom Alert/Confirm)
+    │   ├── AuthContext.jsx         # ระบบตรวจสอบและจดจำสถานะการเข้าสู่ระบบของแอดมิน
+    │   ├── CartContext.jsx         # ระบบจัดการตะกร้าสินค้า (Optimistic UI + Debounced Sync)
+    │   └── ToastContext.jsx        # ระบบแสดงข้อความแจ้งเตือนป๊อปอัปสั้น (Toast Notifications)
+    ├── hooks/                      # Custom React Hooks
+    │   ├── queries.js              # Hook ฟังก์ชันรวมการเรียกข้อมูลเมนู หมวดหมู่ และน้ำสลัด
+    │   └── useSSE.js               # Custom Hook สำหรับเชื่อมต่อ Server-Sent Events แบบเรียลไทม์
+    ├── pages/                      # หน้าหลักของระบบ
+    │   ├── AdminApp.jsx            # โครงสร้างหน้าหลักและ Layout ของระบบแอดมิน
+    │   ├── CustomerApp.jsx         # หน้าร้านค้าหลักสำหรับลูกค้าเลือกดูและสั่งอาหาร
+    │   └── admin/                  # หน้าย่อยแต่ละแท็บของระบบแอดมิน
+    │       ├── Dashboard.jsx       # แดชบอร์ดสรุปสถิติยอดขายวันนี้/เดือนนี้/ทั้งหมด และเมนูขายดี
+    │       ├── Dressings.jsx       # หน้าจัดการเพิ่ม ลบ แก้ไข รายการน้ำสลัดและสถานะเปิด/ปิด
+    │       ├── Login.jsx           # หน้าฟอร์มเข้าสู่ระบบแอดมิน
+    │       ├── Menu.jsx            # หน้าจัดการเพิ่ม ลบ แก้ไข รายการเมนูอาหารและหมวดหมู่
+    │       ├── Orders.jsx          # กระดานควบคุมและเปลี่ยนสถานะคำสั่งซื้อแบบเรียลไทม์
+    │       └── Settings.jsx        # หน้าตั้งค่าชื่อร้าน, ข้อความประกาศ และสวิตช์เปิด/ปิดร้าน
+    └── utils/                      # ฟังก์ชันช่วยเหลือและยูทิลิตี้
+        └── audio.js                # ตัวกำเนิดเสียงกระดิ่งแจ้งเตือนด้วย Web Audio Context API
 ```
 
 ---

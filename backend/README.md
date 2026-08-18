@@ -8,22 +8,63 @@
 ## 🧩 สถาปัตยกรรมระดับซอร์สโค้ด (Feature-First Architecture)
 
 ```
-backend/src/
-├── admin/                  # การตรวจสอบสิทธิ์แอดมิน, แดชบอร์ดสถิติ และรายงาน
-├── cart/                   # เซสชันตะกร้าสินค้าและการจัดการรายการสินค้า
-├── config/                 # การตั้งค่าระบบส่วนกลาง + ตรวจสอบความถูกต้องตั้งแต่เริ่มบูต (Fail-Fast)
-├── cron/                   # ระบบ Cron งานบำรุงรักษา (ล้างเซสชันที่หมดอายุ)
-├── dressings/              # จัดการข้อมูลน้ำสลัด (CRUD)
-├── menu/                   # จัดการข้อมูลเมนูอาหารและหมวดหมู่ (CRUD)
-├── orders/                 # วงจรออเดอร์, การสตรีมข้อมูล SSE และการติดตามสถานะ
-├── shared/                 # ฟังก์ชันและโมดูลส่วนกลางของระบบ
-│   ├── errors.js           # โครงสร้างคลาส Error แบบกำหนดประเภท (มาตรฐาน RFC 9457)
-│   ├── logger.js           # ระบบบันทึก Log รูปแบบ JSON เชิงโครงสร้างด้วย Pino
-│   ├── sse.js              # ตัวจัดการช่องทางสตรีมข้อมูลแบบเรียลไทม์ (SSE Manager)
-│   └── middleware/         # มิดเดิลแวร์ errorHandler.js และ requestContext.js
-├── store/                  # สถานะร้านค้า, ลำดับคิว และข้อความประกาศ
-├── discord.js              # การแจ้งเตือนและจัดการข้อความผ่าน Discord Webhook
-└── index.js                # การตั้งค่า Express App, มิดเดิลแวร์ และการประกาศ Route
+backend/
+├── Dockerfile                      # คำสั่งสร้าง Docker Image สำหรับรันเซิร์ฟเวอร์
+├── package.json                    # รายการไลบรารีและ Dependencies
+├── render.yaml                     # ไฟล์คอนฟิก Deploy แบบ Infrastructure-as-Code บน Render
+├── server.js                       # จุดเริ่มต้นบูตเซิร์ฟเวอร์, ตรวจสอบ Database และ Auto-Migration
+└── src/
+    ├── discord.js                  # ระบบเชื่อมต่อและส่ง Webhook แจ้งเตือนเข้า Discord
+    ├── index.js                    # จุดรวม Express App, Middlewares, Rate Limiting และ Routes
+    ├── admin/                      # ฟีเจอร์: การจัดการระบบแอดมินหลังบ้าน
+    │   ├── admin_controller.js     # ตัวควบคุม Route หลักของแอดมิน
+    │   ├── analytics_controller.js # คำนวณและส่งคืนสถิติยอดขาย (Dashboard Analytics)
+    │   ├── auth_controller.js      # จัดการ Login, Logout และตรวจสอบเซสชันแอดมิน
+    │   ├── categories_controller.js# จัดการเพิ่ม ลบ แก้ไข หมวดหมู่อาหาร
+    │   ├── dressings_controller.js # จัดการเพิ่ม ลบ แก้ไข รายการน้ำสลัด
+    │   ├── events_controller.js    # สตรีม SSE สำหรับแจ้งเตือนออเดอร์ใหม่เข้าแอดมิน
+    │   ├── menu_controller.js      # จัดการเพิ่ม ลบ แก้ไข รายการเมนูอาหาร
+    │   └── orders_controller.js    # จัดการเปลี่ยนสถานะออเดอร์และรายงานสรุปยอด
+    ├── cart/                       # ฟีเจอร์: ตะกร้าสินค้าของลูกค้า
+    │   ├── cart_controller.js      # ตัวควบคุมรับคำขอดึงและอัปเดตตะกร้าสินค้า
+    │   ├── cart_middleware.js      # มิดเดิลแวร์ตรวจจับและสร้างเซสชันตะกร้าสินค้า
+    │   ├── cart_repository.js      # คำสั่ง SQL จัดการตาราง cart_sessions และ cart_items
+    │   └── cart_service.js         # ตรรกะทางธุรกิจ (Business Logic) ตะกร้าสินค้า
+    ├── config/                     # ฟีเจอร์: การตั้งค่าและการเชื่อมต่อฐานข้อมูล
+    │   ├── config.js               # Centralized Config พร้อมระบบตรวจสอบ Fail-Fast
+    │   └── database.js             # ตัวจัดการ Connection Pool เชื่อมต่อ PostgreSQL
+    ├── cron/                       # ฟีเจอร์: งานบำรุงรักษาระบบอัตโนมัติ
+    │   ├── cron_controller.js      # ตัวควบคุม Endpoint สำหรับรับคำขอจาก Cron Job
+    │   ├── cron_repository.js      # คำสั่ง SQL ล้างเซสชันและข้อมูลที่หมดอายุ
+    │   └── cron_service.js         # ตรรกะการทำความสะอาดฐานข้อมูลประจำวัน
+    ├── dressings/                  # ฟีเจอร์: การดึงข้อมูลน้ำสลัดฝั่งลูกค้า
+    │   ├── dressings_controller.js # ตัวควบคุมรับคำขอดึงรายการน้ำสลัดที่เปิดให้บริการ
+    │   ├── dressings_repository.js # คำสั่ง SQL ดึงข้อมูลจากตาราง dressings
+    │   └── dressings_service.js    # ตรรกะการตรวจสอบสถานะน้ำสลัด
+    ├── menu/                       # ฟีเจอร์: การดึงข้อมูลเมนูอาหารฝั่งลูกค้า
+    │   ├── menu_controller.js      # ตัวควบคุมรับคำขอดึงรายการเมนูและหมวดหมู่
+    │   ├── menu_repository.js      # คำสั่ง SQL ดึงข้อมูลจากตาราง menu_items และ categories
+    │   └── menu_service.js         # ตรรกะการจัดกลุ่มเมนูตามหมวดหมู่
+    ├── orders/                     # ฟีเจอร์: คำสั่งซื้อและการติดตามสถานะ
+    │   ├── events_controller.js    # สตรีม SSE อัปเดตสถานะออเดอร์แบบเรียลไทม์ส่งตรงถึงลูกค้า
+    │   ├── orders_controller.js    # ตัวควบคุมรับคำสั่งซื้อและค้นหาสถานะออเดอร์
+    │   ├── orders_repository.js    # คำสั่ง SQL จัดการตาราง orders และ order_items
+    │   └── orders_service.js       # ตรรกะการสร้างออเดอร์, คิว, และแจ้งเตือน Discord
+    ├── shared/                     # ส่วนประกอบและมิดเดิลแวร์ที่ใช้ร่วมกันทั่วทั้งระบบ
+    │   ├── errors.js               # โครงสร้างคลาส Error เฉพาะทาง (มาตรฐาน RFC 9457)
+    │   ├── logger.js               # ระบบ Structured JSON Logger ด้วย Pino
+    │   ├── sse.js                  # SSE Manager จัดการการเชื่อมต่อและบรอดแคสต์ข้อมูล
+    │   ├── middleware/             # มิดเดิลแวร์ส่วนกลาง
+    │   │   ├── auth.js             # ตรวจสอบความถูกต้องของคุกกี้เซสชันแอดมิน
+    │   │   ├── errorHandler.js     # มิดเดิลแวร์ดักจับข้อผิดพลาดและจัดรูปแบบ Response
+    │   │   ├── requestContext.js   # มิดเดิลแวร์แนบ Request ID และบันทึก Log คำขอ
+    │   │   └── validate.js         # มิดเดิลแวร์ตรวจสอบความถูกต้องของข้อมูล (Validation)
+    │   └── validators/             # สคีมาตรวจสอบโครงสร้างข้อมูลนำเข้า
+    │       └── index.js            # กำหนดกฎเกณฑ์ความถูกต้องของข้อมูลแต่ละคำขอ
+    └── store/                      # ฟีเจอร์: สถานะร้านค้าและคิวคำสั่งซื้อ
+        ├── store_controller.js     # ตัวควบคุมรับคำขอดึงและอัปเดตสถานะร้านค้า
+        ├── store_repository.js     # คำสั่ง SQL จัดการตาราง store_status และ sequence คิว
+        └── store_service.js        # ตรรกะเปิด/ปิดร้าน, รีเซ็ตคิว และคำนวณยอดขายประจำวัน
 ```
 
 ---
