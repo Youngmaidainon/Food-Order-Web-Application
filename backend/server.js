@@ -2,7 +2,7 @@ import http from 'http';
 import app from './src/index.js';
 import { applicationConfig } from './src/config/config.js';
 import { executeQuery, databasePool } from './src/config/database.js';
-import { appLogger } from './src/logger.js';
+import { appLogger } from './src/shared/logger.js';
 
 // Override global console methods with Pino logger for structured logging
 globalThis.console.log = (...args) => appLogger.info({ msg: args.join(' ') });

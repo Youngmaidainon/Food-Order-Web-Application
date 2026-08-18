@@ -1,7 +1,8 @@
 import { ValidationError, AppError } from '../shared/errors.js';
-import { getDatabaseClient } from '../shared/database/database.js';
+import { getDatabaseClient } from '../config/database.js';
 import { storeService } from '../store/store_controller.js';
 import { sendDiscordOrderNotification, deleteDiscordOrderNotification, sendDiscordCancelNotification } from '../discord.js';
+import { sseManager } from '../shared/sse.js';
 
 export class OrdersService {
   constructor(ordersRepository) {
@@ -10,8 +11,8 @@ export class OrdersService {
 
   generateUniqueOrderNumber() {
     const currentDateString = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const randomFourDigitNumber = Math.floor(1000 + Math.random() * 9000);
-    return `ORD-${currentDateString}-${randomFourDigitNumber}`;
+    const randomThreeDigitNumber = Math.floor(100 + Math.random() * 900);
+    return `ORD-${currentDateString}-${randomThreeDigitNumber}`;
   }
 
   async createOrder(data, ip, cartSessionId) {
@@ -54,7 +55,6 @@ export class OrdersService {
 
       let calculatedTotalAmount = 0;
       const validatedOrderItems = [];
-      const generatedOrderNumber = this.generateUniqueOrderNumber();
 
       const menuItemIds = [...new Set(orderItemsList.map(i => i.menu_item_id))];
       const dressingIds = [...new Set(orderItemsList.map(i => i.dressing_id).filter(id => id))];
@@ -99,6 +99,7 @@ export class OrdersService {
       }
 
       const newSequence = await this.ordersRepository.getAndIncrementSequence(databaseClient);
+      const generatedOrderNumber = this.generateUniqueOrderNumber();
 
       const createdOrderRecord = await this.ordersRepository.createOrder(databaseClient, {
         orderNumber: generatedOrderNumber,
@@ -150,12 +151,31 @@ export class OrdersService {
     }
   }
 
-  async trackOrder(orderNumber) {
+  async trackOrder(orderNumber, cartSessionId, isAdmin) {
     const orderRecord = await this.ordersRepository.getOrderByNumber(orderNumber);
     if (!orderRecord) throw new AppError('ไม่พบรหัสคำสั่งซื้อนี้', 'NOT_FOUND', 404);
 
     const items = await this.ordersRepository.getOrderItemsByOrderId(this.ordersRepository, orderRecord.id);
     orderRecord.items = items;
+
+    // PII Masking: If not admin and not the owner of the session, mask PII
+    if (!isAdmin && orderRecord.session_id !== cartSessionId) {
+      if (orderRecord.customer_name) {
+        const parts = orderRecord.customer_name.split(' ');
+        if (parts.length > 1) {
+          orderRecord.customer_name = `${parts[0]} ${parts[1][0]}***`;
+        } else {
+          orderRecord.customer_name = `${parts[0].substring(0, Math.min(3, parts[0].length))}***`;
+        }
+      }
+      if (orderRecord.customer_phone) {
+        orderRecord.customer_phone = orderRecord.customer_phone.replace(/(\d{3})\d{4}(\d{3})/, '$1-XXX-$2');
+      }
+      if (orderRecord.address) {
+        orderRecord.address = '*** ข้อมูลถูกซ่อนเพื่อความปลอดภัย ***';
+      }
+    }
+
     return orderRecord;
   }
 
@@ -189,6 +209,9 @@ export class OrdersService {
       await databaseClient.query('COMMIT');
 
       const updatedOrderPayload = { id: parseInt(orderId, 10), order_number: currentOrderRecord.order_number, status: 'ยกเลิก' };
+
+      // Broadcast to admin
+      sseManager.emitToAdmin('order_status_updated', updatedOrderPayload);
 
       if (currentOrderRecord.discord_message_id) {
         deleteDiscordOrderNotification(currentOrderRecord.discord_message_id, currentOrderRecord, 'ลูกค้า');

@@ -1,7 +1,8 @@
 import express from 'express';
-import { executeQuery, getDatabaseClient } from '../../config/database.js';
-import { authenticateAdminSession } from '../../middleware/auth.js';
-import { deleteDiscordOrderNotification, sendDiscordCancelNotification } from '../../discord.js';
+import { executeQuery, getDatabaseClient } from '../config/database.js';
+import { authenticateAdminSession } from '../shared/middleware/auth.js';
+import { deleteDiscordOrderNotification, sendDiscordCancelNotification } from '../discord.js';
+import { sseManager } from '../shared/sse.js';
 
 const ordersRouter = express.Router();
 
@@ -25,7 +26,7 @@ ordersRouter.get('/', authenticateAdminSession, async (request, response) => {
         customerOrder.status, 
         customerOrder.cancel_reason,
         customerOrder.canceled_by,
-        customerOrder.total_amount, 
+        FLOOR(customerOrder.total_amount)::INT as total_amount, 
         customerOrder.created_at,
         (
           SELECT COALESCE(JSON_AGG(
@@ -34,7 +35,7 @@ ordersRouter.get('/', authenticateAdminSession, async (request, response) => {
               'menu_item_id', orderItem.menu_item_id,
               'menu_item_name', menuItem.name,
               'quantity', orderItem.quantity,
-              'unit_price', orderItem.unit_price,
+              'unit_price', FLOOR(orderItem.unit_price)::INT,
               'dressing_id', orderItem.dressing_id,
               'dressing_name', COALESCE(dressing.name, 'ไม่รับน้ำสลัด'),
               'item_notes', orderItem.item_notes
@@ -91,7 +92,6 @@ ordersRouter.get('/', authenticateAdminSession, async (request, response) => {
   }
 });
 
-
 // PATCH /api/admin/orders/:id/status - อัปเดตสถานะออเดอร์
 ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, response) => {
   const { id: orderId } = request.params;
@@ -133,7 +133,7 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
           orderItem.menu_item_id, 
           menuItem.name as menu_item_name, 
           orderItem.quantity, 
-          orderItem.unit_price, 
+          FLOOR(orderItem.unit_price)::INT as unit_price, 
           orderItem.dressing_id, 
           COALESCE(dressing.name, 'ไม่รับน้ำสลัด') as dressing_name, 
           orderItem.item_notes
@@ -171,6 +171,10 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
     await databaseClient.query('COMMIT');
 
     const updatedOrderPayload = { id: parseInt(orderId, 10), order_number: orderQueryResult.rows[0].order_number, status: newTargetStatus, previousStatus };
+    
+    // Broadcast to admin and customer
+    sseManager.emitToAdmin('order_status_updated', updatedOrderPayload);
+    sseManager.emitToCustomer(orderQueryResult.rows[0].order_number, 'order_status_updated', updatedOrderPayload);
 
     return response.json({ success: true, message: `อัปเดตสถานะออเดอร์เป็น "${newTargetStatus}" เรียบร้อยแล้ว`, data: updatedOrderPayload });
   } catch (updateOrderStatusError) {
@@ -181,7 +185,6 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
     databaseClient.release();
   }
 });
-
 
 // POST /api/admin/orders/reset-queue - รีเซ็ตคิวการสั่งอาหาร
 ordersRouter.post('/reset-queue', authenticateAdminSession, async (request, response) => {

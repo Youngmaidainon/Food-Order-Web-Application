@@ -1,13 +1,14 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 
-import authRouter from '../routes/admin/auth.js';
-import ordersRouter from '../routes/admin/orders.js';
-import menuRouter from '../routes/admin/menu.js';
-import categoriesRouter from '../routes/admin/categories.js';
-import dressingsRouter from '../routes/admin/dressings.js';
-import storeRouter from '../routes/admin/store.js';
-import analyticsRouter from '../routes/admin/analytics.js';
+import authRouter from './auth_controller.js';
+import ordersRouter from './orders_controller.js';
+import menuRouter from './menu_controller.js';
+import categoriesRouter from './categories_controller.js';
+import dressingsRouter from './dressings_controller.js';
+import analyticsRouter from './analytics_controller.js';
+import { eventsRouter } from './events_controller.js';
+import { storeRouter } from '../store/store_controller.js';
 
 const adminRouter = express.Router();
 
@@ -28,5 +29,6 @@ adminRouter.use('/categories', categoriesRouter);
 adminRouter.use('/dressings', dressingsRouter);
 adminRouter.use('/store', storeRouter);
 adminRouter.use('/analytics', analyticsRouter);
+adminRouter.use('/events', eventsRouter);
 
 export { adminRouter };

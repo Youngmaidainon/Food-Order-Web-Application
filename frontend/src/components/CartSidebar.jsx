@@ -30,7 +30,7 @@ export default function CartSidebar({ isStoreOpen, onCheckout }) {
                   <span className="text-xl">{item.image_url}</span> 
                   {item.name}
                 </span>
-                <span className="text-primary">{(item.price * item.quantity).toFixed(2)}.-</span>
+                <span className="text-primary">{parseInt(item.price * item.quantity, 10)} ฿</span>
               </div>
               <div className="text-xs text-secondary mb-3 bg-secondary/10 border border-secondary/20 py-1 px-2.5 rounded-full inline-block">น้ำสลัด {item.dressing_name}</div>
               {item.item_notes && (
@@ -60,9 +60,14 @@ export default function CartSidebar({ isStoreOpen, onCheckout }) {
       </div>
 
       <div className="pt-6 border-t border-white/10 mt-4 relative z-10">
-        <div className="flex justify-between text-xl font-bold mb-6 text-white items-end">
-          <span className="text-sm font-normal text-gray-400 mb-1">ยอดรวมทั้งหมด</span>
-          <span className="text-3xl text-primary text-glow">{totalPrice.toFixed(2)} ฿</span>
+        <div className="flex justify-between text-xl font-bold mb-6 text-white items-center">
+          <div>
+            <span className="text-base font-bold text-white block">ยอดรวมทั้งสิ้น</span>
+            <span className="text-xs text-gray-400 font-normal">
+              {cartItems.reduce((acc, i) => acc + i.quantity, 0)} รายการ
+            </span>
+          </div>
+          <span className="text-3xl text-primary text-glow">{parseInt(totalPrice, 10)} ฿</span>
         </div>
         <button 
           className="w-full bg-primary text-white border border-primary/50 py-4 rounded-2xl text-base font-bold cursor-pointer transition-all shadow-[0_8px_25px_rgba(16,185,129,0.4)] hover:bg-primary-hover hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(16,185,129,0.5)] disabled:bg-surface-hover disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none disabled:transform-none disabled:border-transparent flex items-center justify-center gap-2" 

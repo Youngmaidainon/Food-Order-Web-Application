@@ -1,0 +1,61 @@
+class SSEManager {
+  constructor() {
+    this.adminClients = new Set();
+    this.customerClients = new Map(); // orderNumber -> Set of clients
+  }
+
+  addAdminClient(res) {
+    this.adminClients.add(res);
+    res.on('close', () => {
+      this.adminClients.delete(res);
+    });
+  }
+
+  addCustomerClient(orderNumber, res) {
+    if (!this.customerClients.has(orderNumber)) {
+      this.customerClients.set(orderNumber, new Set());
+    }
+    this.customerClients.get(orderNumber).add(res);
+    
+    res.on('close', () => {
+      const clients = this.customerClients.get(orderNumber);
+      if (clients) {
+        clients.delete(res);
+        if (clients.size === 0) {
+          this.customerClients.delete(orderNumber);
+        }
+      }
+    });
+  }
+
+  emitToAdmin(event, data) {
+    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+    for (const res of this.adminClients) {
+      res.write(payload);
+    }
+  }
+
+  emitToCustomer(orderNumber, event, data) {
+    const clients = this.customerClients.get(orderNumber);
+    if (clients) {
+      const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+      for (const res of clients) {
+        res.write(payload);
+      }
+    }
+  }
+
+  broadcast(event, data) {
+    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+    for (const res of this.adminClients) {
+      res.write(payload);
+    }
+    for (const clients of this.customerClients.values()) {
+      for (const res of clients) {
+        res.write(payload);
+      }
+    }
+  }
+}
+
+export const sseManager = new SSEManager();

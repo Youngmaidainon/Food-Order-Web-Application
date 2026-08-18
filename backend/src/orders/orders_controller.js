@@ -4,8 +4,11 @@ import { OrdersService } from './orders_service.js';
 import rateLimit from 'express-rate-limit';
 import { validate } from '../shared/middleware/validate.js';
 import { createOrderSchema, cancelOrderSchema } from '../shared/validators/index.js';
+import { eventsRouter } from './events_controller.js';
 
 const ordersRouter = express.Router();
+ordersRouter.use('/events', eventsRouter);
+
 const ordersRepository = new OrdersRepository();
 const ordersService = new OrdersService(ordersRepository);
 
@@ -58,7 +61,8 @@ ordersRouter.post('/', createOrderRateLimiter, validate(createOrderSchema), asyn
 // GET /api/orders/track/:order_number - Track order status by order number
 ordersRouter.get('/track/:order_number', trackOrderRateLimiter, async (req, res, next) => {
   try {
-    const data = await ordersService.trackOrder(req.params.order_number.trim());
+    const isAdmin = !!req.user; // Assuming req.user is set by auth middleware if admin is logged in
+    const data = await ordersService.trackOrder(req.params.order_number.trim(), req.cookies?.springroll_cart_session, isAdmin);
     return res.json({ success: true, data });
   } catch (error) {
     next(error);

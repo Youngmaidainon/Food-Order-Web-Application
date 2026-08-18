@@ -201,7 +201,7 @@ export default function Menu() {
                       <span className="bg-white/10 px-3 py-1 rounded-full text-xs">{item.category_name}</span>
                     </td>
                     <td className="p-5 text-center">
-                      <div className="font-bold text-primary text-lg">{item.price} ฿</div>
+                      <div className="font-bold text-primary text-lg">{parseInt(item.price, 10)} ฿</div>
                       {!item.is_available && <span className="inline-block mt-1 text-xs text-red-400 bg-red-400/10 border border-red-400/20 py-0.5 px-2 rounded-full">หมดชั่วคราว</span>}
                     </td>
                     <td className="p-5 text-center">
@@ -258,7 +258,7 @@ export default function Menu() {
               <div className="grid grid-cols-2 gap-4 mb-5">
                 <div>
                   <label className="block mb-2 font-semibold text-gray-300 text-sm">ราคา (บาท)</label>
-                  <input type="number" className="w-full p-3.5 border border-white/10 rounded-xl bg-black/40 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-mono" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+                  <input type="number" min="0" max="9999999" step="1" className="w-full p-3.5 border border-white/10 rounded-xl bg-black/40 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-mono" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value.replace(/[^0-9]/g, '').slice(0, 7)})} onKeyDown={e => { if (e.key === '.') e.preventDefault(); }} />
                 </div>
                 <div>
                   <label className="block mb-2 font-semibold text-gray-300 text-sm">รูปภาพ (Emoji)</label>

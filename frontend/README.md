@@ -1,6 +1,6 @@
 <div align="center">
   <h1>✨ Frontend Architecture - ร้านสปริงโรลออนไลน์</h1>
-  <p>ส่วนต่อประสานผู้ใช้ (UI) พัฒนาด้วย <strong>React 18 + Vite + Tailwind CSS</strong> สไตล์ Glassmorphism เน้นความลื่นไหล ประสบการณ์ผู้ใช้ (UX) และการจัดการ State ที่มีประสิทธิภาพ</p>
+  <p><strong>React 18 + Vite + Tailwind CSS. Glassmorphism UI, mobile-first responsive, real-time SSE, audio chime, optimized state.</strong></p>
 </div>
 
 ---
@@ -10,31 +10,36 @@
 ```
 frontend/src/
 ├── api/
-│   └── api.js              # Fetch wrapper (sendApiRequest) จัดการ Request, Error และ credentials
+│   └── api.js              # Fetch wrapper (sendApiRequest) จัดการ Request, Error, credentials
 ├── components/             # Reusable UI Components
-│   ├── Header.jsx          # แถบเมนูด้านบน แสดงสถานะร้านและปุ่มติดตามออเดอร์
-│   ├── MenuGrid.jsx        # แสดงการ์ดเมนูอาหารและตัวกรองหมวดหมู่
-│   ├── CartSidebar.jsx     # ตะกร้าสินค้าด้านข้างสำหรับหน้าจอ Desktop
-│   ├── MobileCartBar.jsx   # แถบตะกร้าสินค้าแบบ Floating สำหรับหน้าจอ Mobile
-│   ├── DressingModal.jsx   # Modal ให้ลูกค้าเลือกน้ำสลัดก่อนเพิ่มลงตะกร้า
-│   ├── CheckoutModal.jsx   # Modal สรุปรายการและกรอกข้อมูลจัดส่ง
-│   ├── TrackingModal.jsx   # Modal ตรวจสอบและติดตามสถานะคำสั่งซื้อ
-│   └── admin/              # Components เฉพาะสำหรับระบบแอดมิน
+│   ├── Header.jsx          # Navbar, สถานะร้าน, ปุ่มติดตามออเดอร์, Mobile Cart
+│   ├── MenuGrid.jsx        # เมนูอาหาร, badges, filter หมวดหมู่
+│   ├── CartSidebar.jsx     # Desktop Cart Sidebar
+│   ├── MobileCartBar.jsx   # Mobile Bottom Floating Cart Bar
+│   ├── CartModal.jsx       # Mobile/Tablet Bottom Sheet Drawer
+│   ├── DressingModal.jsx   # เลือกน้ำสลัดก่อนลงตะกร้า
+│   ├── CheckoutModal.jsx   # Checkout & ข้อมูลจัดส่ง
+│   ├── TrackingModal.jsx   # ติดตามออเดอร์ Real-time + ดูสลิป
+│   ├── OrderSlipModal.jsx  # E-Receipt สลิปกระดาษคำสั่งซื้อ
+│   └── admin/              # Components ระบบแอดมิน
 ├── context/                # Global State Management
-│   ├── AlertContext.jsx    # จัดการ Confirm / Alert Dialog สไตล์โมเดิร์น
-│   ├── AuthContext.jsx     # จัดการสถานะการเข้าสู่ระบบของแอดมิน
-│   ├── CartContext.jsx     # จัดการตะกร้าสินค้า (Optimistic Update + Debouncing)
-│   └── ToastContext.jsx    # แสดง Toast Notifications แจ้งเตือนสถานะต่างๆ
-├── pages/                  # หน้าหลักของระบบ
-│   ├── CustomerApp.jsx     # หน้าร้านค้าหลักสำหรับลูกค้าสั่งซื้อ
-│   └── admin/              # หน้าควบคุมแอดมิน
-│       ├── Dashboard.jsx   # แดชบอร์ดสรุปยอดขาย วันนี้/เดือนนี้/ทั้งหมด และเมนูขายดี
-│       ├── Menu.jsx        # จัดการเพิ่ม/ลบ/แก้ไขเมนูอาหาร และหมวดหมู่
-│       ├── Dressings.jsx   # จัดการรายการน้ำสลัด
-│       ├── Orders.jsx      # กระดานจัดการและเปลี่ยนสถานะออเดอร์
-│       ├── Reports.jsx     # สรุปรายงานรายวันและส่งรายงานเข้า Discord
-│       └── Login.jsx       # หน้าเข้าสู่ระบบแอดมิน
-└── index.css               # สไตล์หลัก, Custom Glassmorphism, Fluid Typography สำหรับภาษาไทย
+│   ├── AlertContext.jsx    # Modern Dialog Alert / Confirm
+│   ├── AuthContext.jsx     # Admin auth state
+│   ├── CartContext.jsx     # Cart state (Optimistic UI + Debounced sync)
+│   └── ToastContext.jsx    # Toast notifications
+├── pages/                  # Main Pages
+│   ├── CustomerApp.jsx     # หน้าร้านค้าลูกค้า + Hero Banner
+│   └── admin/              # แอดมิน
+│       ├── Dashboard.jsx   # สถิติยอดขาย & เมนูขายดี
+│       ├── Menu.jsx        # CRUD เมนู & หมวดหมู่
+│       ├── Dressings.jsx   # CRUD น้ำสลัด
+│       ├── Orders.jsx      # กระดานจัดการสถานะออเดอร์ (Kanban / Table)
+│       ├── Settings.jsx    # ตั้งค่าชื่อร้าน, ข้อความประกาศ, สวิตช์เปิด/ปิด
+│       ├── Reports.jsx     # รายงานรายวัน & ส่ง Discord
+│       └── Login.jsx       # เข้าสู่ระบบแอดมิน
+├── utils/
+│   └── audio.js            # Web Audio Context bell chime generator
+└── index.css               # Theme tokens, Glassmorphism, Tailwind
 ```
 
 ---
@@ -42,22 +47,24 @@ frontend/src/
 ## 🚀 เทคนิคการปรับจูนประสิทธิภาพและ UX (Optimizations)
 
 ### 1. ⚡ Optimistic UI + Debouncing (`CartContext.jsx`)
-- **Instant Response**: เมื่อลูกค้ากดเพิ่ม/ลดจำนวนสินค้า State บนหน้าจอจะอัปเดตทันที ไม่ต้องรอการตอบกลับจาก Network
-- **Debounced Sync**: หน่วงเวลา 500ms ก่อนยิงคำขอ `/api/cart/update` ไปยัง Server เพื่อลดจำนวน Request ที่เกิดจากการกดย้ำๆ
-- **Graceful Rollback**: หากเกิด Network Error ระบบจะดึงข้อมูลล่าสุดจาก Server กลับมาแสดงผลโดยอัตโนมัติ
+- **Instant Response**: UI อัปเดตทันที ไม่รอ network
+- **Debounced Sync**: หน่วงเวลา 500ms ก่อนส่ง `/api/cart/update` ลดโหลด request
+- **Graceful Rollback**: Network error ดึง state จริงจาก Server กลับมาคืนค่าอัตโนมัติ
 
 ### 2. 📱 Fluid Typography & Responsive Layout (`index.css`)
-- ปรับขนาด `font-size` พื้นฐานตามความกว้างหน้าจอ (14px ในมือถือ, 15px ในแท็บเล็ต, 16px ในเดสก์ท็อป) เพื่อป้องกันปัญหาการตัดคำภาษาไทยไม่สวยงาม
-- ใช้แบบอักษร **Prompt** ควบคู่กับเอฟเฟกต์กระจกฝ้า (Glassmorphism) และ Dark Theme
+- Auto font scale ตาม viewport (14px mobile, 15px tablet, 16px desktop)
+- ฟอนต์ **Prompt** + Glassmorphism dark palette
 
-### 3. ⏱️ Non-aggressive Order Tracking (`CustomerApp.jsx` & `TrackingModal.jsx`)
-- ติดตามสถานะออเดอร์อัตโนมัติผ่าน Polling ในช่วงเวลาที่เหมาะสม (10 วินาที) โดยหยุดทำงานอัตโนมัติเมื่อออเดอร์เสร็จสิ้นหรือถูกยกเลิก เพื่อประหยัด Bandwidth
+### 3. ⏱️ Real-time SSE & Smart Tracking (`TrackingModal.jsx` & `audio.js`)
+- รับ event ผ่าน Server-Sent Events (SSE) `/api/orders/events/:order_number`
+- ส่งเสียงแจ้งเตือน Harmonic Bell Chime เมื่อสถานะออเดอร์เปลี่ยน
+- ดึงออเดอร์ล่าสุดของลูกค้าอัตโนมัติ
 
 ---
 
 ## 🚀 การ Deploy ขึ้น Vercel (Free Tier)
 
-โปรเจกต์มีไฟล์ `frontend/vercel.json` สำหรับตั้งค่า **Reverse Proxy / Rewrites**:
+ไฟล์ `frontend/vercel.json` ตั้งค่า Reverse Proxy / Rewrites:
 
 ```json
 {
@@ -75,4 +82,4 @@ frontend/src/
 ```
 
 > [!TIP]
-> การตั้งค่า Rewrites ทำให้ Frontend เรียก `/api/*` ผ่าน Domain ของ Vercel โดยตรง ซึ่งช่วยขจัดปัญหา CORS ได้อย่างสมบูรณ์ และทำให้ระบบ Single Page Application (SPA) รองรับการรีเฟรชหน้าเว็บโดยไม่เกิดข้อผิดพลาด 404
+> Rewrites proxy ส่ง `/api/*` ผ่าน domain Vercel ตรง แก้ปัญหา CORS 100% + ป้องกัน 404 บน SPA routing

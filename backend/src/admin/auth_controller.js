@@ -1,10 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { executeQuery } from '../../config/database.js';
-import { authenticateAdminSession } from '../../middleware/auth.js';
-import { validate } from '../../shared/middleware/validate.js';
-import { adminLoginSchema } from '../../shared/validators/index.js';
+import { executeQuery } from '../config/database.js';
+import { authenticateAdminSession } from '../shared/middleware/auth.js';
+import { validate } from '../shared/middleware/validate.js';
+import { adminLoginSchema } from '../shared/validators/index.js';
 
 const authRouter = express.Router();
 

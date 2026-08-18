@@ -1,5 +1,10 @@
 // ดึง URL ของ API จาก Environment (ค่าเริ่มต้นคือ /api)
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+export function getApiUrl(endpoint) {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${API_BASE_URL}${cleanEndpoint}`;
+}
 
 // คลาสจัดการ Error จาก API พร้อมรองรับข้อความตอบกลับจากเซิร์ฟเวอร์
 export class ApiError extends Error {

@@ -1,4 +1,4 @@
-import { executeQuery } from '../shared/database/database.js';
+import { executeQuery } from '../config/database.js';
 
 export class MenuRepository {
   async fetchAvailableMenuItems() {
@@ -9,7 +9,7 @@ export class MenuRepository {
         category.name as category_name, 
         menuItem.name, 
         menuItem.description, 
-        menuItem.price, 
+        FLOOR(menuItem.price)::INT as price, 
         menuItem.image_url, 
         menuItem.is_available, 
         menuItem.created_at

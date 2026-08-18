@@ -6,35 +6,8 @@ const ToastContext = createContext(null);
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
-  // สร้างเสียงแจ้งเตือนสั้นๆ เพื่อดึงดูดความสนใจผ่าน Web Audio API
-  const playToastSound = () => {
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
-      
-      gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-      
-      osc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      
-      osc.start();
-      osc.stop(ctx.currentTime + 0.1);
-    } catch(e) {
-      console.warn('Audio play failed', e);
-    }
-  };
-
-  // แสดง Toast แจ้งเตือน และตั้งเวลาให้หายไปอัตโนมัติภายใน 3 วินาที
+  // แสดง Toast แจ้งเตือน และตั้งเวลาให้หายไปอัตโนมัติภายใน 3 วินาที (ปิดเสียงแจ้งเตือนแล้ว)
   const showToast = useCallback((message, type = 'success') => {
-    playToastSound();
     const id = Date.now() + Math.random(); // ป้องกันรหัสซ้ำกัน
     setToasts(prev => [...prev, { id, message, type }]);
     

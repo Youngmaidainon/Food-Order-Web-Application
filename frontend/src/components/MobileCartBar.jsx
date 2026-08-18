@@ -1,21 +1,43 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 
-// แถบสรุปตะกร้าสินค้าแบบย่อสำหรับแสดงผลบนหน้าจอมือถือ
 export default function MobileCartBar({ onOpenCart }) {
   const { totalQuantity, totalPrice } = useCart();
 
   if (totalQuantity === 0) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-surface/85 backdrop-blur-md border-t border-border p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex justify-between items-center lg:hidden" id="mobile-cart-bar">
-      <div className="flex flex-col">
-        <span className="text-sm text-text-muted">{totalQuantity} รายการ</span>
-        <span className="text-xl font-extrabold text-primary">{totalPrice.toFixed(2)} บาท</span>
+    <div 
+      id="mobile-cart-bar"
+      className="fixed bottom-4 left-4 right-4 z-50 lg:hidden animate-in fade-in slide-in-from-bottom-5 duration-300"
+    >
+      <div 
+        onClick={onOpenCart}
+        className="bg-primary/95 backdrop-blur-xl border border-primary/40 rounded-2xl p-3.5 px-5 shadow-[0_8px_30px_rgba(16,185,129,0.4)] flex justify-between items-center cursor-pointer active:scale-98 transition-transform"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold text-base shadow-inner">
+            {totalQuantity}
+          </div>
+          <div>
+            <p className="text-xs text-white/80 font-medium">ตะกร้าของคุณ ({totalQuantity} ชิ้น)</p>
+            <p className="text-lg font-extrabold text-white leading-tight">
+              {parseInt(totalPrice, 10)} ฿
+            </p>
+          </div>
+        </div>
+
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenCart();
+          }}
+          className="bg-white text-primary px-4 py-2 rounded-xl font-bold text-sm shadow-md flex items-center gap-1.5 hover:bg-gray-100 transition-colors"
+        >
+          <span>ดูตะกร้า</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
       </div>
-      <button className="bg-primary text-white border-none py-1.5 px-4 rounded-full font-bold text-sm shadow-[0_4px_12px_rgba(249,115,22,0.3)]" onClick={onOpenCart}>
-        <span>ดูตะกร้าสินค้า</span>
-      </button>
     </div>
   );
 }

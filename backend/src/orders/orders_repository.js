@@ -1,4 +1,4 @@
-import { executeQuery } from '../shared/database/database.js';
+import { executeQuery } from '../config/database.js';
 
 export class OrdersRepository {
   async getActiveOrderCountByPhoneOrSession(client, phone, sessionId) {
@@ -49,7 +49,7 @@ export class OrdersRepository {
     const result = await client.query(
       `INSERT INTO orders (order_number, sequence_number, customer_name, customer_phone, delivery_type, address, status, total_amount, ip_address, session_id)
        VALUES ($1, $2, $3, $4, $5, $6, 'รอดำเนินการ', $7, $8, $9)
-       RETURNING id, order_number, sequence_number, customer_name, customer_phone, delivery_type, address, status, total_amount, created_at`,
+       RETURNING id, order_number, sequence_number, customer_name, customer_phone, delivery_type, address, status, FLOOR(total_amount)::INT as total_amount, created_at`,
       [orderNumber, sequence, customerName, customerPhone, deliveryType, address, totalAmount, ip, sessionId]
     );
     return result.rows[0];
@@ -59,7 +59,7 @@ export class OrdersRepository {
     const result = await client.query(
       `INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price, dressing_id, item_notes)
        VALUES ${valuesQuery}
-       RETURNING id, menu_item_id, quantity, unit_price, dressing_id, item_notes`,
+       RETURNING id, menu_item_id, quantity, FLOOR(unit_price)::INT as unit_price, dressing_id, item_notes`,
       itemsParams
     );
     return result.rows;
@@ -76,7 +76,7 @@ export class OrdersRepository {
   async getOrderByNumber(orderNumber) {
     // ปิดบังข้อมูลส่วนบุคคล (PII) เพื่อป้องกันข้อมูลลูกค้ารั่วไหล
     const result = await executeQuery(
-      'SELECT id, order_number, sequence_number, delivery_type, status, cancel_reason, canceled_by, total_amount, created_at FROM orders WHERE order_number = $1 AND deleted_at IS NULL',
+      'SELECT id, order_number, sequence_number, delivery_type, status, cancel_reason, canceled_by, FLOOR(total_amount)::INT as total_amount, created_at FROM orders WHERE order_number = $1 AND deleted_at IS NULL',
       [orderNumber]
     );
     return result.rows.length > 0 ? result.rows[0] : null;
@@ -88,7 +88,7 @@ export class OrdersRepository {
         orderItem.menu_item_id, 
         menuItem.name as menu_item_name, 
         orderItem.quantity, 
-        orderItem.unit_price, 
+        FLOOR(orderItem.unit_price)::INT as unit_price, 
         orderItem.dressing_id, 
         COALESCE(dressing.name, 'ไม่รับน้ำสลัด') as dressing_name,
         orderItem.item_notes

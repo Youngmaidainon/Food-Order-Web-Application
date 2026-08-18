@@ -50,7 +50,7 @@ export const sendDiscordOrderNotification = async (customerOrderDetails) => {
     const discordEmbedMessage = {
       title: `ออเดอร์ใหม่ #${orderNumber}`,
       color: 0x0ea5e9, // Clean modern blue
-      description: `**ข้อมูลลูกค้า**\nชื่อ: ${customerName}\nโทร: ${customerPhone}\n\n**การรับสินค้า**\nรูปแบบ: ${deliveryType}${deliveryAddress ? `\nที่อยู่: ${deliveryAddress}` : ''}\n\n**รายการสินค้า**\n${formattedItemsDescription}\n\n**ยอดรวมทั้งสิ้น**\n\`${parseFloat(totalAmount).toFixed(2)} บาท\``,
+      description: `**ข้อมูลลูกค้า**\nชื่อ: ${customerName}\nโทร: ${customerPhone}\n\n**การรับสินค้า**\nรูปแบบ: ${deliveryType}${deliveryAddress ? `\nที่อยู่: ${deliveryAddress}` : ''}\n\n**รายการสินค้า**\n${formattedItemsDescription}\n\n**ยอดรวมทั้งสิ้น**\n\`${parseInt(totalAmount, 10)} บาท\``,
       timestamp: new Date().toISOString()
     };
 
@@ -189,7 +189,7 @@ export const sendDiscordDailySummary = async (sales, bestSellers, cancelledCount
     const discordEmbedMessage = {
       title: `📊 สรุปยอดขายประจำวัน`,
       color: 0x10b981, // Emerald Green
-      description: `**ยอดขายรวม:** \`${parseFloat(sales).toFixed(2)} บาท\`\n**จำนวนออเดอร์:** ${ordersCount} ออเดอร์\n**จำนวนออเดอร์ที่ถูกยกเลิก:** ${cancelledCount} ออเดอร์\n\n**🔥 เมนูขายดี:**\n${formattedBestSellers}`,
+      description: `**ยอดขายรวม:** \`${parseInt(sales, 10)} บาท\`\n**จำนวนออเดอร์:** ${ordersCount} ออเดอร์\n**จำนวนออเดอร์ที่ถูกยกเลิก:** ${cancelledCount} ออเดอร์\n\n**🔥 เมนูขายดี:**\n${formattedBestSellers}`,
       timestamp: new Date().toISOString()
     };
 
@@ -205,8 +205,11 @@ export const sendDiscordDailySummary = async (sales, bestSellers, cancelledCount
     if (response.ok) {
       const data = await response.json();
       return data.id;
+    } else {
+      throw new Error(`Discord API responded with status ${response.status}`);
     }
   } catch (error) {
     console.error('Error sending Discord daily summary:', error);
+    throw error; // Re-throw to allow caller to rollback
   }
 };

@@ -1,4 +1,4 @@
-import { executeQuery } from '../config/database.js';
+import { executeQuery } from '../../config/database.js';
 
 // Middleware ตรวจสอบสิทธิ์ผู้ดูแลระบบ (Authentication) เพื่อป้องกัน BOLA/IDOR
 export const authenticateAdminSession = async (request, response, nextFunction) => {

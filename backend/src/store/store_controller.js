@@ -2,6 +2,7 @@ import express from 'express';
 import { StoreRepository } from './store_repository.js';
 import { StoreService } from './store_service.js';
 import rateLimit from 'express-rate-limit';
+import { authenticateAdminSession } from '../shared/middleware/auth.js';
 
 const storeRouter = express.Router();
 const storeRepository = new StoreRepository();
@@ -24,6 +25,16 @@ storeRouter.get('/status', storeRateLimiter, async (req, res, next) => {
   try {
     const data = await storeService.getStatus();
     return res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// PATCH /api/store/status - อัปเดตสถานะการเปิด/ปิดร้าน (Admin Only)
+storeRouter.patch('/status', authenticateAdminSession, async (req, res, next) => {
+  try {
+    const data = await storeService.updateStatus(req.body);
+    return res.json({ success: true, message: 'อัปเดตสถานะร้านเรียบร้อยแล้ว', data });
   } catch (error) {
     next(error);
   }

@@ -1,30 +1,29 @@
 <div align="center">
   <h1>⚙️ Backend API - ร้านสปริงโรลออนไลน์</h1>
-  <p>ซอร์สโค้ดฝั่ง Backend พัฒนาด้วย <strong>Node.js + Express.js</strong> ออกแบบตามสถาปัตยกรรม <strong>Feature-First Architecture</strong>, ระบบตรวจสอบสิทธิ์, Rate Limiting และ Database Connection Pooling</p>
+  <p><strong>Node.js + Express.js backend. Feature-First architecture, session auth, rate limiting, connection pool, SSE streams.</strong></p>
 </div>
 
 ---
 
 ## 🧩 สถาปัตยกรรมระดับซอร์สโค้ด (Feature-First Architecture)
 
-โค้ดใน `backend/src` ถูกจัดกลุ่มตามฟีเจอร์ทางธุรกิจ (Feature-First) แทนการแยกตามโฟลเดอร์เทคนิคแบบเดิม เพื่อให้บำรุงรักษาง่ายและลดความซับซ้อน:
-
 ```
 backend/src/
-├── admin/                  # จัดการสิทธิ์แอดมิน, สถิติยอดขาย (Dashboard), และรายงานรายวัน
-├── cart/                   # ตรรกะตะกร้าสินค้า (Cart Session, เพิ่ม/ลด/ลบรายการ)
-├── config/                 # Centralized Configuration + Fail-fast startup validation
-├── cron/                   # Internal Maintenance Cron (ล้าง Session หมดอายุ)
-├── dressings/              # CRUD รายการน้ำสลัด
-├── menu/                   # CRUD รายการอาหารและหมวดหมู่ (Categories)
-├── orders/                 # สร้างออเดอร์, ติดตามสถานะ, อัปเดตสถานะการจัดส่ง
-├── shared/                 # โครงสร้างร่วมของระบบ
-│   ├── errors.js           # Typed AppError hierarchy (RFC 9457 standard)
-│   ├── logger.js           # Structured JSON Logging ด้วย Pino
+├── admin/                  # Admin auth, dashboard analytics, reports
+├── cart/                   # Cart session & item mutations
+├── config/                 # Centralized config + Fail-fast startup checks
+├── cron/                   # Maintenance cron (purge expired sessions)
+├── dressings/              # CRUD dressings
+├── menu/                   # CRUD menu & categories
+├── orders/                 # Order lifecycle, SSE stream, tracking
+├── shared/                 # Common kernel
+│   ├── errors.js           # Typed AppError hierarchy (RFC 9457)
+│   ├── logger.js           # Structured JSON Pino logging
+│   ├── sse.js              # Real-time SSE channel manager
 │   └── middleware/         # errorHandler.js, requestContext.js
-├── store/                  # สถานะร้านค้า (เปิด/ปิด), ลำดับคิว (Sequence)
-├── discord.js              # ระบบเชื่อมต่อ Discord Webhook สำหรับแจ้งเตือน
-└── index.js                # Express App pipeline, Middlewares, Routes declaration
+├── store/                  # Store status, queue sequence, announcement
+├── discord.js              # Discord webhook alerts & lifecycle management
+└── index.js                # Express app setup, middlewares, routes
 ```
 
 ---
@@ -32,50 +31,53 @@ backend/src/
 ## 🛡️ ชั้นความปลอดภัยและการจัดการข้อผิดพลาด (Security & Error Handling)
 
 1. **Centralized Fail-Fast Config (`src/config/config.js`)**
-   - ตรวจสอบความถูกต้องของ Environment Variables ตั้งแต่เริ่มบูต หากตัวแปรสำคัญขาดหาย (เช่น `JWT_SECRET` ในโหมด Production) จะแจ้งเตือนและหยุดการทำงานทันที (Fail-Fast)
+   - ตรวจสอบ env vars ตอนบูต หยุดทำงานทันทีถ้าตัวแปรสำคัญขาดหาย
+
 2. **Typed Error Hierarchy (`src/shared/errors.js`)**
-   - มีคลาส Error เฉพาะทาง เช่น `NotFoundError`, `ValidationError`, `UnauthorizedError`, `ForbiddenError` สืบทอดจาก `AppError`
-   - `globalErrorHandler` ส่งคืน Response ตามมาตรฐาน **RFC 9457 Problem Details** พร้อมซ่อน Stack Trace ใน Production
-3. **Structured JSON Logging (`src/logger.js` & `src/shared/middleware/requestContext.js`)**
-   - สร้าง Request ID กำกับทุกคำขอ เพื่อความสะดวกในการติดตาม Log แบบ End-to-End
+   - คลาสเฉพาะทาง: `NotFoundError`, `ValidationError`, `UnauthorizedError`, `ForbiddenError`
+   - `globalErrorHandler` ตอบกลับ RFC 9457 Problem Details ซ่อน stack trace บน production
+
+3. **Structured JSON Logging (`src/shared/logger.js` & `requestContext.js`)**
+   - แนบ `requestId` ทุก request ติดตาม log end-to-end
+
 4. **Rate Limiting & Security Headers (`src/index.js`)**
-   - `Helmet` ป้องกัน Header ทั่วไป
-   - `CORS` อนุญาตเฉพาะ Domain ที่อยู่ใน `CORS_ORIGIN` (เมื่ออยู่ในโหมด Production)
-   - ป้องกัน Brute Force ใน Endpoint `/api/admin/login` (จำกัด 5 ครั้ง / 15 นาที) และคำขอทั่วไป (300 ครั้ง / 15 นาที)
+   - `Helmet` headers
+   - `CORS` whitelist domain ตาม `CORS_ORIGIN`
+   - Rate limits: `/api/admin/login` (5 req / 15m), general API (300 req / 15m)
 
 ---
 
 ## 🤖 ระบบแจ้งเตือนผ่าน Discord Webhook (`discord.js`)
 
-- **Real-time Order Alerts**: ส่งการแจ้งเตือนคำสั่งซื้อใหม่เข้าห้อง Discord ทันทีพร้อมปุ่ม/สถานะ
-- **State Synchronization & Auto-Deletion**: เมื่อลูกค้ายกเลิกคำสั่งซื้อ Backend จะทำการแก้ไขข้อความเดิม และสั่งลบข้อความเก่าภายใน 5 วินาที พร้อมส่งข้อความแจ้งเตือนการยกเลิกใหม่เพื่อป้องกันความสับสน
-- **Daily Sales Report**: สรุปยอดขาย ออเดอร์ทั้งหมด และเมนูขายดีประจำวัน
+- **Real-time Order Alerts**: ส่งใบออเดอร์เข้า Discord ทันที
+- **State Sync & Auto-Deletion**: เมื่อยกเลิกออเดอร์ ลบข้อความเก่าใน 5s ส่งแจ้งเตือนยกเลิกใหม่
+- **Daily Sales Report**: ส่งสรุปยอดขาย ออเดอร์ เมนูขายดีเมื่อปิดร้าน
 
 ---
 
 ## 🚀 การจัดการ Environment Variables
 
-สร้างไฟล์ `.env` ที่โฟลเดอร์ `backend/` โดยอ้างอิงจาก `.env.example`:
+สร้างไฟล์ `backend/.env` อิงจาก `.env.example`:
 
 ```env
 PORT=8000
 NODE_ENV=production
 
-# Database Connection (Neon Serverless PostgreSQL หรือ Local)
+# Database Connection (Neon Serverless PostgreSQL or Local)
 DATABASE_URL=postgres://user:password@host/database?sslmode=require
 
 # Security Keys
 JWT_SECRET=your_super_secret_jwt_key
 CRON_SECRET=your_super_secret_cron_token
 
-# CORS Allowed Origins (คั่นด้วยจุลภาค)
+# CORS Allowed Origins (comma-separated)
 CORS_ORIGIN=https://your-app.vercel.app,http://localhost:5173
 
-# Admin Setup (ค่าเริ่มต้นสำหรับการ Hash รหัสครั้งแรก)
+# Admin Setup
 ADMIN_INIT_USERNAME=admin
 ADMIN_INIT_PASSWORD=adminpassword
 
-# Discord Notifications (ใส่ URL Webhook)
+# Discord Notifications
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 DISCORD_CANCEL_WEBHOOK_URL=https://discord.com/api/webhooks/...
 DISCORD_REPORT_WEBHOOK_URL=https://discord.com/api/webhooks/...
@@ -87,12 +89,13 @@ DISCORD_REPORT_WEBHOOK_URL=https://discord.com/api/webhooks/...
 
 | Method | Endpoint | คำอธิบาย | การตรวจสอบสิทธิ์ |
 |---|---|---|---|
-| `GET` | `/api/health` | ตรวจสอบสถานะการทำงาน (Health Check) | Public |
-| `GET` | `/api/menu` | ดึงรายการอาหารทั้งหมด | Public |
-| `GET` | `/api/dressings` | ดึงรายการน้ำสลัด | Public |
+| `GET` | `/api/health` | Health Check | Public |
+| `GET` | `/api/menu` | รายการอาหารทั้งหมด | Public |
+| `GET` | `/api/dressings` | รายการน้ำสลัด | Public |
 | `POST` | `/api/orders` | สั่งซื้อสินค้า | Public |
 | `GET` | `/api/orders/track/:order_number` | ติดตามสถานะออเดอร์ | Public |
+| `GET` | `/api/orders/events/:order_number` | SSE Real-time stream ออเดอร์ | Public |
 | `POST` | `/api/admin/login` | เข้าสู่ระบบแอดมิน | Rate Limited |
-| `GET` | `/api/admin/analytics` | สถิติยอดขายและเมนูขายดี | Admin Cookie |
-| `PUT` | `/api/store/status` | เปิด/ปิดร้านค้า | Admin Cookie |
-| `POST` | `/internal/cron/maintenance` | ล้าง Session ขยะรายวัน | Bearer CRON_SECRET |
+| `GET` | `/api/admin/analytics` | สถิติยอดขาย | Admin Cookie |
+| `PATCH` | `/api/admin/store/status` | เปิด/ปิดร้านค้า & ประกาศ | Admin Cookie |
+| `POST` | `/internal/cron/maintenance` | ล้าง session ขยะ | Bearer CRON_SECRET |

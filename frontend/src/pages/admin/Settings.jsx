@@ -23,7 +23,7 @@ export default function Settings() {
         setStoreStatus(res.data);
         setOriginalIsOpen(res.data.is_open);
         setRestaurantName(res.data.restaurant_name);
-        setAnnouncement(res.data.announcement_message);
+        setAnnouncement(res.data.announcement_message || '');
       }
     } catch (err) {
       console.error('Failed to load settings:', err);
@@ -92,15 +92,15 @@ export default function Settings() {
                 required
               />
             </div>
-            
+
             <div>
-              <label className="block mb-2 font-semibold text-gray-300 text-sm">ข้อความประกาศ (แสดงที่แถบด้านบน)</label>
+              <label className="block mb-2 font-semibold text-gray-300 text-sm">ข้อความประกาศร้าน (แสดงที่แถบด้านบนตอนเปิดร้าน)</label>
               <input 
                 type="text" 
                 className="w-full p-4 border border-white/10 rounded-xl bg-black/40 backdrop-blur-md text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors shadow-inner" 
                 value={announcement}
                 onChange={e => setAnnouncement(e.target.value)}
-                placeholder="เช่น ยินดีต้อนรับสู่ร้านของเรา! วันนี้มีเมนูพิเศษ..."
+                placeholder="เช่น เปิดรับออเดอร์ตามปกติ หรือ วันนี้มีเมนูพิเศษ..."
               />
             </div>
             

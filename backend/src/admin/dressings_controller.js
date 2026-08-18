@@ -1,6 +1,6 @@
 import express from 'express';
-import { executeQuery } from '../../config/database.js';
-import { authenticateAdminSession } from '../../middleware/auth.js';
+import { executeQuery } from '../config/database.js';
+import { authenticateAdminSession } from '../shared/middleware/auth.js';
 
 const dressingsRouter = express.Router();
 

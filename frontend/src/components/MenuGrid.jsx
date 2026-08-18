@@ -3,13 +3,28 @@ import { useCart } from '../context/CartContext';
 
 // Component แสดงรายการเมนูอาหารทั้งหมด พร้อมระบบคัดกรองตามหมวดหมู่ (Category Filter)
 export default function MenuGrid({ menuItems, isStoreOpen, onAddItem, dressings }) {
+  const { cartItems } = useCart();
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const categories = [
-    { id: 'all', name: 'ทั้งหมด' },
-    { id: 1, name: 'สปริงโรล' },
-    { id: 2, name: 'สปริงโรลอโวคาโด้' },
-  ];
+  const dynamicCategories = React.useMemo(() => {
+    const map = new Map();
+    menuItems.forEach(item => {
+      if (item.category_id && item.category_name) {
+        map.set(item.category_id, item.category_name);
+      }
+    });
+    const extracted = Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+    if (extracted.length === 0) {
+      return [
+        { id: 'all', name: 'ทั้งหมด' },
+        { id: 1, name: 'สปริงโรล' },
+        { id: 2, name: 'สปริงโรลอโวคาโด้' }
+      ];
+    }
+    return [{ id: 'all', name: 'ทั้งหมด' }, ...extracted];
+  }, [menuItems]);
+
+  const categories = dynamicCategories;
 
   const filteredItems = menuItems.filter(item => 
     selectedCategory === 'all' || item.category_id == selectedCategory
@@ -17,11 +32,16 @@ export default function MenuGrid({ menuItems, isStoreOpen, onAddItem, dressings 
 
   return (
     <>
-      <div className="flex gap-3 mb-8 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" id="category-tabs-container">
+      {/* Category Pills Filter */}
+      <div className="flex gap-2 sm:gap-2.5 mb-5 sm:mb-6 overflow-x-auto pb-1.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" id="category-tabs-container">
         {categories.map(cat => (
           <button
             key={cat.id}
-            className={`glass border py-2 px-5 rounded-full text-sm font-medium cursor-pointer transition-all whitespace-nowrap hover:border-primary hover:text-primary ${selectedCategory === cat.id ? 'bg-primary/20 text-primary border-primary shadow-glow' : 'border-white/10 text-gray-400'}`}
+            className={`border py-1.5 px-3.5 sm:px-4 rounded-xl text-xs sm:text-sm font-medium cursor-pointer transition-all whitespace-nowrap ${
+              selectedCategory === cat.id 
+                ? 'bg-primary text-white border-primary shadow-sm font-semibold' 
+                : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+            }`}
             onClick={() => setSelectedCategory(cat.id)}
           >
             {cat.name}
@@ -29,34 +49,72 @@ export default function MenuGrid({ menuItems, isStoreOpen, onAddItem, dressings 
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 mb-[100px] w-full" id="menu-grid-container">
+      {/* Menu Cards Grid: 2 cols on mobile, 2-3 on iPad, 3 on desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-6 mb-12 sm:mb-16 w-full" id="menu-grid-container">
         {filteredItems.length === 0 ? (
-          <div className="text-center p-12 text-gray-500 glass-card rounded-3xl border border-dashed border-white/20">ไม่มีรายการสินค้าในหมวดหมู่นี้</div>
+          <div className="col-span-full text-center p-8 text-gray-400 bg-white/5 rounded-2xl border border-dashed border-white/10 text-xs sm:text-sm">
+            ไม่มีรายการสินค้าในหมวดหมู่นี้
+          </div>
         ) : (
-          filteredItems.map(item => (
-            <div className="glass-card rounded-3xl p-5 sm:p-6 flex flex-col transition-all shadow-lg relative overflow-hidden group hover:-translate-y-2 hover:shadow-glow hover:border-primary/50" key={item.id}>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/20 transition-colors"></div>
-              
-              <div className="text-6xl sm:text-7xl text-center mb-5 transition-transform duration-500 ease-out group-hover:scale-110 group-hover:rotate-6 drop-shadow-2xl">{item.image_url || '🌯'}</div>
-              <div className="text-lg sm:text-xl leading-tight tracking-tight font-bold mb-2 text-white min-h-[3.5rem] line-clamp-2 relative z-10 break-keep">{item.name}</div>
-              <div className="text-sm text-gray-400 flex-grow mb-6 relative z-10">{item.description || 'ชิ้นพอดีกิน อีสฉ่ำ'}</div>
-              
-              <div className="flex flex-wrap items-center justify-between gap-3 mt-auto relative z-10 border-t border-white/10 pt-4">
+          filteredItems.map(item => {
+            const inCartQty = cartItems
+              .filter(ci => ci.menu_item_id === item.id)
+              .reduce((sum, ci) => sum + ci.quantity, 0);
+
+            return (
+              <div 
+                key={item.id}
+                className={`bg-white/5 border rounded-2xl p-3 sm:p-5 flex flex-col justify-between transition-all shadow-md relative overflow-hidden group hover:border-primary/40 hover:bg-white/[0.08] ${
+                  inCartQty > 0 ? 'border-primary/30 ring-1 ring-primary/20' : 'border-white/10'
+                }`} 
+              >
+                {/* In-Cart Active Badge */}
+                {inCartQty > 0 && (
+                  <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 bg-primary text-black font-black text-[9.5px] sm:text-[10.5px] px-1.5 py-0.5 rounded-md shadow-sm z-10">
+                    ในตะกร้า {inCartQty}
+                  </div>
+                )}
+
                 <div>
-                  <div className="text-2xl font-bold text-primary whitespace-nowrap">{parseFloat(item.price).toFixed(2)}.-</div>
+                  {/* Food Image / Icon */}
+                  <div className="text-4xl sm:text-5xl lg:text-6xl text-center py-2 sm:py-4 transition-transform duration-300 group-hover:scale-105 select-none drop-shadow-md">
+                    {item.image_url || '🌯'}
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-xs sm:text-base font-bold text-white leading-snug line-clamp-2 mt-1 sm:mt-2">
+                    {item.name}
+                  </h3>
+
+                  {/* Description (Only if present and not generic fallback) */}
+                  {item.description && (
+                    <p className="text-[10px] sm:text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                      {item.description}
+                    </p>
+                  )}
                 </div>
-                <button 
-                  className="whitespace-nowrap flex-shrink-0 bg-primary text-white py-2.5 px-5 rounded-full text-sm font-semibold cursor-pointer transition-all shadow-[0_4px_12px_rgba(16,185,129,0.3)] hover:bg-primary-hover hover:scale-105 disabled:bg-surface-hover disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none disabled:transform-none disabled:border-white/10 border border-transparent" 
-                  disabled={!isStoreOpen || item.is_available === false}
-                  onClick={() => onAddItem(item)}
-                >
-                  {!isStoreOpen ? '🔒 ร้านปิด' : (item.is_available === false ? 'หมดชั่วคราว' : '+ เพิ่มใส่ตะกร้า')}
-                </button>
+                
+                {/* Footer: Price & Add Button */}
+                <div className="flex items-center justify-between gap-1.5 sm:gap-2 mt-3 pt-2 sm:pt-3 border-t border-white/10">
+                  <span className="text-sm sm:text-lg font-black text-primary font-mono whitespace-nowrap">
+                    {parseInt(item.price, 10)} ฿
+                  </span>
+                  
+                  <button 
+                    className="bg-primary text-white py-1 sm:py-1.5 px-2.5 sm:px-3.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold cursor-pointer transition-all hover:bg-primary-hover active:scale-95 disabled:opacity-40 disabled:pointer-events-none shadow-sm flex items-center justify-center gap-1" 
+                    disabled={!isStoreOpen || item.is_available === false}
+                    onClick={() => onAddItem(item)}
+                  >
+                    {!isStoreOpen ? 'ร้านปิด' : (item.is_available === false ? 'หมด' : (inCartQty > 0 ? `+ เพิ่ม (${inCartQty})` : '+ เพิ่ม'))}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </>
   );
 }
+
+

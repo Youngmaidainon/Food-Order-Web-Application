@@ -1,4 +1,4 @@
-import { executeQuery } from '../shared/database/database.js';
+import { executeQuery } from '../config/database.js';
 
 export class CartRepository {
   async ensureSessionExists(cartSessionId) {
@@ -16,7 +16,7 @@ export class CartRepository {
         cartItem.id as cart_item_id,
         cartItem.menu_item_id,
         menuItem.name as name,
-        menuItem.price,
+        FLOOR(menuItem.price)::INT as price,
         menuItem.image_url,
         cartItem.quantity,
         cartItem.dressing_id,

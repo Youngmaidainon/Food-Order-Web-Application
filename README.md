@@ -1,6 +1,6 @@
 <div align="center">
   <h1>🌯 ร้านสปริงโรลออนไลน์ (Spring Roll Online Store)</h1>
-  <p><strong>ระบบสั่งอาหารออนไลน์แบบ Full-Stack ครบวงจร พร้อมหน้าร้านลูกค้า และระบบแอดมินจัดการออเดอร์/สถิติยอดขาย</strong></p>
+  <p><strong>Full-stack food ordering platform. Storefront, admin order management, sales analytics, SSE real-time tracking, Discord alerts.</strong></p>
 
   <img src="https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%20%7C%20Tailwind-61DAFB?style=flat-square&logo=react&logoColor=black" alt="Frontend" />
   <img src="https://img.shields.io/badge/Backend-Node.js%20%7C%20Express%20%7C%20Feature--First-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Backend" />
@@ -13,37 +13,37 @@
 <br />
 
 > [!NOTE]  
-> โปรเจกต์นี้พัฒนาตามหลักการ **Separation of Concerns (SoC)**, **Feature-First Architecture** และ **OWASP Security Best Practices** พร้อมรองรับการรันทั้งแบบ **Docker Compose** ในเครื่อง หรือ Deploy ขึ้นระบบ Cloud ระดับ Production / Free Tier
+> Build with **Separation of Concerns (SoC)**, **Feature-First Architecture**, and **OWASP Security Practices**. Run via **Docker Compose** locally or deploy to cloud free tier.
 
 ---
 
 ## 📐 สถาปัตยกรรมระบบ (System Architecture)
 
-1. **Client (Frontend)**: React 18 + Vite + Tailwind CSS สไตล์ Glassmorphism รองรับ Responsive ทั้งมือถือและเดสก์ท็อป พร้อมระบบ CartContext (Optimistic UI + Debounced sync) และ TrackingModal ติดตามสถานะออเดอร์ Real-time
-2. **Application Server (Backend)**: Express.js จัดโครงสร้างแบบ **Feature-First** (`admin`, `cart`, `dressings`, `menu`, `orders`, `store`, `cron`), มี **Centralized Config (Fail-Fast)**, **Typed AppError Hierarchy**, **Structured JSON Logging (Pino)**, และระบบ **Auto-Migration** รันคำสั่ง SQL ตั้งค่าฐานข้อมูลอัตโนมัติเมื่อเริ่มเซิร์ฟเวอร์
-3. **Database**: PostgreSQL พร้อม Custom ENUM Types, Foreign Key Cascades, และ Composite Unique Constraints สำหรับควบคุมความถูกต้องของข้อมูล
-4. **Discord Webhook Automation**: ส่งใบออเดอร์แจ้งเตือนทันทีเมื่อมีคำสั่งซื้อใหม่ พร้อมระบบแก้ไขและลบข้อความเก่าอัตโนมัติเมื่อลูกค้ายกเลิกออเดอร์
-5. **Background Maintenance & Keep-Alive**: รองรับ Endpoint `/api/health` สำหรับ Health Check และ `/internal/cron/maintenance` สำหรับล้าง Session ขยะที่หมดอายุ
+1. **Client (Frontend)**: React 18 + Vite + Tailwind CSS. Glassmorphism UI, responsive mobile/tablet/desktop, `CartContext` (optimistic UI + debounce), `TrackingModal` (real-time SSE stream + audio alerts).
+2. **Application Server (Backend)**: Express.js **Feature-First** structure (`admin`, `cart`, `dressings`, `menu`, `orders`, `store`, `cron`), centralized fail-fast config, RFC 9457 typed errors, structured JSON logging (Pino), auto-migrations on boot.
+3. **Database**: PostgreSQL with custom ENUMs, foreign key cascades, composite unique constraints, performance indexes.
+4. **Discord Webhook Automation**: Instant order notifications, automated message updates, auto-deletion on cancellation, daily revenue reports.
+5. **Background Maintenance**: `/api/health` health check, `/internal/cron/maintenance` daily session cleanup.
 
 ---
 
 ## 🛡️ ความปลอดภัยและการเพิ่มประสิทธิภาพ (Security & Optimization)
 
 ### 🔒 ด้านความปลอดภัย (Cyber Security)
-- **Typed Error Hierarchy & Problem Details**: ดักจับ Error ทั่วระบบด้วย `globalErrorHandler` และส่งข้อความตอบกลับตามมาตรฐาน RFC 9457 โดยไม่เปิดเผย Stack Trace ไปยัง Client
-- **Session-Based Authentication**: ตรวจสอบสิทธิ์แอดมินด้วย `HttpOnly`, `SameSite` Cookies ป้องกันการโจมตีแบบ XSS
-- **Strict Rate Limiting**:
-  - `POST /api/admin/login` -> จำกัด 5 ครั้ง / 15 นาที (ป้องกัน Brute Force)
-  - `POST /internal/cron` -> จำกัด 20 ครั้ง / 15 นาที พร้อมตรวจสอบ `CRON_SECRET`
-  - `/api/*` ทั่วไป -> จำกัด 300 ครั้ง / 15 นาที (ป้องกัน DoS / Scraper)
-- **Security Headers & Strict CORS**: ติดตั้ง `Helmet` ป้องกัน Header ทั่วไป และจำกัด `CORS` อนุญาตเฉพาะ Whitelist Origins ใน Production
-- **Parameterized SQL Queries**: คำสั่ง SQL ทุกจุดใช้ Parameterized Query (`$1, $2, ...`) ป้องกัน SQL Injection 100%
-- **HTTPS Redirection**: บังคับ Redirect เป็น HTTPS อัตโนมัติเมื่อรันในสภาพแวดล้อม Production
+- **RFC 9457 Problem Details**: Centralized `globalErrorHandler`, stack traces hidden in production.
+- **Session Auth**: Admin auth via `HttpOnly`, `SameSite` secure cookies (anti-XSS).
+- **Strict Rate Limits**:
+  - `POST /api/admin/login`: 5 req / 15m (anti-bruteforce)
+  - `POST /internal/cron/*`: 20 req / 15m + `CRON_SECRET` validation
+  - `/api/*`: 300 req / 15m (anti-DoS)
+- **Security Headers & CORS**: `Helmet` headers + strict `CORS_ORIGIN` whitelist in production.
+- **Parameterized SQL**: 100% parameter queries (`$1, $2, ...`), zero SQL injection.
+- **HTTPS Enforcement**: Auto HTTPS redirection on production.
 
 ### 🚀 ด้านการเพิ่มประสิทธิภาพ (Optimization)
-- **Optimistic UI & Debounced Requests**: อัปเดต UI ทันที และหน่วงเวลา 500ms ก่อนส่งอัปเดตจำนวนสินค้าลงตะกร้าไปยังเซิร์ฟเวอร์
-- **Database Connection Pooling**: จัดการ Connection Pool ผ่าน `pg.Pool` รองรับโหลดพร้อมกันได้สูง
-- **Non-blocking Polling**: ระบบติดตามสถานะออเดอร์ฝั่งลูกค้า Polling อย่างเหมาะสม ไม่ส่งคำขอซ้ำซ้อน
+- **Optimistic UI & Debounced Sync**: Instant local state updates, 500ms sync delay for cart changes.
+- **Connection Pooling**: `pg.Pool` connection management.
+- **Real-time SSE**: Low-overhead event streaming for live order status changes.
 
 ---
 
@@ -60,20 +60,19 @@
    docker compose up -d --build
    ```
 3. เข้าใช้งานระบบ:
-   - **หน้าร้าน (Storefront)**: `http://localhost`
-   - **หน้าจัดการแอดมิน (Admin)**: `http://localhost/admin`
+   - **Storefront**: `http://localhost`
+   - **Admin Portal**: `http://localhost/admin`
    - **Backend API**: `http://localhost:8000/api`
    - **Health Check**: `http://localhost:8000/api/health`
 
 ### การทดสอบแบบ Public ด้วย Cloudflare Tunnel (ทดสอบ Webhook 100%)
-สำหรับทดสอบระบบเสมือน Production จริง รวมถึงให้ Discord/External services ยิงกลับมาได้:
-1. รัน Docker Compose ปกติ: `docker compose up -d --build`
-2. เปิด Tunnel ชี้ไปที่ Frontend (Port 80):
+
+1. รัน Docker Compose: `docker compose up -d --build`
+2. รัน Tunnel ชี้ไปที่ Frontend (Port 80):
    ```bash
    npx cloudflared tunnel --url http://localhost
    ```
-3. นำ URL ที่ได้จาก Cloudflared (เช่น `https://xxxx.trycloudflare.com`) ไปเปิดทดสอบบนมือถือ หรือตั้งค่า Webhook ได้เลย!
-   (ระบบ CORS ถูกตั้งให้เปิดรับทุก Origin ชั่วคราวเมื่อรันแบบ Development)
+3. ใช้ URL `https://xxxx.trycloudflare.com` ทดสอบบนอุปกรณ์จริงหรือเชื่อม Discord Webhook
 
 ---
 
@@ -84,31 +83,30 @@
 | **Database** | **Neon.tech** | PostgreSQL Serverless (Free Tier) |
 | **Backend** | **Render.com** | Node.js Web Service (Free Tier) |
 | **Frontend** | **Vercel.com** | React SPA + API Rewrites Proxy (Free Tier) |
-| **Keep-Alive & Cron** | **cron-job.org** | ยิง Ping กันเซิร์ฟเวอร์หลับ และรันงาน Maintenance รายวัน |
+| **Keep-Alive & Cron** | **cron-job.org** | Health check ping + daily maintenance |
 
 #### 1. สร้าง Database บน Neon
-- สมัครและสร้างโปรเจกต์บน [Neon.tech](https://neon.tech)
-- คัดลอก `DATABASE_URL` (Connection String ที่มี `sslmode=require`)
+- สร้างโปรเจกต์บน [Neon.tech](https://neon.tech)
+- คัดลอก `DATABASE_URL` (`sslmode=require`)
 
 #### 2. Deploy Backend บน Render
-- นำโค้ดขึ้น GitHub และสร้าง **Web Service** บน [Render.com](https://render.com)
-- เลือกเชื่อมต่อกับโฟลเดอร์ `backend` (หรือใช้ `render.yaml`)
-- ตั้งค่า Environment Variables สำคัญ:
-  - `DATABASE_URL`: URL จาก Neon
+- สร้าง Web Service บน [Render.com](https://render.com) ชี้ไปที่โฟลเดอร์ `backend`
+- ตั้งค่า Environment Variables:
+  - `DATABASE_URL`: Connection string จาก Neon
   - `NODE_ENV`: `production`
-  - `JWT_SECRET`: รหัสลับสำหรับ JWT
-  - `CORS_ORIGIN`: URL ของ Frontend บน Vercel เช่น `https://your-app.vercel.app`
-  - `CRON_SECRET`: รหัสลับสำหรับ Cron endpoint
-  - `DISCORD_WEBHOOK_URL`: (ไม่บังคับ) Webhook สำหรับรับการแจ้งเตือน
+  - `JWT_SECRET`: Secret key สำหรับ JWT
+  - `CORS_ORIGIN`: URL Frontend Vercel (เช่น `https://your-app.vercel.app`)
+  - `CRON_SECRET`: Secret token สำหรับ Cron
+  - `DISCORD_WEBHOOK_URL`: (Optional) Discord Webhook URL
 
 #### 3. Deploy Frontend บน Vercel
 - สร้างโปรเจกต์บน [Vercel.com](https://vercel.com) ผูกกับโฟลเดอร์ `frontend`
-- **สำคัญ:** เข้าไปแก้ไขไฟล์ `frontend/vercel.json` โดยเปลี่ยน `https://your-backend-url.onrender.com` ให้เป็น URL จริงของ Render Backend ที่เพิ่งสร้างเสร็จ
-- กด Deploy จะได้ Domain หน้าร้านค้าทันที
+- แก้ไข `frontend/vercel.json` ปรับ URL destination ไปที่ Render backend
+- Deploy รับ Domain หน้าร้าน
 
 #### 4. ตั้งค่า cron-job.org (ป้องกัน Render Sleep)
-- สร้าง Job ยิง HTTP GET ไปที่ `https://your-backend.onrender.com/api/health` ทุก **10-14 นาที**
-- สร้าง Job รายวันยิง HTTP POST ไปที่ `https://your-backend.onrender.com/internal/cron/maintenance` พร้อม Header `Authorization: Bearer <CRON_SECRET>`
+- สร้าง Job GET `https://your-backend.onrender.com/api/health` ทุก **10-14 นาที**
+- สร้าง Job POST `https://your-backend.onrender.com/internal/cron/maintenance` รายวันพร้อม header `Authorization: Bearer <CRON_SECRET>`
 
 ---
 
@@ -124,9 +122,9 @@ Food Order System/
 │   │   ├── cron/             # Feature: Maintenance & Cleanup
 │   │   ├── dressings/        # Feature: Salad Dressings Management
 │   │   ├── menu/             # Feature: Menu Items & Categories
-│   │   ├── orders/           # Feature: Order Creation & Tracking
-│   │   ├── shared/           # Error Handler, AppError, Logger, Middleware
-│   │   └── store/            # Feature: Store Status & Sequence
+│   │   ├── orders/           # Feature: Order Lifecycle, SSE, Tracking
+│   │   ├── shared/           # Error Handler, AppError, Logger, SSE
+│   │   └── store/            # Feature: Store Status, Sequence, Announcement
 │   ├── Dockerfile
 │   ├── render.yaml           # Render Infrastructure-as-Code
 │   ├── server.js             # Bootstrap & Auto-migration
@@ -137,6 +135,7 @@ Food Order System/
 │   │   ├── components/       # UI Components (Cart, Menu, Admin, Modals)
 │   │   ├── context/          # State Management (Auth, Cart, Toast, Alert)
 │   │   ├── pages/            # App Pages (CustomerApp, Admin Pages)
+│   │   ├── utils/            # Audio generator
 │   │   └── index.css         # Tailwind & Custom Glassmorphism Theme
 │   ├── vercel.json           # Vercel Deployment & API Proxy Config
 │   ├── Dockerfile

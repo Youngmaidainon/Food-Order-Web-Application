@@ -1,6 +1,6 @@
 import express from 'express';
-import { executeQuery } from '../../config/database.js';
-import { authenticateAdminSession } from '../../middleware/auth.js';
+import { executeQuery } from '../config/database.js';
+import { authenticateAdminSession } from '../shared/middleware/auth.js';
 
 const menuRouter = express.Router();
 
@@ -14,7 +14,7 @@ menuRouter.get('/', authenticateAdminSession, async (request, response) => {
         category.name as category_name, 
         menuItem.name, 
         menuItem.description, 
-        menuItem.price, 
+        FLOOR(menuItem.price)::INT as price, 
         menuItem.image_url, 
         menuItem.is_available, 
         menuItem.created_at
@@ -38,8 +38,13 @@ menuRouter.post('/', authenticateAdminSession, async (request, response) => {
     return response.status(400).json({ success: false, message: 'กรุณาระบุชื่อสินค้าและราคา' });
   }
 
-  if (parseFloat(menuItemPrice) < 0) {
-    return response.status(400).json({ success: false, message: 'ราคาสินค้าต้องไม่ติดลบ' });
+  const parsedPrice = parseFloat(menuItemPrice);
+  if (isNaN(parsedPrice) || parsedPrice < 0) {
+    return response.status(400).json({ success: false, message: 'ราคาสินค้าต้องเป็นตัวเลขและไม่ติดลบ' });
+  }
+
+  if (parsedPrice > 9999999.99) {
+    return response.status(400).json({ success: false, message: 'ราคาสินค้าเกินขีดจำกัด' });
   }
 
   try {
@@ -72,8 +77,14 @@ menuRouter.put('/:id', authenticateAdminSession, async (request, response) => {
   const { id: menuItemId } = request.params;
   const { category_id: categoryId, name: menuItemName, description: menuItemDescription, price: menuItemPrice, image_url: menuItemImageUrl, is_available: isAvailable } = request.body;
 
-  if (menuItemPrice !== undefined && parseFloat(menuItemPrice) < 0) {
-    return response.status(400).json({ success: false, message: 'ราคาสินค้าต้องไม่ติดลบ' });
+  if (menuItemPrice !== undefined) {
+    const parsedPrice = parseFloat(menuItemPrice);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      return response.status(400).json({ success: false, message: 'ราคาสินค้าต้องเป็นตัวเลขและไม่ติดลบ' });
+    }
+    if (parsedPrice > 9999999.99) {
+      return response.status(400).json({ success: false, message: 'ราคาสินค้าเกินขีดจำกัด' });
+    }
   }
 
   try {

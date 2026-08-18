@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS menu_items (
     category_id INT REFERENCES categories(id) ON DELETE SET NULL,
     name VARCHAR(150) NOT NULL,
     description TEXT,
-    price DECIMAL(10, 2) NOT NULL,
+    price INT NOT NULL,
     image_url TEXT,
     is_available BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS orders (
     delivery_type delivery_type_enum NOT NULL,
     address TEXT,
     status order_status_enum NOT NULL DEFAULT 'รอดำเนินการ',
-    total_amount DECIMAL(10, 2) NOT NULL,
+    total_amount INT NOT NULL,
     cancel_reason TEXT DEFAULT NULL,
     canceled_by TEXT DEFAULT NULL,
     discord_message_id VARCHAR(255) DEFAULT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     order_id INT REFERENCES orders(id) ON DELETE CASCADE,
     menu_item_id INT REFERENCES menu_items(id) ON DELETE CASCADE,
     quantity INT NOT NULL CHECK (quantity > 0),
-    unit_price DECIMAL(10, 2) NOT NULL,
+    unit_price INT NOT NULL,
     dressing_id INT REFERENCES dressings(id) ON DELETE SET NULL,
     item_notes TEXT
 );
@@ -134,6 +134,9 @@ CREATE INDEX IF NOT EXISTS idx_orders_deleted_at ON orders(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_cart_sessions_last_active ON cart_sessions(last_accessed_at);
 CREATE INDEX IF NOT EXISTS idx_admin_sessions_expires_at ON admin_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_orders_status_created ON orders(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_session_active ON orders(session_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_order_items_composite ON order_items(order_id, menu_item_id);
 
 -- ========================================================
 -- Seed Data เริ่มต้นสำหรับทดสอบระบบ
@@ -147,17 +150,18 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Menu Items Seed Data
 INSERT INTO menu_items (id, category_id, name, description, price, image_url, is_available) VALUES
-(1, 1, 'สปริงโรลแซลม่อน', 'ชิ้นพอดีกิน อีสฉ่ำ', 40.00, '🐟', true),
-(2, 2, 'สปริงโรลอโวคาโด้+แซลม่อน', 'ชิ้นพอดีกิน อีสฉ่ำ', 40.00, '🐟🥑', true),
-(3, 1, 'สปริงโรลกุ้ง', 'ชิ้นพอดีกิน อีสฉ่ำ', 35.00, '🦐', true),
-(4, 2, 'สปริงโรลอโวคาโด้+กุ้ง', 'ชิ้นพอดีกิน อีสฉ่ำ', 35.00, '🦐🥑', true),
-(5, 1, 'สปริงโรลอกไก่', 'ชิ้นพอดีกิน อีสฉ่ำ', 35.00, '🐣', true),
-(6, 2, 'สปริงโรลอโวคาโด้+อกไก่', 'ชิ้นพอดีกิน อีสฉ่ำ', 35.00, '🐣🥑', true),
-(7, 1, 'สปริงโรลปูอัด', 'ชิ้นพอดีกิน อีสฉ่ำ', 35.00, '🦀', true),
-(8, 2, 'สปริงโรลอโวคาโด้+ปูอัด', 'ชิ้นพอดีกิน อีสฉ่ำ', 35.00, '🦀🥑', true)
+(1, 1, 'สปริงโรลแซลม่อน', 'ชิ้นพอดีกิน อีสฉ่ำ', 40, '🐟', true),
+(2, 2, 'สปริงโรลอโวคาโด้+แซลม่อน', 'ชิ้นพอดีกิน อีสฉ่ำ', 40, '🐟🥑', true),
+(3, 1, 'สปริงโรลกุ้ง', 'ชิ้นพอดีกิน อีสฉ่ำ', 35, '🦐', true),
+(4, 2, 'สปริงโรลอโวคาโด้+กุ้ง', 'ชิ้นพอดีกิน อีสฉ่ำ', 35, '🦐🥑', true),
+(5, 1, 'สปริงโรลอกไก่', 'ชิ้นพอดีกิน อีสฉ่ำ', 35, '🐣', true),
+(6, 2, 'สปริงโรลอโวคาโด้+อกไก่', 'ชิ้นพอดีกิน อีสฉ่ำ', 35, '🐣🥑', true),
+(7, 1, 'สปริงโรลปูอัด', 'ชิ้นพอดีกิน อีสฉ่ำ', 35, '🦀', true),
+(8, 2, 'สปริงโรลอโวคาโด้+ปูอัด', 'ชิ้นพอดีกิน อีสฉ่ำ', 35, '🦀🥑', true)
 ON CONFLICT (id) DO NOTHING;
 
 SELECT setval('menu_items_id_seq', (SELECT MAX(id) FROM menu_items));
+SELECT setval('categories_id_seq', (SELECT MAX(id) FROM categories));
 
 -- Dressings Seed Data
 INSERT INTO dressings (id, name, is_available) VALUES

@@ -1,4 +1,4 @@
-import { executeQuery } from '../shared/database/database.js';
+import { executeQuery } from '../config/database.js';
 
 export class CronRepository {
   async cleanupSessions() {
