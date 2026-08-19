@@ -123,6 +123,27 @@ export default function Menu() {
     }
   };
 
+  // ลบข้อมูลหมวดหมู่เมนูอาหารออกจากระบบ (ต้องกดยืนยันก่อน)
+  const handleDeleteCategory = async (id) => {
+    const isConfirmed = await showConfirm('ยืนยันการลบหมวดหมู่นี้?');
+    if (!isConfirmed) return;
+
+    try {
+      const res = await sendApiRequest(`/admin/categories/${id}`, { method: 'DELETE' });
+      if (res.success) {
+        setCategories(prev => prev.filter(cat => cat.id !== id));
+        if (formData.category_id === id) {
+          const remaining = categories.filter(cat => cat.id !== id);
+          setFormData(prev => ({ ...prev, category_id: remaining.length > 0 ? remaining[0].id : 1 }));
+        }
+        showAlert('ลบหมวดหมู่สำเร็จ');
+        fetchMenu();
+      }
+    } catch (err) {
+      showAlert(err.message || 'ลบหมวดหมู่ไม่สำเร็จ');
+    }
+  };
+
   // เพิ่มหมวดหมู่เมนูอาหารใหม่
   const handleAddCategory = async (e) => {
     e.preventDefault();
@@ -138,7 +159,6 @@ export default function Menu() {
         setCategories(prev => [...prev, newCategory]);
         setFormData(prev => ({ ...prev, category_id: newCategory.id }));
         showAlert('เพิ่มหมวดหมู่สำเร็จ');
-        setIsCategoryModalOpen(false);
         setNewCategoryName('');
       }
     } catch (err) {
@@ -148,15 +168,21 @@ export default function Menu() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-white tracking-tight m-0">จัดการเมนู</h1>
           <p className="text-gray-400 mt-2 text-sm">เพิ่ม ลบ หรือแก้ไขรายการอาหารในร้าน</p>
         </div>
-        <button onClick={openAddModal} className="flex items-center gap-2 py-2.5 px-5 text-sm bg-primary text-white border-none rounded-xl cursor-pointer font-bold hover:bg-primary-hover transition-all shadow-[0_4px_15px_rgba(16,185,129,0.3)] hover:-translate-y-0.5">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          เพิ่มเมนูใหม่
-        </button>
+        <div className="flex gap-3">
+          <button onClick={() => setIsCategoryModalOpen(true)} className="flex items-center gap-2 py-2.5 px-4 text-sm bg-white/5 border border-white/10 text-white rounded-xl cursor-pointer font-semibold hover:bg-white/10 transition-all hover:-translate-y-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+            จัดการหมวดหมู่
+          </button>
+          <button onClick={openAddModal} className="flex items-center gap-2 py-2.5 px-5 text-sm bg-primary text-white border-none rounded-xl cursor-pointer font-bold hover:bg-primary-hover transition-all shadow-[0_4px_15px_rgba(16,185,129,0.3)] hover:-translate-y-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            เพิ่มเมนูใหม่
+          </button>
+        </div>
       </div>
 
       <div className="glass-card rounded-2xl border border-white/10 overflow-hidden shadow-lg">
@@ -242,7 +268,7 @@ export default function Menu() {
                       <option key={cat.id} value={cat.id} className="bg-[#18181b]">{cat.name}</option>
                     ))}
                   </select>
-                  <button type="button" onClick={() => setIsCategoryModalOpen(true)} className="px-4 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 font-medium whitespace-nowrap transition-colors flex items-center justify-center">
+                  <button type="button" onClick={() => setIsCategoryModalOpen(true)} title="จัดการหมวดหมู่" className="px-4 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 font-medium whitespace-nowrap transition-colors flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   </button>
                 </div>
@@ -285,14 +311,58 @@ export default function Menu() {
 
       {isCategoryModalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex justify-center items-center z-[1100] p-4 animate-in fade-in duration-200">
-          <div className="glass-card p-6 rounded-2xl w-full max-w-[400px] shadow-2xl border border-white/10 relative">
-            <h2 className="text-xl font-bold mb-4 text-white">เพิ่มหมวดหมู่ใหม่</h2>
-            <form onSubmit={handleAddCategory}>
-              <input type="text" className="w-full p-3.5 border border-white/10 rounded-xl bg-black/40 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors mb-4" required value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} placeholder="ชื่อหมวดหมู่..." autoFocus />
-              <div className="flex gap-3">
-                <button type="button" onClick={() => { setIsCategoryModalOpen(false); setNewCategoryName(''); }} className="flex-1 py-2.5 px-4 text-sm bg-white/5 text-white border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors font-semibold">ยกเลิก</button>
-                <button type="submit" className="flex-1 py-2.5 px-4 text-sm bg-primary text-white border-none rounded-xl cursor-pointer hover:bg-primary-hover transition-colors font-bold shadow-sm">ยืนยัน</button>
+          <div className="glass-card p-6 rounded-2xl w-full max-w-[440px] shadow-2xl border border-white/10 relative max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-white m-0">จัดการหมวดหมู่</h2>
+              <button 
+                onClick={() => { setIsCategoryModalOpen(false); setNewCategoryName(''); }} 
+                className="text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-1.5 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="block mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">หมวดหมู่ทั้งหมด ({categories.length})</label>
+              <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                {categories.length === 0 ? (
+                  <div className="text-gray-500 text-sm text-center py-4">ยังไม่มีหมวดหมู่</div>
+                ) : (
+                  categories.map(cat => (
+                    <div key={cat.id} className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                      <span className="text-sm font-medium text-white">{cat.name}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => handleDeleteCategory(cat.id)} 
+                        className="p-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500 hover:text-white transition-all cursor-pointer"
+                        title="ลบหมวดหมู่"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
+            </div>
+
+            <hr className="border-white/10 mb-4" />
+
+            <h3 className="text-sm font-semibold text-gray-300 mb-2">เพิ่มหมวดหมู่ใหม่</h3>
+            <form onSubmit={handleAddCategory} className="flex gap-2">
+              <input 
+                type="text" 
+                className="flex-1 p-2.5 text-sm border border-white/10 rounded-xl bg-black/40 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" 
+                required 
+                value={newCategoryName} 
+                onChange={e => setNewCategoryName(e.target.value)} 
+                placeholder="ชื่อหมวดหมู่..." 
+              />
+              <button 
+                type="submit" 
+                className="py-2.5 px-4 text-sm bg-primary text-white border-none rounded-xl cursor-pointer hover:bg-primary-hover transition-colors font-bold whitespace-nowrap shadow-sm"
+              >
+                เพิ่ม
+              </button>
             </form>
           </div>
         </div>
