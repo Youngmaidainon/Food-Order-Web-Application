@@ -102,6 +102,16 @@ app.get('/api/health', (request, response) => {
   response.json({ status: 'ok', time: new Date().toISOString() });
 });
 
+// Root Status & Info Endpoint
+app.get('/', (request, response) => {
+  response.json({
+    name: 'Spring Roll Online Store Backend API',
+    status: 'online',
+    health: '/api/health',
+    message: 'Backend API is running. Access API endpoints under /api or deploy Frontend on Vercel.'
+  });
+});
+
 app.use(globalErrorHandler);
 
 export default app;
