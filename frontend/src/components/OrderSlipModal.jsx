@@ -1,6 +1,10 @@
 import React, { useEffect } from 'react';
+import { useStoreStatus } from '../hooks/queries.js';
 
-export default function OrderSlipModal({ isOpen, onClose, order, restaurantName = 'ร้านสปริงโรลออนไลน์' }) {
+export default function OrderSlipModal({ isOpen, onClose, order, restaurantName: propRestaurantName }) {
+  const { data: storeStatus } = useStoreStatus();
+  const restaurantName = propRestaurantName || storeStatus?.restaurant_name || 'ร้านสปริงโรลออนไลน์';
+
   // Close on Escape key press
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -39,18 +43,18 @@ export default function OrderSlipModal({ isOpen, onClose, order, restaurantName 
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/80 backdrop-blur-md flex justify-center items-end sm:items-center z-[1100] p-0 sm:p-4 transition-all duration-300 animate-in fade-in"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-[#141418] border border-white/15 w-full max-w-[460px] rounded-t-3xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
-        
+
         {/* Mobile Drag/Close Handle */}
-        <div 
-          className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-2.5 sm:hidden cursor-pointer" 
+        <div
+          className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-2.5 sm:hidden cursor-pointer"
           onClick={onClose}
         ></div>
 
@@ -58,14 +62,14 @@ export default function OrderSlipModal({ isOpen, onClose, order, restaurantName 
         <div className="flex justify-between items-center pb-3 border-b border-white/10 mb-3 sm:mb-4 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary text-sm shadow-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" x2="8" y1="13" y2="13" /><line x1="16" x2="8" y1="17" y2="17" /></svg>
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">สลิปคำสั่งซื้อ (E-Receipt)</h3>
               <p className="text-[10.5px] sm:text-[11px] text-gray-400">ใบเสร็จและรายละเอียดออเดอร์ของคุณ</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-xs"
             title="ปิดหน้าต่าง"
@@ -77,7 +81,7 @@ export default function OrderSlipModal({ isOpen, onClose, order, restaurantName 
         {/* Premium Paper Receipt Body */}
         <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
           <div className="bg-[#fefdfb] text-gray-900 rounded-2xl p-4 sm:p-6 shadow-xl border border-amber-900/10 text-xs leading-relaxed relative overflow-hidden select-text">
-            
+
             {/* Paper Top Decorative Line */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-primary to-amber-500"></div>
 
@@ -85,7 +89,7 @@ export default function OrderSlipModal({ isOpen, onClose, order, restaurantName 
             <div className="text-center pb-3 sm:pb-4 border-b border-dashed border-gray-300">
               <h2 className="text-base sm:text-lg font-black text-gray-900 tracking-tight">{restaurantName}</h2>
               <p className="text-[10.5px] sm:text-[11px] text-gray-500 font-medium mt-0.5">ใบแจ้งรายละเอียดคำสั่งซื้อ</p>
-              
+
               {/* Synchronized Status Badge */}
               <div className={`mt-2 inline-flex items-center gap-1.5 text-[11px] px-3 py-0.5 rounded-full border font-bold ${getStatusBadgeStyle(currentStatus)}`}>
                 <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
@@ -151,7 +155,7 @@ export default function OrderSlipModal({ isOpen, onClose, order, restaurantName 
                         {parseInt(item.unit_price * item.quantity, 10)} ฿
                       </span>
                     </div>
-                    
+
                     {item.dressing_name && item.dressing_name !== 'ไม่รับน้ำสลัด' && (
                       <div className="text-[10px] sm:text-[10.5px] text-gray-600 pl-3 sm:pl-4 mt-0.5 flex items-center gap-1">
                         <span className="text-primary font-bold">•</span>
@@ -175,7 +179,7 @@ export default function OrderSlipModal({ isOpen, onClose, order, restaurantName 
                 <span>รวมค่าอาหาร:</span>
                 <span className="font-semibold">{parseInt(order.total_amount, 10)} ฿</span>
               </div>
-              
+
               {/* Only display delivery fee row if order is delivery */}
               {isDelivery && (
                 <div className="flex justify-between text-gray-600">
@@ -192,7 +196,7 @@ export default function OrderSlipModal({ isOpen, onClose, order, restaurantName 
 
             {/* Slogan Footer */}
             <div className="text-center pt-3 mt-3 border-t border-dashed border-gray-300">
-              <p className="text-[11px] sm:text-[11.5px] font-bold text-gray-800">ขอบคุณที่อุดหนุนร้านสปริงโรลออนไลน์</p>
+              <p className="text-[11px] sm:text-[11.5px] font-bold text-gray-800">ขอบคุณที่อุดหนุน{restaurantName}ค่ะ</p>
               <p className="text-[10px] text-gray-500 mt-0.5">ทานให้อร่อยนะคะ ยินดีให้บริการค่ะ</p>
             </div>
 

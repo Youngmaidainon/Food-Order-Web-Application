@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { sendApiRequest } from '../../api/api.js';
 import { useAlert } from '../../context/AlertContext';
 
 // หน้าสำหรับตั้งค่าข้อมูลทั่วไปของร้าน เช่น ชื่อร้าน และสถานะเปิด/ปิด
 export default function Settings() {
+  const queryClient = useQueryClient();
   const { showAlert, showConfirm } = useAlert();
   const [storeStatus, setStoreStatus] = useState(null);
   const [restaurantName, setRestaurantName] = useState('');
@@ -54,6 +56,7 @@ export default function Settings() {
       if (res.success) {
         showAlert('บันทึกการตั้งค่าสำเร็จ');
         setOriginalIsOpen(storeStatus.is_open);
+        queryClient.invalidateQueries({ queryKey: ['storeStatus'] });
       }
     } catch (err) {
       showAlert(err.message || 'บันทึกการตั้งค่าไม่สำเร็จ');
