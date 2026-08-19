@@ -31,23 +31,26 @@ app.use(cors({
       return callback(null, true);
     }
 
-    if (!origin) return callback(null, true); // Allow same-origin or curl requests
+    if (!origin) return callback(null, true); // Allow same-origin, curl, or server-to-server requests
     
-    // อนุญาตทุก Origin หากเปิดใช้งาน ALLOW_DYNAMIC_CORS (เฉพาะการจำลอง Production บน Docker)
-    if (process.env.ALLOW_DYNAMIC_CORS === 'true') {
+    // อนุญาตทุก Origin หากเปิดใช้งาน ALLOW_DYNAMIC_CORS หรือตั้ง CORS_ORIGIN=*
+    if (process.env.ALLOW_DYNAMIC_CORS === 'true' || process.env.CORS_ORIGIN === '*') {
       return callback(null, true);
     }
 
-    let allowedOrigins = ['http://localhost', 'http://localhost:80', 'http://localhost:8080'];
+    let allowedOrigins = ['http://localhost', 'http://localhost:80', 'http://localhost:8080', 'http://localhost:5173', 'http://localhost:3000'];
     if (process.env.CORS_ORIGIN) {
-      const origins = process.env.CORS_ORIGIN.split(',').map(o => o.trim());
+      const origins = process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/+$/, ''));
       allowedOrigins = [...allowedOrigins, ...origins];
     }
 
-    if (allowedOrigins.includes(origin)) {
+    const cleanOrigin = origin.replace(/\/+$/, '');
+
+    // Allow if in whitelist or from any *.vercel.app domain
+    if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
-      callback(new ForbiddenError('Not allowed by CORS'));
+      callback(new ForbiddenError(`Not allowed by CORS: ${origin}`));
     }
   },
   credentials: true
