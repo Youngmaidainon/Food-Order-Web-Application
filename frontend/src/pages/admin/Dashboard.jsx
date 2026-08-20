@@ -74,8 +74,8 @@ export default function Dashboard() {
     cancel_rate: 0
   };
 
-  const topSellersMaxRevenue = analytics.top_sellers.length > 0 
-    ? Math.max(...analytics.top_sellers.map(i => i.total_revenue)) 
+  const topSellersMaxRevenue = analytics.top_sellers.length > 0
+    ? Math.max(...analytics.top_sellers.map(i => i.total_revenue))
     : 1;
 
   return (
@@ -102,11 +102,10 @@ export default function Dashboard() {
           </a>
 
           {/* Store Open / Closed Status Pill */}
-          <div className={`flex items-center gap-2.5 px-4 py-2 rounded-2xl border ${
-            storeStatus.is_open 
-              ? 'bg-primary/10 border-primary/30 text-primary' 
-              : 'bg-red-500/10 border-red-500/30 text-red-400'
-          }`}>
+          <div className={`flex items-center gap-2.5 px-4 py-2 rounded-2xl border ${storeStatus.is_open
+            ? 'bg-primary/10 border-primary/30 text-primary'
+            : 'bg-red-500/10 border-red-500/30 text-red-400'
+            }`}>
             <span className={`w-2.5 h-2.5 rounded-full ${storeStatus.is_open ? 'bg-primary animate-pulse' : 'bg-red-500'}`}></span>
             <span className="font-bold text-xs sm:text-sm">
               {storeStatus.is_open ? '🟢 เปิดรับออเดอร์' : '🔴 ร้านปิดชั่วคราว'}
@@ -128,7 +127,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Active Sales */}
           <div className="glass-card p-5 rounded-3xl border border-primary/20 bg-primary/5 relative overflow-hidden">
-            <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">ยอดขายรอบนี้ (สำเร็จ)</div>
+            <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">ยอดขายในวันนี้ (สำเร็จ)</div>
             <div className="text-3xl font-black text-white mb-1">
               {parseInt(activeBatch.sales, 10)} <span className="text-base text-primary font-bold">฿</span>
             </div>
@@ -137,7 +136,7 @@ export default function Dashboard() {
 
           {/* Active Completed Orders */}
           <div className="glass-card p-5 rounded-3xl border border-white/5 relative overflow-hidden">
-            <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">ออเดอร์ทั้งหมดในรอบนี้</div>
+            <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">ออเดอร์ทั้งหมดในวันนี้</div>
             <div className="text-3xl font-black text-white mb-1">
               {activeBatch.total_orders} <span className="text-base text-gray-400 font-normal">บิล</span>
             </div>
@@ -146,7 +145,7 @@ export default function Dashboard() {
 
           {/* Canceled Orders */}
           <div className="glass-card p-5 rounded-3xl border border-white/5 relative overflow-hidden">
-            <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">ยกเลิกในรอบนี้</div>
+            <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">จำนวนการยกเลิกออเดอร์ในวันนี้</div>
             <div className="text-3xl font-black text-red-400 mb-1">
               {activeBatch.canceled_orders} <span className="text-base text-red-400/70 font-normal">บิล</span>
             </div>
@@ -266,7 +265,7 @@ export default function Dashboard() {
 
                       {/* Visual Revenue Share Bar */}
                       <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="bg-gradient-to-r from-primary to-secondary h-full rounded-full transition-all duration-500"
                           style={{ width: `${percent}%` }}
                         />

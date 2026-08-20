@@ -74,9 +74,9 @@ export class OrdersRepository {
   }
 
   async getOrderByNumber(orderNumber) {
-    // ปิดบังข้อมูลส่วนบุคคล (PII) เพื่อป้องกันข้อมูลลูกค้ารั่วไหล
+    // ดึงข้อมูลออเดอร์พร้อม PII สำหรับ Masking ฝั่ง Service Layer
     const result = await executeQuery(
-      'SELECT id, order_number, sequence_number, delivery_type, status, cancel_reason, canceled_by, FLOOR(total_amount)::INT as total_amount, created_at FROM orders WHERE order_number = $1 AND deleted_at IS NULL',
+      'SELECT id, order_number, sequence_number, customer_name, customer_phone, delivery_type, address, status, cancel_reason, canceled_by, FLOOR(total_amount)::INT as total_amount, session_id, created_at FROM orders WHERE order_number = $1 AND deleted_at IS NULL',
       [orderNumber]
     );
     return result.rows.length > 0 ? result.rows[0] : null;

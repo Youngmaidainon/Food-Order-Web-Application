@@ -12,7 +12,7 @@ const ordersRouter = express.Router();
 const ordersRepository = new OrdersRepository();
 const ordersService = new OrdersService(ordersRepository);
 
-export { ordersService, ordersRepository };
+
 
 // Rate Limiter: ป้องกันสแปมและ DoS จำกัดโควต้าสร้างออเดอร์ 10 ครั้งต่อ 15 นาที
 const createOrderRateLimiter = rateLimit({

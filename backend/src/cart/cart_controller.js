@@ -10,7 +10,7 @@ const cartRouter = express.Router();
 const cartRepository = new CartRepository();
 const cartService = new CartService(cartRepository);
 
-export { cartService, cartRepository };
+
 
 // Rate Limiter: ป้องกัน DoS บนตะกร้าสินค้า
 const cartRateLimiter = rateLimit({

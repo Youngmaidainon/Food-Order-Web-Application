@@ -94,7 +94,7 @@ export default function Orders() {
       case 'รับออเดอร์แล้ว':
         return { label: 'กำลังเตรียมอาหาร', nextStatus: 'กำลังเตรียมอาหาร', color: 'bg-orange-500 hover:bg-orange-600' };
       case 'กำลังเตรียมอาหาร':
-        return isPickup 
+        return isPickup
           ? { label: 'พร้อมรับอาหาร', nextStatus: 'พร้อมรับอาหาร', color: 'bg-emerald-500 hover:bg-emerald-600' }
           : { label: 'กำลังจัดส่ง', nextStatus: 'กำลังจัดส่ง', color: 'bg-purple-500 hover:bg-purple-600' };
       case 'พร้อมรับอาหาร':
@@ -206,17 +206,15 @@ export default function Orders() {
           <div className="flex items-center bg-black/40 border border-white/10 p-1 rounded-2xl shadow-inner">
             <button
               onClick={() => toggleViewMode('kanban')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'kanban' ? 'bg-primary text-white shadow-sm shadow-primary/30' : 'text-gray-400 hover:text-white'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${viewMode === 'kanban' ? 'bg-primary text-white shadow-sm shadow-primary/30' : 'text-gray-400 hover:text-white'
+                }`}
             >
               <span>🍱 กระดานครัว</span>
             </button>
             <button
               onClick={() => toggleViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'table' ? 'bg-primary text-white shadow-sm shadow-primary/30' : 'text-gray-400 hover:text-white'
-              }`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${viewMode === 'table' ? 'bg-primary text-white shadow-sm shadow-primary/30' : 'text-gray-400 hover:text-white'
+                }`}
             >
               <span>ตาราง</span>
             </button>
@@ -242,11 +240,11 @@ export default function Orders() {
           <p className="text-sm font-medium">กำลังโหลดข้อมูลออเดอร์...</p>
         </div>
       ) : viewMode === 'kanban' ? (
-        
+
         /* Kanban Board View */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 items-start">
           {kanbanColumns.map(column => (
-            <div 
+            <div
               key={column.id}
               className={`glass-card rounded-3xl border ${column.color} p-4 flex flex-col max-h-[85vh] bg-surface/50`}
             >
@@ -273,7 +271,7 @@ export default function Orders() {
                     const nextAction = getNextStatusAction(order);
 
                     return (
-                      <div 
+                      <div
                         key={order.id}
                         className="bg-[#18181f] border border-white/10 hover:border-white/25 rounded-2xl p-4 transition-all shadow-md group relative overflow-hidden"
                       >
@@ -304,11 +302,10 @@ export default function Orders() {
                           <span className="font-semibold text-white truncate max-w-[120px]">
                             {order.customer_name}
                           </span>
-                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${
-                            order.delivery_type === 'รับเองที่ร้าน' 
-                              ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
-                              : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                          }`}>
+                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md ${order.delivery_type === 'รับเองที่ร้าน'
+                            ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                            : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                            }`}>
                             {order.delivery_type === 'รับเองที่ร้าน' ? '🛍️ รับหน้าร้าน' : '🛵 จัดส่ง'}
                           </span>
                         </div>
@@ -384,7 +381,7 @@ export default function Orders() {
                 <tr className="bg-black/50 text-gray-300 text-xs tracking-wider uppercase border-b border-white/10 font-bold">
                   <th className="p-4 sm:p-5 text-center min-w-[110px] whitespace-nowrap">ลำดับคิว</th>
                   <th className="p-4 sm:p-5 text-center min-w-[170px] whitespace-nowrap">รหัสออเดอร์</th>
-                  <th className="p-4 sm:p-5 text-center min-w-[200px] whitespace-nowrap">ลูกค้า & การจัดส่ง</th>
+                  <th className="p-4 sm:p-5 text-center min-w-[200px] whitespace-nowrap">รูปแบบการรับอาหาร</th>
                   <th className="p-4 sm:p-5 text-center min-w-[130px] whitespace-nowrap">ระยะเวลารอ</th>
                   <th className="p-4 sm:p-5 text-center min-w-[150px] whitespace-nowrap">สถานะ</th>
                   <th className="p-4 sm:p-5 text-center min-w-[120px] whitespace-nowrap">ยอดเงิน</th>
@@ -427,11 +424,10 @@ export default function Orders() {
                               {order.customer_name}
                             </span>
                             <div className="flex items-center justify-center gap-1.5 flex-wrap text-xs text-gray-400">
-                              <span className={`px-2 py-0.5 rounded-md font-medium text-[11px] ${
-                                order.delivery_type === 'รับเองที่ร้าน' 
-                                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
-                                  : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                              }`}>
+                              <span className={`px-2 py-0.5 rounded-md font-medium text-[11px] ${order.delivery_type === 'รับเองที่ร้าน'
+                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                }`}>
                                 {order.delivery_type === 'รับเองที่ร้าน' ? '🛍️ รับหน้าร้าน' : '🛵 จัดส่ง'}
                               </span>
                               <span>•</span>
@@ -508,8 +504,8 @@ export default function Orders() {
                   สั่งเมื่อ {new Date(selectedOrder.created_at).toLocaleString('th-TH')}
                 </p>
               </div>
-              <button 
-                onClick={() => setSelectedOrder(null)} 
+              <button
+                onClick={() => setSelectedOrder(null)}
                 className="bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-full w-9 h-9 flex items-center justify-center transition-colors cursor-pointer border border-white/10"
               >
                 ✕
@@ -575,8 +571,8 @@ export default function Orders() {
             {/* Modal Actions */}
             <div className="flex gap-2.5 flex-wrap pt-2 border-t border-white/10">
               {getNextStatusAction(selectedOrder) && (
-                <button 
-                  onClick={() => updateOrderStatus(selectedOrder.id, getNextStatusAction(selectedOrder).nextStatus)} 
+                <button
+                  onClick={() => updateOrderStatus(selectedOrder.id, getNextStatusAction(selectedOrder).nextStatus)}
                   className={`flex-1 py-3 px-4 text-sm rounded-xl cursor-pointer font-bold text-white transition-all ${getNextStatusAction(selectedOrder).color}`}
                 >
                   {getNextStatusAction(selectedOrder).label}
@@ -584,8 +580,8 @@ export default function Orders() {
               )}
 
               {(selectedOrder.status === 'รอดำเนินการ' || selectedOrder.status === 'รับออเดอร์แล้ว') && (
-                <button 
-                  onClick={() => updateOrderStatus(selectedOrder.id, 'ยกเลิก')} 
+                <button
+                  onClick={() => updateOrderStatus(selectedOrder.id, 'ยกเลิก')}
                   className="py-3 px-4 text-sm rounded-xl cursor-pointer font-bold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white transition-colors"
                 >
                   ยกเลิกออเดอร์
