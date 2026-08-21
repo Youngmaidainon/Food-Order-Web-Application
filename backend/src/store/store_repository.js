@@ -4,7 +4,7 @@ export class StoreRepository {
   async getStoreStatus(databaseClient = null) {
     const queryExecutor = databaseClient ? (sqlText, sqlParams) => databaseClient.query(sqlText, sqlParams) : executeQuery;
     const statusQueryResult = await queryExecutor(
-      `SELECT is_open, announcement_message, restaurant_name, current_sequence
+      `SELECT is_open, announcement_message, restaurant_name, hero_title, hero_subtitle, current_sequence
        FROM store_status ORDER BY id ASC LIMIT 1`
     );
     return statusQueryResult.rows.length > 0 ? statusQueryResult.rows[0] : null;
@@ -60,30 +60,34 @@ export class StoreRepository {
     await databaseClient.query('DELETE FROM orders');
   }
 
-  async updateStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName, resetSequence) {
+  async updateStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName, heroTitle, heroSubtitle, resetSequence) {
     const sequenceUpdate = resetSequence ? ', current_sequence = 0' : '';
     const updateStoreStatusSql = `
       UPDATE store_status 
       SET 
         is_open = COALESCE($1, is_open),
         announcement_message = COALESCE($2, announcement_message),
-        restaurant_name = COALESCE($3, restaurant_name)
+        restaurant_name = COALESCE($3, restaurant_name),
+        hero_title = COALESCE($4, hero_title),
+        hero_subtitle = COALESCE($5, hero_subtitle)
         ${sequenceUpdate}
       WHERE id = (SELECT id FROM store_status ORDER BY id ASC LIMIT 1)
       RETURNING *
     `;
-    const res = await databaseClient.query(updateStoreStatusSql, [isOpen, announcementMessage, restaurantName]);
+    const res = await databaseClient.query(updateStoreStatusSql, [isOpen, announcementMessage, restaurantName, heroTitle, heroSubtitle]);
     return res.rows.length > 0 ? res.rows[0] : null;
   }
 
-  async insertStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName) {
+  async insertStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName, heroTitle, heroSubtitle) {
     const res = await databaseClient.query(
-      `INSERT INTO store_status (is_open, announcement_message, restaurant_name) 
-       VALUES ($1, $2, $3) RETURNING *`,
+      `INSERT INTO store_status (is_open, announcement_message, restaurant_name, hero_title, hero_subtitle) 
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [
         isOpen !== undefined ? isOpen : true,
         announcementMessage || 'เปิดรับออเดอร์ค่า💖',
-        restaurantName || 'ร้านสปริงโรลออนไลน์'
+        restaurantName || 'ร้านสปริงโรลออนไลน์',
+        heroTitle || '🥗 เมนูเพื่อสุขภาพสดใหม่',
+        heroSubtitle || 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์'
       ]
     );
     return res.rows[0];
