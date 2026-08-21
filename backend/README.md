@@ -93,7 +93,7 @@ backend/
 | Method | Endpoint | คำอธิบาย | การตรวจสอบสิทธิ์ | Request Body ตัวอย่าง |
 |---|---|---|---|---|
 | `POST` | `/api/orders` | สร้างคำสั่งซื้อใหม่ | สาธารณะ | `{"customer_name":"สมชาย","customer_phone":"0812345678","delivery_type":"รับเองที่ร้าน","items":[...]}` |
-| `GET` | `/api/orders/track/:order_number` | ค้นหาและดูสถานะคำสั่งซื้อ (Smart Polling 4s) | สาธารณะ (Masked PII) | - |
+| `GET` | `/api/orders/track/:order_number` | ค้นหาและดูสถานะคำสั่งซื้อ (Smart Polling 4s) | สาธารณะ (Masked PII: ซ่อนชื่อ, เบอร์โทร, ที่อยู่) | - |
 | `PATCH` | `/api/orders/:id/status` | ลูกค้ายกเลิกคำสั่งซื้อของตนเอง | สาธารณะ | `{"status":"ยกเลิก","cancel_reason":"ติดธุระด่วน"}` |
 
 ### 6. ระบบผู้ดูแลระบบ (Admin Portal Endpoints)
@@ -140,6 +140,9 @@ backend/
    - `Track Order Rate Limiter`: จำกัด 300 ครั้ง / 15 นาที รองรับการ Polling สถานะออเดอร์
    - `Store Status Rate Limiter`: จำกัด 300 ครั้ง / 15 นาที รองรับการ Polling สถานะร้าน
    - `General API Rate Limiter`: จำกัด 600 ครั้ง / 15 นาที ป้องกัน DoS และ Scraper
+
+5. **การปกป้องข้อมูลส่วนบุคคล (PII Data Protection & Masking)**
+   - บน Endpoint `GET /api/orders/track/:order_number` หากผู้เรียกดูไม่ใช่ผู้ดูแลระบบและไม่ใช่เจ้าของเซสชันที่สร้างคำสั่งซื้อ (`cart_session`) ระบบจะซ่อนฟิลด์ข้อมูลส่วนบุคคล (`customer_name`, `customer_phone`, `address`) อัตโนมัติเป็น `'*** ข้อมูลถูกซ่อนเพื่อความปลอดภัย ***'` เพื่อป้องกันการรั่วไหลของข้อมูล PII
 
 ---
 

@@ -1,6 +1,6 @@
 <div align="center">
   <h1>🗄️ โครงสร้างฐานข้อมูล (Database Architecture & Schema)</h1>
-  <p><strong>ระบบฐานข้อมูล PostgreSQL 15+ ออกแบบตามหลัก Relational Integrity, Custom ENUMs, Foreign Key Cascades และ B-Tree Indexes ประสิทธิภาพสูง รองรับทั้งการรันบน Local Docker และผู้ให้บริการ Cloud Database Hosting ทุกค่าย</strong></p>
+  <p><strong>ระบบฐานข้อมูล PostgreSQL 17+ ออกแบบตามหลัก Relational Integrity, Custom ENUMs, Foreign Key Cascades และ B-Tree Indexes ประสิทธิภาพสูง รองรับทั้งการรันบน Local Docker และผู้ให้บริการ Cloud Database Hosting ทุกค่าย</strong></p>
 </div>
 
 ---
@@ -80,6 +80,8 @@ erDiagram
         boolean is_open
         text announcement_message
         varchar restaurant_name
+        varchar hero_title
+        varchar hero_subtitle
         int current_sequence
     }
 
@@ -186,6 +188,8 @@ erDiagram
 * `is_open` (`BOOLEAN DEFAULT TRUE`): สถานะเปิด/ปิดรับออเดอร์ของร้าน
 * `announcement_message` (`TEXT DEFAULT ''`): ข้อความประกาศหน้าร้าน
 * `restaurant_name` (`VARCHAR(100) DEFAULT 'ร้านสปริงโรลออนไลน์'`): ชื่อร้านค้า
+* `hero_title` (`VARCHAR(150) DEFAULT '🥗 เมนูเพื่อสุขภาพสดใหม่'`): หัวข้อหลักของ Hero Section หน้าร้าน
+* `hero_subtitle` (`VARCHAR(255) DEFAULT 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์'`): คำบรรยายย่อยของ Hero Section หน้าร้าน
 * `current_sequence` (`INT DEFAULT 0`): ลำดับคิวล่าสุดประจำวัน
 
 ### 7. ตาราง `admin_users` (บัญชีผู้ดูแลระบบ)

@@ -6,7 +6,7 @@
 
   <img src="https://img.shields.io/badge/Frontend-React%2018%20%7C%20Vite%20%7C%20TailwindCSS-00f2fe?style=flat-square&logo=react&logoColor=white" alt="Frontend" />
   <img src="https://img.shields.io/badge/Backend-Node.js%20%7C%20Express-43e97b?style=flat-square&logo=node.js&logoColor=white" alt="Backend" />
-  <img src="https://img.shields.io/badge/Database-PostgreSQL%2015%2B-336791?style=flat-square&logo=postgresql&logoColor=white" alt="Database" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL%2017%2B-336791?style=flat-square&logo=postgresql&logoColor=white" alt="Database" />
   <img src="https://img.shields.io/badge/Realtime-Smart%20Polling%20%26%20Intelligent%20Cache-ff0844?style=flat-square" alt="Smart Polling & Cache" />
   <img src="https://img.shields.io/badge/Container-Docker%20%7C%20Docker%20Compose-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
   <img src="https://img.shields.io/badge/Cloud%20Hosting-Render%20%7C%20Vercel%20%7C%20Neon-000000?style=flat-square&logo=vercel&logoColor=white" alt="Cloud Hosting" />
@@ -46,7 +46,7 @@ flowchart TD
     end
 
     subgraph STORAGE ["🗄️ 4. แหล่งจัดเก็บข้อมูล (Database Layer)"]
-        Database[("🐘 PostgreSQL 15+ Database<br/>• เมนูอาหาร, ออเดอร์, เซสชัน<br/>• B-Tree Indexes & Connection Pool")]:::db
+        Database[("🐘 PostgreSQL 17+ Database<br/>• เมนูอาหาร, ออเดอร์, เซสชัน<br/>• B-Tree Indexes & Connection Pool")]:::db
     end
 
     subgraph EXTERNAL ["☁️ 5. บริการภายนอก (External Cloud Services)"]
@@ -98,6 +98,7 @@ flowchart TD
 ### 🔒 ด้านความปลอดภัย (Cyber Security)
 - **มาตรฐาน RFC 9457 Problem Details**: ดักจับและจัดการ Error ส่วนกลางด้วย `globalErrorHandler` พร้อมซ่อน Stack Trace บนสภาพแวดล้อม Production
 - **การตรวจสอบสิทธิ์ด้วยเซสชัน (Session Auth)**: ตรวจสอบสิทธิ์แอดมินผ่านคุกกี้ที่ปลอดภัย `HttpOnly` และ `SameSite` ป้องกันการโจมตีแบบ XSS
+- **การปกป้องข้อมูลส่วนบุคคล (PII Data Protection & Masking)**: ซ่อนข้อมูลระบุตัวตน (ชื่อ, เบอร์โทรศัพท์ และที่อยู่) อัตโนมัติบน API ติดตามสถานะคำสั่งซื้อ (`GET /api/orders/track/:order_number`) หากผู้ขอไม่ใช่แอดมินและไม่ใช่เจ้าของเซสชันที่สั่งซื้อ
 - **การจำกัดอัตราคำขอที่เข้มงวด (Strict Rate Limits)**:
   - `POST /api/admin/login`: จำกัด 5 ครั้ง / 15 นาที (ป้องกัน Brute Force)
   - `GET /api/orders/track/:order_number`: จำกัด 300 ครั้ง / 15 นาที (รองรับ Customer Smart Polling)
