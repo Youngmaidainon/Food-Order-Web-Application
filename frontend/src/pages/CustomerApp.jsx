@@ -147,10 +147,10 @@ export default function CustomerApp() {
               <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-emerald-500/10 opacity-40 pointer-events-none"></div>
               <div className="relative z-10 flex flex-col items-center">
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight leading-tight flex items-center justify-center gap-2">
-                  <span className="text-primary">🥗</span> เมนูเพื่อสุขภาพสดใหม่
+                  {storeStatus.hero_title || '🥗 เมนูเพื่อสุขภาพสดใหม่'}
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-300 font-light max-w-md mx-auto mt-1 leading-relaxed">
-                  ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์
+                  {storeStatus.hero_subtitle || 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์'}
                 </p>
               </div>
             </div>
