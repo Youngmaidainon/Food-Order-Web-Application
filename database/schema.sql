@@ -80,6 +80,8 @@ CREATE TABLE IF NOT EXISTS store_status (
     is_open BOOLEAN DEFAULT TRUE,
     announcement_message TEXT DEFAULT '',
     restaurant_name VARCHAR(100) DEFAULT 'ร้านสปริงโรลออนไลน์',
+    hero_title VARCHAR(150) DEFAULT '🥗 เมนูเพื่อสุขภาพสดใหม่',
+    hero_subtitle VARCHAR(255) DEFAULT 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์',
     current_sequence INT DEFAULT 0
 );
 
