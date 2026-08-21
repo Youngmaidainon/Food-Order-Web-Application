@@ -111,6 +111,24 @@ export default function Settings() {
                 onChange={e => setAnnouncement(e.target.value)}
                 placeholder="เช่น เปิดรับออเดอร์ตามปกติ หรือ วันนี้มีเมนูพิเศษ..."
               />
+              
+              {/* Real-time Announcement Banner Preview */}
+              <div className="mt-3">
+                <label className="block mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">ตัวอย่างแถบประกาศหน้าร้าน (Live Preview)</label>
+                <div 
+                  className={`text-center py-2 px-3 sm:px-4 text-xs font-medium tracking-wide rounded-xl text-white transition-all shadow-sm ${
+                    !storeStatus.is_open 
+                      ? 'bg-gradient-to-r from-red-600 via-red-500 to-red-600 shadow-[0_0_15px_rgba(239,68,68,0.5)] font-semibold' 
+                      : 'bg-gradient-to-r from-primary to-primary-hover shadow-glow'
+                  }`}
+                >
+                  {!storeStatus.is_open ? (
+                    <span>🔴 ขณะนี้ร้านปิดรับออเดอร์ชั่วคราว (คุณยังสามารถเลือกชมเมนูอาหารได้ตามปกติ)</span>
+                  ) : (
+                    <span>ประกาศร้าน: <strong className="font-semibold">{announcement || 'เปิดรับออเดอร์ตามปกติ'}</strong></span>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Hero Section Settings */}
