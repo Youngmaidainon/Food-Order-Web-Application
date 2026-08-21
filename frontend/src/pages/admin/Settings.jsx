@@ -10,6 +10,8 @@ export default function Settings() {
   const [storeStatus, setStoreStatus] = useState(null);
   const [restaurantName, setRestaurantName] = useState('');
   const [announcement, setAnnouncement] = useState('');
+  const [heroTitle, setHeroTitle] = useState('');
+  const [heroSubtitle, setHeroSubtitle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [originalIsOpen, setOriginalIsOpen] = useState(null);
 
@@ -26,6 +28,8 @@ export default function Settings() {
         setOriginalIsOpen(res.data.is_open);
         setRestaurantName(res.data.restaurant_name);
         setAnnouncement(res.data.announcement_message || '');
+        setHeroTitle(res.data.hero_title || '🥗 เมนูเพื่อสุขภาพสดใหม่');
+        setHeroSubtitle(res.data.hero_subtitle || 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์');
       }
     } catch (err) {
       console.error('Failed to load settings:', err);
@@ -46,7 +50,9 @@ export default function Settings() {
     const formData = {
       is_open: storeStatus.is_open,
       restaurant_name: restaurantName,
-      announcement_message: announcement
+      announcement_message: announcement,
+      hero_title: heroTitle,
+      hero_subtitle: heroSubtitle
     };
     try {
       const res = await sendApiRequest('/admin/store/status', {
@@ -105,6 +111,59 @@ export default function Settings() {
                 onChange={e => setAnnouncement(e.target.value)}
                 placeholder="เช่น เปิดรับออเดอร์ตามปกติ หรือ วันนี้มีเมนูพิเศษ..."
               />
+            </div>
+
+            {/* Hero Section Settings */}
+            <div className="pt-6 border-t border-white/10">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">🥗</span>
+                <div>
+                  <h3 className="text-base font-bold text-white">ข้อความส่วนหัวหน้าร้าน (Hero Section)</h3>
+                  <p className="text-xs text-gray-400">กำหนดหัวข้อและคำโปรยที่แสดงเด่นชัดด้านบนของหน้าร้านค้า</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block mb-2 font-semibold text-gray-300 text-sm">หัวข้อหลัก (Hero Title)</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 border border-white/10 rounded-xl bg-black/40 backdrop-blur-md text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors shadow-inner text-sm" 
+                    value={heroTitle}
+                    onChange={e => setHeroTitle(e.target.value)}
+                    placeholder="เช่น 🥗 เมนูเพื่อสุขภาพสดใหม่"
+                    maxLength="150"
+                  />
+                </div>
+
+                <div>
+                  <label className="block mb-2 font-semibold text-gray-300 text-sm">คำบรรยายย่อย (Hero Subtitle)</label>
+                  <textarea 
+                    rows="2"
+                    className="w-full p-4 border border-white/10 rounded-xl bg-black/40 backdrop-blur-md text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors shadow-inner text-sm resize-none" 
+                    value={heroSubtitle}
+                    onChange={e => setHeroSubtitle(e.target.value)}
+                    placeholder="เช่น ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์"
+                    maxLength="255"
+                  />
+                </div>
+
+                {/* Real-time Hero Preview */}
+                <div>
+                  <label className="block mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">ตัวอย่างการแสดงผลจริง (Live Preview)</label>
+                  <div className="bg-gradient-to-br from-white/[0.08] via-white/[0.03] to-transparent border border-white/10 rounded-2xl p-4 sm:p-5 text-center shadow-md relative overflow-hidden backdrop-blur-md">
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/15 via-transparent to-emerald-500/10 opacity-40 pointer-events-none"></div>
+                    <div className="relative z-10 flex flex-col items-center">
+                      <h4 className="text-lg sm:text-xl font-black text-white tracking-tight leading-tight flex items-center justify-center gap-2">
+                        {heroTitle || '🥗 เมนูเพื่อสุขภาพสดใหม่'}
+                      </h4>
+                      <p className="text-xs text-gray-300 font-light max-w-md mx-auto mt-1 leading-relaxed">
+                        {heroSubtitle || 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             
             <div className="p-5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 flex items-center justify-between mt-8 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => setStoreStatus({...storeStatus, is_open: !storeStatus.is_open})}>
