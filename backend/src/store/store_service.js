@@ -21,7 +21,9 @@ export class StoreService {
       return {
         is_open: false,
         announcement_message: 'ปิดรับออเดอร์',
-        restaurant_name: 'ร้านสปริงโรลออนไลน์'
+        restaurant_name: 'ร้านสปริงโรลออนไลน์',
+        hero_title: '🥗 เมนูเพื่อสุขภาพสดใหม่',
+        hero_subtitle: 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์'
       };
     }
 
@@ -29,17 +31,36 @@ export class StoreService {
       resultData.announcement_message = 'เปิดรับออเดอร์ค่า 💖';
     }
 
+    if (!resultData.hero_title) {
+      resultData.hero_title = '🥗 เมนูเพื่อสุขภาพสดใหม่';
+    }
+    if (!resultData.hero_subtitle) {
+      resultData.hero_subtitle = 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์';
+    }
+
     return resultData;
   }
 
   async updateStatus(data) {
-    const { is_open: isOpen, announcement_message: announcementMessage, restaurant_name: restaurantName } = data;
+    const { 
+      is_open: isOpen, 
+      announcement_message: announcementMessage, 
+      restaurant_name: restaurantName,
+      hero_title: heroTitle,
+      hero_subtitle: heroSubtitle
+    } = data;
 
     if (restaurantName && restaurantName.length > 100) {
       throw new ValidationError('ชื่อร้านยาวเกินไป (สูงสุด 100 ตัวอักษร)');
     }
     if (announcementMessage && announcementMessage.length > 200) {
       throw new ValidationError('ข้อความประกาศยาวเกินไป (สูงสุด 200 ตัวอักษร)');
+    }
+    if (heroTitle && heroTitle.length > 150) {
+      throw new ValidationError('หัวข้อ Hero ยาวเกินไป (สูงสุด 150 ตัวอักษร)');
+    }
+    if (heroSubtitle && heroSubtitle.length > 255) {
+      throw new ValidationError('คำอธิบายย่อย Hero ยาวเกินไป (สูงสุด 255 ตัวอักษร)');
     }
 
     const databaseClient = await getDatabaseClient();
@@ -78,10 +99,10 @@ export class StoreService {
       // Reset queue sequence if state changed
       const stateChanged = (isOpen !== undefined && isOpen !== wasOpen);
 
-      let updateResult = await this.storeRepository.updateStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName, stateChanged);
+      let updateResult = await this.storeRepository.updateStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName, heroTitle, heroSubtitle, stateChanged);
       
       if (!updateResult) {
-        updateResult = await this.storeRepository.insertStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName);
+        updateResult = await this.storeRepository.insertStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName, heroTitle, heroSubtitle);
       }
 
       await databaseClient.query('COMMIT');
