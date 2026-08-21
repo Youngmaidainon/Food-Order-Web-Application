@@ -16,6 +16,8 @@ async function runDatabaseMigrations() {
   try {
 
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS restaurant_name VARCHAR(100) DEFAULT 'ร้านสปริงโรลออนไลน์'`);
+    await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS hero_title VARCHAR(150) DEFAULT '🥗 เมนูเพื่อสุขภาพสดใหม่'`);
+    await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS hero_subtitle VARCHAR(255) DEFAULT 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์'`);
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS current_sequence INT DEFAULT 0`);
 
     await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45) DEFAULT NULL`);
