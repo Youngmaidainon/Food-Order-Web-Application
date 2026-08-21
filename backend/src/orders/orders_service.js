@@ -163,15 +163,10 @@ export class OrdersService {
     // PII Masking: If not admin and not the owner of the session, mask PII
     if (!isAdmin && orderRecord.session_id !== cartSessionId) {
       if (orderRecord.customer_name) {
-        const parts = orderRecord.customer_name.split(' ');
-        if (parts.length > 1) {
-          orderRecord.customer_name = `${parts[0]} ${parts[1][0]}***`;
-        } else {
-          orderRecord.customer_name = `${parts[0].substring(0, Math.min(3, parts[0].length))}***`;
-        }
+        orderRecord.customer_name = '*** ข้อมูลถูกซ่อนเพื่อความปลอดภัย ***';
       }
       if (orderRecord.customer_phone) {
-        orderRecord.customer_phone = orderRecord.customer_phone.replace(/(\d{3})\d{4}(\d{3})/, '$1-XXX-$2');
+        orderRecord.customer_phone = '*** ข้อมูลถูกซ่อนเพื่อความปลอดภัย ***';
       }
       if (orderRecord.address) {
         orderRecord.address = '*** ข้อมูลถูกซ่อนเพื่อความปลอดภัย ***';
@@ -193,7 +188,7 @@ export class OrdersService {
 
       const currentOrderRecord = await this.ordersRepository.getOrderByIdForUpdate(databaseClient, orderId);
       if (!currentOrderRecord) throw new ValidationError('ไม่พบออเดอร์ที่ต้องการยกเลิก');
-      
+
       // ป้องกัน IDOR: ตรวจสอบว่า session_id ตรงกับคนที่สั่งหรือไม่
       if (currentOrderRecord.session_id !== cartSessionId) {
         throw new AppError('ไม่มีสิทธิ์เข้าถึงออเดอร์นี้', 'FORBIDDEN', 403);
