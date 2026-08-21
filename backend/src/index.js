@@ -100,6 +100,11 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
 
+// Lightweight Ping / Health Check Endpoints for Cron Job & Uptime Monitors
+app.get(['/ping', '/health', '/api/ping'], (request, response) => {
+  response.status(200).send('OK');
+});
+
 // System Health Check Endpoint
 app.get('/api/health', (request, response) => {
   response.json({ status: 'ok', time: new Date().toISOString() });
@@ -111,6 +116,7 @@ app.get('/', (request, response) => {
     name: 'Spring Roll Online Store Backend API',
     status: 'online',
     health: '/api/health',
+    ping: '/ping',
     message: 'Backend API is running. Access API endpoints under /api or deploy Frontend on Vercel.'
   });
 });
