@@ -27,7 +27,7 @@ export default function CartSidebar({ isStoreOpen, onCheckout }) {
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 transition-all hover:bg-white/10 hover:border-primary/30 group" key={item.cart_item_id || idx}>
               <div className="flex justify-between font-semibold mb-2 text-white">
                 <span className="flex items-center gap-2">
-                  <span className="text-xl">{item.image_url}</span> 
+                  <span className="text-xl whitespace-nowrap flex-shrink-0 select-none">{item.image_url}</span> 
                   {item.name}
                 </span>
                 <span className="text-primary">{parseInt(item.price * item.quantity, 10)} ฿</span>

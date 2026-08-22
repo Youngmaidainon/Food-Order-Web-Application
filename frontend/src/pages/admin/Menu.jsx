@@ -214,8 +214,8 @@ export default function Menu() {
               ) : (
                 menuItems.map(item => (
                   <tr key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
-                    <td className="p-5 text-4xl text-center">
-                      <div className="w-16 h-16 flex items-center justify-center bg-white/5 rounded-2xl border border-white/10 shadow-inner group-hover:scale-110 transition-transform">
+                    <td className="p-5 text-center">
+                      <div className="w-16 h-16 flex items-center justify-center bg-white/5 rounded-2xl border border-white/10 shadow-inner group-hover:scale-110 transition-transform whitespace-nowrap text-2xl sm:text-3xl mx-auto select-none">
                         {item.image_url}
                       </div>
                     </td>

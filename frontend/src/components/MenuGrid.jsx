@@ -77,7 +77,7 @@ export default function MenuGrid({ menuItems, isStoreOpen, onAddItem, dressings 
 
                 <div>
                   {/* Food Image / Icon */}
-                  <div className="text-4xl sm:text-5xl lg:text-6xl text-center py-2 sm:py-4 transition-transform duration-300 group-hover:scale-105 select-none drop-shadow-md">
+                  <div className="text-4xl sm:text-5xl lg:text-6xl text-center py-2 sm:py-4 transition-transform duration-300 group-hover:scale-105 select-none drop-shadow-md whitespace-nowrap">
                     {item.image_url || '🌯'}
                   </div>
 
