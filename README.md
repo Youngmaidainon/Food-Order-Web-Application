@@ -16,7 +16,7 @@
 <br />
 
 > [!NOTE]  
-> พัฒนาตามหลักการ **Separation of Concerns (SoC)**, สถาปัตยกรรม **Feature-First** และมาตรฐานความปลอดภัย **OWASP Security Best Practices** รองรับทั้งการรันผ่าน **Docker Compose** ในเครื่อง หรือ Deploy ขึ้นระบบ Cloud ระดับ Production / Free Tier
+> พัฒนาตามหลักการ **Separation of Concerns (SoC)**, สถาปัตยกรรม **Feature-First** และมาตรฐานความปลอดภัย **OWASP Security Best Practices** รองรับทั้งการรันผ่าน **Docker Compose** ในเครื่อง หรือ Deploy ขึ้นระบบ Cloud ระดับ Production Free Tier
 
 ---
 
