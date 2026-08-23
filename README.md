@@ -248,7 +248,7 @@ Food-Order-Web-Application/
 | 🐘 **ฐานข้อมูล (Database)** | [Neon.tech](https://neon.tech) | Free Tier (0.5 GiB) | PostgreSQL Serverless เก็บข้อมูลเมนู, ออเดอร์, และคิว |
 | ⚙️ **เซิร์ฟเวอร์ (Backend API)** | [Render.com](https://render.com) | Free Web Service | Node.js + Express API, ประมวลผลคำสั่งซื้อและรายงาน Discord |
 | 🌐 **ส่วนติดต่อผู้ใช้ (Frontend)** | [Vercel.com](https://vercel.com) | Free Hobby | React 18 SPA + Reverse Proxy ส่งต่อคำขอ API ไปยัง Render |
-| ⏰ **ระบบปลุกเซิร์ฟเวอร์ (Keep-Alive)** | [cron-job.org](https://cron-job.org) | Free 100% | ยิงคำขอ Ping ทุก 10 นาที ป้องกันไม่ให้ Render เข้าสู่โหมด Sleep |
+| ⏰ **ระบบปลุกเซิร์ฟเวอร์ (Keep-Alive)** | [cron-job.org](https://cron-job.org) | Free 100% | ยิงคำขอ Ping ทุก 14 นาที ป้องกันไม่ให้ Render เข้าสู่โหมด Sleep |
 
 ---
 
