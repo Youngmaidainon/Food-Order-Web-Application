@@ -99,7 +99,7 @@ export class OrdersRepository {
        ORDER BY orderItem.id ASC`;
     
     let result;
-    if (clientOrPool.query) {
+    if (clientOrPool && typeof clientOrPool.query === 'function') {
        result = await clientOrPool.query(query, [orderId]);
     } else {
        result = await executeQuery(query, [orderId]);
