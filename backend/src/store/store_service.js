@@ -72,6 +72,7 @@ export class StoreService {
       // Extract discord messages for async deletion later
       let cancelMessages = [];
       let orderMessages = [];
+      let dailySummaryData = null;
 
       // If closing the store
       if (wasOpen && isOpen === false) {
@@ -88,11 +89,10 @@ export class StoreService {
           orderMessages = await this.storeRepository.getDiscordOrderMessages(databaseClient);
         }
 
-        // 2. Guaranteed Delivery: Send summary to Discord BEFORE clearing DB
-        // If this throws, transaction rolls back.
-        await sendDiscordDailySummary(totalSales, bestSellers, cancelledCount, totalOrders);
+        // Cache summary stats to send asynchronously outside DB transaction
+        dailySummaryData = { totalSales, bestSellers, cancelledCount, totalOrders };
 
-        // 3. Clear DB queue
+        // 2. Clear DB queue
         await this.storeRepository.clearDailyQueue(databaseClient);
       }
 
@@ -107,11 +107,11 @@ export class StoreService {
 
       await databaseClient.query('COMMIT');
 
-      // 4. Async Fire-and-Forget Discord Cleanup
-      // Execute outside transaction to not block DB
+      // 3. Async Background Discord Operations (Non-blocking)
+      if (dailySummaryData) {
+        this._asyncSendDiscordDailySummary(dailySummaryData);
+      }
       this._asyncCleanupDiscordMessages(cancelMessages, orderMessages);
-
-
 
       return updateResult;
     } catch (error) {
@@ -119,10 +119,17 @@ export class StoreService {
       if (error instanceof ValidationError || error instanceof AppError) {
         throw error;
       }
-      throw new AppError('เกิดข้อผิดพลาดในการอัปเดตสถานะร้าน (อาจเชื่อมต่อ Discord ไม่สำเร็จ)', 'INTERNAL_ERROR', 500);
+      throw new AppError('เกิดข้อผิดพลาดในการอัปเดตสถานะร้าน', 'INTERNAL_ERROR', 500);
     } finally {
       databaseClient.release();
     }
+  }
+
+  _asyncSendDiscordDailySummary(summaryData) {
+    const { totalSales, bestSellers, cancelledCount, totalOrders } = summaryData;
+    sendDiscordDailySummary(totalSales, bestSellers, cancelledCount, totalOrders).catch(err => {
+      console.error('Error sending async Discord daily summary:', err);
+    });
   }
 
   _asyncCleanupDiscordMessages(cancelMessages, orderMessages) {
