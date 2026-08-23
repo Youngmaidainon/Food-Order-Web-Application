@@ -31,8 +31,8 @@ export function useStoreStatus() {
       if (!response.success) throw new Error('Failed to fetch store status');
       return response.data;
     },
-    staleTime: 10000,
-    refetchInterval: 15000,
+    staleTime: 4000,
+    refetchInterval: 5000,
     refetchOnWindowFocus: true,
     refetchIntervalInBackground: false,
   });

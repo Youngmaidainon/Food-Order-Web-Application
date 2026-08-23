@@ -136,12 +136,8 @@ export class OrdersService {
         items: completeOrderItemsList
       };
 
-      const messageId = await sendDiscordOrderNotification(completeOrderPayload);
-      if (messageId) {
-        await this.ordersRepository.updateOrderDiscordMessageId(createdOrderRecord.id, messageId);
-      }
-
-
+      // Async Non-blocking Discord Notification
+      this._asyncSendOrderNotification(completeOrderPayload, createdOrderRecord.id);
 
       return completeOrderPayload;
     } catch (error) {
@@ -153,11 +149,25 @@ export class OrdersService {
     }
   }
 
+  _asyncSendOrderNotification(orderPayload, orderId) {
+    sendDiscordOrderNotification(orderPayload).then(async (messageId) => {
+      if (messageId) {
+        try {
+          await this.ordersRepository.updateOrderDiscordMessageId(orderId, messageId);
+        } catch (err) {
+          console.error('Error updating order discord message id:', err);
+        }
+      }
+    }).catch(err => {
+      console.error('Error sending async Discord order notification:', err);
+    });
+  }
+
   async trackOrder(orderNumber, cartSessionId, isAdmin) {
     const orderRecord = await this.ordersRepository.getOrderByNumber(orderNumber);
     if (!orderRecord) throw new AppError('ไม่พบรหัสคำสั่งซื้อนี้', 'NOT_FOUND', 404);
 
-    const items = await this.ordersRepository.getOrderItemsByOrderId(this.ordersRepository, orderRecord.id);
+    const items = await this.ordersRepository.getOrderItemsByOrderId(null, orderRecord.id);
     orderRecord.items = items;
 
     // PII Masking: If not admin and not the owner of the session, mask PII
@@ -207,15 +217,8 @@ export class OrdersService {
 
       const updatedOrderPayload = { id: parseInt(orderId, 10), order_number: currentOrderRecord.order_number, status: 'ยกเลิก' };
 
-
-
-      if (currentOrderRecord.discord_message_id) {
-        deleteDiscordOrderNotification(currentOrderRecord.discord_message_id, currentOrderRecord, 'ลูกค้า');
-      }
-      const cancelMessageId = await sendDiscordCancelNotification(currentOrderRecord, 'ลูกค้า');
-      if (cancelMessageId) {
-        await this.ordersRepository.updateOrderDiscordCancelMessageId(orderId, cancelMessageId);
-      }
+      // Async Non-blocking Discord Cancellation Notification
+      this._asyncSendCancelNotification(currentOrderRecord, orderId, 'ลูกค้า');
 
       return updatedOrderPayload;
     } catch (error) {
@@ -224,5 +227,22 @@ export class OrdersService {
     } finally {
       databaseClient.release();
     }
+  }
+
+  _asyncSendCancelNotification(orderRecord, orderId, canceledBy) {
+    if (orderRecord.discord_message_id) {
+      deleteDiscordOrderNotification(orderRecord.discord_message_id, orderRecord, canceledBy);
+    }
+    sendDiscordCancelNotification(orderRecord, canceledBy).then(async (cancelMessageId) => {
+      if (cancelMessageId) {
+        try {
+          await this.ordersRepository.updateOrderDiscordCancelMessageId(orderId, cancelMessageId);
+        } catch (err) {
+          console.error('Error updating order discord cancel message id:', err);
+        }
+      }
+    }).catch(err => {
+      console.error('Error sending async Discord cancel notification:', err);
+    });
   }
 }

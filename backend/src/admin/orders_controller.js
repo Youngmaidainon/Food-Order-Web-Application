@@ -3,7 +3,6 @@ import { executeQuery, getDatabaseClient } from '../config/database.js';
 import { authenticateAdminSession } from '../shared/middleware/auth.js';
 import { deleteDiscordOrderNotification, sendDiscordCancelNotification } from '../discord.js';
 
-
 const ordersRouter = express.Router();
 
 // GET /api/admin/orders - ดึงข้อมูลออเดอร์ทั้งหมดพร้อมไอเทม (มี Filter สถานะ และ Sort)
@@ -61,51 +60,47 @@ ordersRouter.get('/', authenticateAdminSession, async (request, response) => {
       countParameters.push(filterStatus);
     }
 
-    const orderSortingDirection = sortDirection === 'asc' ? 'ASC' : 'DESC';
-    fetchOrdersSql += ` ORDER BY customerOrder.created_at ${orderSortingDirection}`;
-    
-    queryParameters.push(limitNum);
-    queryParameters.push(offset);
-    fetchOrdersSql += ` LIMIT $${queryParameters.length - 1} OFFSET $${queryParameters.length}`;
+    const validSortDirections = ['asc', 'desc'];
+    const sanitizedSortDirection = validSortDirections.includes(sortDirection.toLowerCase()) ? sortDirection.toUpperCase() : 'DESC';
+    fetchOrdersSql += ` ORDER BY customerOrder.created_at ${sanitizedSortDirection} LIMIT $${queryParameters.length + 1} OFFSET $${queryParameters.length + 2}`;
+    queryParameters.push(limitNum, offset);
 
-    const [adminOrdersQueryResult, countResult] = await Promise.all([
+    const [ordersQueryResult, countQueryResult] = await Promise.all([
       executeQuery(fetchOrdersSql, queryParameters),
       executeQuery(countSql, countParameters)
     ]);
-    
-    const totalCount = parseInt(countResult.rows[0].total, 10);
-    const totalPages = Math.ceil(totalCount / limitNum);
 
-    return response.json({ 
-      success: true, 
-      data: adminOrdersQueryResult.rows,
+    const totalOrdersCount = parseInt(countQueryResult.rows[0].total, 10);
+    const totalPagesCount = Math.ceil(totalOrdersCount / limitNum);
+
+    return response.json({
+      success: true,
+      data: ordersQueryResult.rows,
       pagination: {
         page: pageNum,
         limit: limitNum,
-        total: totalCount,
-        totalPages: totalPages
+        total: totalOrdersCount,
+        totalPages: totalPagesCount
       }
     });
   } catch (fetchOrdersError) {
-    console.error('Error fetching admin orders:', fetchOrdersError);
-    return response.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์' });
+    console.error('Error fetching admin orders:', fetchOrdersError.message);
+    return response.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการดึงข้อมูลออเดอร์' });
   }
 });
 
-// PATCH /api/admin/orders/:id/status - อัปเดตสถานะออเดอร์
+// PATCH /api/admin/orders/:id/status - อัปเดตสถานะคำสั่งซื้อตาม Workflow
 ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, response) => {
-  const { id: orderId } = request.params;
-  const { status: newTargetStatus, cancel_reason: cancelReason, reason: legacyReason } = request.body;
-  const cancellationReasonText = cancelReason || legacyReason || null;
-
-  const validOrderStatuses = ['รอดำเนินการ', 'รับออเดอร์แล้ว', 'กำลังเตรียมอาหาร', 'พร้อมรับอาหาร', 'รับอาหารแล้ว', 'กำลังจัดส่ง', 'จัดส่งแล้ว', 'ยกเลิก'];
-  if (!validOrderStatuses.includes(newTargetStatus)) {
-    return response.status(400).json({ success: false, message: 'สถานะออเดอร์ไม่ถูกต้อง' });
-  }
-
   const databaseClient = await getDatabaseClient();
-
   try {
+    const { id: orderId } = request.params;
+    const { status: newTargetStatus, cancel_reason: cancellationReasonText } = request.body;
+
+    const allowedOrderStatuses = ['รอดำเนินการ', 'รับออเดอร์แล้ว', 'กำลังเตรียมอาหาร', 'พร้อมรับอาหาร', 'กำลังจัดส่ง', 'รับอาหารแล้ว', 'จัดส่งแล้ว', 'ยกเลิก'];
+    if (!allowedOrderStatuses.includes(newTargetStatus)) {
+      return response.status(400).json({ success: false, message: 'สถานะไม่ถูกต้อง' });
+    }
+
     await databaseClient.query('BEGIN');
 
     const orderQueryResult = await databaseClient.query('SELECT id, status, order_number, delivery_type, discord_message_id FROM orders WHERE id = $1 AND deleted_at IS NULL FOR UPDATE', [orderId]);
@@ -119,6 +114,8 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
       await databaseClient.query('ROLLBACK');
       return response.json({ success: true, message: 'สถานะไม่มีการเปลี่ยนแปลง' });
     }
+
+    let cancelOrderDetails = null;
 
     if (newTargetStatus === 'ยกเลิก') {
       if (!cancellationReasonText || cancellationReasonText.trim().length < 1 || cancellationReasonText.trim().length > 20) {
@@ -145,14 +142,7 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
       );
       currentOrderRecord.items = orderItemsQueryResult.rows;
       currentOrderRecord.cancel_reason = cancellationReasonText.trim();
-      
-      if (currentOrderRecord.discord_message_id) {
-        deleteDiscordOrderNotification(currentOrderRecord.discord_message_id, currentOrderRecord, 'ร้านค้า');
-      }
-      const cancelMessageId = await sendDiscordCancelNotification(currentOrderRecord, 'ร้านค้า');
-      if (cancelMessageId) {
-        await databaseClient.query('UPDATE orders SET discord_cancel_message_id = $1 WHERE id = $2', [cancelMessageId, orderId]);
-      }
+      cancelOrderDetails = currentOrderRecord;
     } else {
       const pickupFlow = ['รอดำเนินการ', 'รับออเดอร์แล้ว', 'กำลังเตรียมอาหาร', 'พร้อมรับอาหาร', 'รับอาหารแล้ว'];
       const deliveryFlow = ['รอดำเนินการ', 'รับออเดอร์แล้ว', 'กำลังเตรียมอาหาร', 'กำลังจัดส่ง', 'จัดส่งแล้ว'];
@@ -170,9 +160,25 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
 
     await databaseClient.query('COMMIT');
 
-    const updatedOrderPayload = { id: parseInt(orderId, 10), order_number: orderQueryResult.rows[0].order_number, status: newTargetStatus, previousStatus };
-    
+    // Async Non-blocking Discord Notification for Cancellation
+    if (cancelOrderDetails) {
+      if (cancelOrderDetails.discord_message_id) {
+        deleteDiscordOrderNotification(cancelOrderDetails.discord_message_id, cancelOrderDetails, 'ร้านค้า');
+      }
+      sendDiscordCancelNotification(cancelOrderDetails, 'ร้านค้า').then(async (cancelMessageId) => {
+        if (cancelMessageId) {
+          try {
+            await executeQuery('UPDATE orders SET discord_cancel_message_id = $1 WHERE id = $2', [cancelMessageId, orderId]);
+          } catch (err) {
+            console.error('Error updating discord cancel message id:', err);
+          }
+        }
+      }).catch(err => {
+        console.error('Error sending async Discord cancel notification:', err);
+      });
+    }
 
+    const updatedOrderPayload = { id: parseInt(orderId, 10), order_number: orderQueryResult.rows[0].order_number, status: newTargetStatus, previousStatus };
 
     return response.json({ success: true, message: `อัปเดตสถานะออเดอร์เป็น "${newTargetStatus}" เรียบร้อยแล้ว`, data: updatedOrderPayload });
   } catch (updateOrderStatusError) {
@@ -184,28 +190,20 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
   }
 });
 
-// POST /api/admin/orders/reset-queue - รีเซ็ตคิวการสั่งอาหาร
-ordersRouter.post('/reset-queue', authenticateAdminSession, async (request, response) => {
-  const databaseClient = await getDatabaseClient();
+// DELETE /api/admin/orders/:id - Soft delete ออเดอร์ (ย้ายไปประวัติที่ถูกลบ)
+ordersRouter.delete('/:id', authenticateAdminSession, async (request, response) => {
   try {
-    await databaseClient.query('BEGIN');
-    await databaseClient.query('TRUNCATE TABLE order_items, orders RESTART IDENTITY CASCADE');
-    await databaseClient.query('UPDATE store_status SET current_sequence = 0 WHERE id = 1');
-    await databaseClient.query('COMMIT');
-
-
-
-    return response.json({
-      success: true,
-      message: 'รีเซ็ตลำดับคิวเรียบร้อยแล้ว! คิวถัดไปจะเริ่มต้นที่ คิวที่ #1'
-    });
-  } catch (resetQueueError) {
-    await databaseClient.query('ROLLBACK');
-    console.error('Error resetting queue:', resetQueueError);
-    return response.status(500).json({ success: false, message: `เกิดข้อผิดพลาดในการรีเซ็ตคิว: ${resetQueueError.message}` });
-  } finally {
-    databaseClient.release();
+    const { id: orderId } = request.params;
+    const deleteOrderQueryResult = await executeQuery('UPDATE orders SET deleted_at = NOW() WHERE id = $1 RETURNING id', [orderId]);
+    if (deleteOrderQueryResult.rows.length === 0) {
+      return response.status(404).json({ success: false, message: 'ไม่พบออเดอร์' });
+    }
+    return response.json({ success: true, message: 'ลบออเดอร์เรียบร้อยแล้ว' });
+  } catch (deleteOrderError) {
+    console.error('Error soft-deleting order:', deleteOrderError.message);
+    return response.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดในการลบออเดอร์' });
   }
 });
 
+export { ordersRouter };
 export default ordersRouter;
