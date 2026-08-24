@@ -19,6 +19,11 @@ async function runDatabaseMigrations() {
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS hero_title VARCHAR(150) DEFAULT '🥗 เมนูเพื่อสุขภาพสดใหม่'`);
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS hero_subtitle VARCHAR(255) DEFAULT 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์'`);
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS current_sequence INT DEFAULT 0`);
+    await executeQuery(`
+      INSERT INTO store_status (id, is_open, announcement_message, restaurant_name, hero_title, hero_subtitle, current_sequence)
+      VALUES (1, true, 'เปิดรับออเดอร์ค่า 💖', 'ร้านสปริงโรลออนไลน์', '🥗 เมนูเพื่อสุขภาพสดใหม่', 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์', 0)
+      ON CONFLICT (id) DO NOTHING
+    `);
 
     await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS ip_address VARCHAR(45) DEFAULT NULL`);
     await executeQuery(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS session_id VARCHAR(255) DEFAULT NULL`);

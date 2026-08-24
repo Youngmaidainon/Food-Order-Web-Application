@@ -3,13 +3,19 @@ import { applicationConfig } from './config.js';
 
 const { Pool } = pg;
 
+const isLocalOrDocker = applicationConfig.databaseUrl && (
+  applicationConfig.databaseUrl.includes('localhost') || 
+  applicationConfig.databaseUrl.includes('127.0.0.1') || 
+  applicationConfig.databaseUrl.includes('@db:')
+);
+
 // ตั้งค่า Database Connection Pool เพื่อใช้ Connection ซ้ำและจัดการทรัพยากรฐานข้อมูลอย่างมีประสิทธิภาพ
 export const databasePool = new Pool({
   connectionString: applicationConfig.databaseUrl,
-  max: 10, // จำกัดจำนวน Connection สูงสุด ป้องกันปัญหาฐานข้อมูลทำงานหนักเกินไป (DoS) และเหมาะกับ Free Tier
-  idleTimeoutMillis: 30000, // ปิด Connection ที่ไม่ได้ใช้งานเกิน 30 วินาที คืนทรัพยากร
-  connectionTimeoutMillis: 5000, // รอนานสุด 5 วินาทีในการเชื่อมต่อ (Fail fast)
-  ssl: applicationConfig.databaseUrl && (applicationConfig.databaseUrl.includes('localhost') || applicationConfig.databaseUrl.includes('@db:')) ? false : { rejectUnauthorized: false } // เปิด SSL เมื่อรันบน Production (เช่น Neon) เพื่อความปลอดภัย (Transport Security)
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+  ssl: isLocalOrDocker ? false : { rejectUnauthorized: false }
 });
 
 // จัดการ Error ระดับ Global ของ Pool ป้องกันแอปพลิเคชัน Crash แบบเงียบๆ

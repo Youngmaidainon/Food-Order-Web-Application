@@ -1,9 +1,21 @@
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// ดึงและตั้งค่าตัวแปร (Environment Variables) พื้นฐาน
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load .env from current directory, then fallback to root workspace .env or backend/.env
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
 const portStr = process.env.PORT || '8000';
-const dbUrl = process.env.DATABASE_URL || 'postgres://postgres:postgres@db:5432/springroll_db';
+let dbUrl = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/springroll_db';
+
+// If running locally outside Docker but DATABASE_URL points to '@db:', adapt to localhost
+if (process.env.NODE_ENV !== 'production' && dbUrl.includes('@db:') && !process.env.DOCKER_CONTAINER) {
+  dbUrl = dbUrl.replace('@db:', '@localhost:');
+}
 
 // ส่งออกตัวแปร Config กลางเพื่อใช้งานร่วมกันทั้งระบบ
 export const applicationConfig = {
