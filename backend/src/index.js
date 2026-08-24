@@ -109,19 +109,10 @@ const handleHealthCheck = (request, response) => {
 // System Health Check Endpoint (รองรับ Method HEAD เฉพาะ /api/health)
 app.head('/api/health', handleHealthCheck);
 
-// Root Status & Info Endpoint (รองรับทั้ง HEAD และ GET)
-app.route('/')
-  .head((request, response) => {
-    response.status(200).end();
-  })
-  .get((request, response) => {
-    response.json({
-      name: 'Spring Roll Online Store Backend API',
-      status: 'online',
-      health: '/api/health',
-      message: 'Backend API is running. Access API endpoints under /api or deploy Frontend on Vercel.'
-    });
-  });
+// Root Status Endpoint (รองรับเฉพาะ Method HEAD)
+app.head('/', (request, response) => {
+  response.status(200).end();
+});
 
 app.use(globalErrorHandler);
 
