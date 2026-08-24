@@ -70,10 +70,11 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Global Rate Limiter: ป้องกัน DoS ระดับ API ทั้งระบบ
+// Global Rate Limiter: ป้องกัน DoS ระดับ API ทั้งระบบ (ข้ามการจำกัดสำหรับ HEAD request หรือ Health Check จาก cron-job.org)
 const generalApiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 600,
+  skip: (req) => req.method === 'HEAD' || req.originalUrl === '/api/health' || req.path === '/health',
   message: { success: false, message: 'คำขอมากเกินไป กรุณารอสักครู่ (Too many requests)' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -100,20 +101,27 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
 
-// System Health Check Endpoint
-app.get('/api/health', (request, response) => {
-  response.json({ status: 'ok', time: new Date().toISOString() });
-});
+// System Health & Keep-Alive Handler (สำหรับ Method HEAD จาก cron-job.org หรือ Uptime Monitor)
+const handleHealthCheck = (request, response) => {
+  response.status(200).end();
+};
 
-// Root Status & Info Endpoint
-app.get('/', (request, response) => {
-  response.json({
-    name: 'Spring Roll Online Store Backend API',
-    status: 'online',
-    health: '/api/health',
-    message: 'Backend API is running. Access API endpoints under /api or deploy Frontend on Vercel.'
+// System Health Check Endpoint (รองรับ Method HEAD เฉพาะ /api/health)
+app.head('/api/health', handleHealthCheck);
+
+// Root Status & Info Endpoint (รองรับทั้ง HEAD และ GET)
+app.route('/')
+  .head((request, response) => {
+    response.status(200).end();
+  })
+  .get((request, response) => {
+    response.json({
+      name: 'Spring Roll Online Store Backend API',
+      status: 'online',
+      health: '/api/health',
+      message: 'Backend API is running. Access API endpoints under /api or deploy Frontend on Vercel.'
+    });
   });
-});
 
 app.use(globalErrorHandler);
 
