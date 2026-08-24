@@ -1,6 +1,6 @@
 <div align="center">
   <h1>✨ สถาปัตยกรรมส่วนติดต่อผู้ใช้ (Frontend Architecture)</h1>
-  <p><strong>พัฒนาด้วย React 18 + Vite + Tailwind CSS ดีไซน์หรูหราสไตล์ Glassmorphism รองรับการใช้งานบนมือถือเป็นหลัก (Mobile-First), ระบบซิงค์สถานะอัจฉริยะ (Smart Polling + Smart Cache), การจัดการ State ประสิทธิภาพสูง (Optimistic UI) และเสียงแจ้งเตือนด้วย Web Audio API</strong></p>
+  <p><strong>พัฒนาด้วย React 18 + Vite + Tailwind CSS สไตล์ Glassmorphism ออกแบบ Mobile-First ระบบ Smart Polling + Smart Cache, Optimistic UI และเสียงแจ้งเตือน Web Audio API Context</strong></p>
 </div>
 
 ---
@@ -9,90 +9,116 @@
 
 ```
 frontend/
-├── Dockerfile                      # คำสั่งสร้าง Docker Image สำหรับ Build และ Serve ด้วย Nginx
-├── index.html                      # ไฟล์ HTML หลักของ React SPA
-├── nginx.conf                      # คอนฟิก Nginx ปลอดภัยแบบ Non-root และ Reverse Proxy
-├── package.json                    # รายการไลบรารีและ Dependencies ฝั่ง Frontend
-├── postcss.config.js               # คอนฟิก PostCSS สำหรับ Tailwind CSS
-├── tailwind.config.js              # คอนฟิกชุดสี ธีม และ Custom Utility Classes
-├── vercel.json                     # คอนฟิก Reverse Proxy และ Rewrites สำหรับ Vercel
-├── vite.config.js                  # คอนฟิก Vite Build Tool และ Development Server
+├── Dockerfile                      # คำสั่งสร้าง Docker Image สำหรับ Build & Serve ด้วย Nginx
+├── index.html                      # HTML หลักของ React SPA
+├── nginx.conf                      # คอนฟิก Nginx Non-root & API Reverse Proxy
+├── package.json                    # รายการไลบรารีและ Dependencies
+├── postcss.config.js               # คอนฟิก PostCSS
+├── tailwind.config.js              # คอนฟิกชุดสี ธีม Glassmorphism และ Custom Utility Classes
+├── vercel.json                     # คอนฟิก Reverse Proxy & Rewrites บน Vercel
+├── vite.config.js                  # คอนฟิก Vite Build Tool & Dev Server
 └── src/
-    ├── App.jsx                     # คอมโพเนนต์หลัก จัดการ Routing ระหว่างฝั่งลูกค้าและแอดมิน
-    ├── index.css                   # สไตล์หลัก, ธีม Glassmorphism, Animation และ Fluid Typography
-    ├── main.jsx                    # จุดเริ่มต้น React DOM Render และ Wrap บริบท Contexts
-    ├── api/                        # ตัวจัดการเชื่อมต่อ Backend API
-    │   └── api.js                  # Wrapper ส่งคำขอ (sendApiRequest) จัดการ Error และ Cookies
-    ├── components/                 # คอมโพเนนต์ UI ฝั่งหน้าร้านและหน้าต่าง Modals
-    │   ├── CartModal.jsx           # หน้าต่างสรุปตะกร้าสินค้าแบบเลื่อนเปิดจากด้านล่าง (Bottom Sheet)
-    │   ├── CartSidebar.jsx         # แถบตะกร้าสินค้าแบบคงที่ด้านขวาสำหรับหน้าจอคอมพิวเตอร์
-    │   ├── CheckoutModal.jsx       # หน้าต่างตรวจสอบรายการ สรุปยอดเงิน และกรอกข้อมูลจัดส่ง
-    │   ├── DressingModal.jsx       # หน้าต่างตัวเลือกน้ำสลัดสำหรับเมนูที่ต้องเลือกน้ำสลัด
-    │   ├── Header.jsx              # แถบเมนูด้านบน, โลโก้, สถานะร้าน, ปุ่มติดตามออเดอร์ และปุ่มตะกร้า
-    │   ├── MenuGrid.jsx            # การ์ดแสดงรายการเมนูอาหาร, ป้ายสถานะ และตัวกรองหมวดหมู่
-    │   ├── MobileCartBar.jsx       # แถบตะกร้าสินค้าแบบลอยตัวด้านล่างสุดสำหรับหน้าจอมือถือ
-    │   ├── OrderSlipModal.jsx      # หน้าต่างแสดงสลิปใบเสร็จรับเงินอิเล็กทรอนิกส์ (E-Receipt)
-    │   └── TrackingModal.jsx       # หน้าต่างค้นหาและติดตามสถานะออเดอร์ (Smart Polling)
-    ├── context/                    # ระบบจัดการสถานะส่วนกลาง (Global State Management)
-    │   ├── AdminContext.jsx        # ตัวจัดการ State ข้อมูลหมวดหมู่และน้ำสลัดสำหรับหน้าแอดมิน
-    │   ├── AlertContext.jsx        # ระบบกล่องข้อความแจ้งเตือนและยืนยัน (Custom Alert/Confirm)
-    │   ├── AuthContext.jsx         # ระบบตรวจสอบและจดจำสถานะการเข้าสู่ระบบของแอดมิน
-    │   ├── CartContext.jsx         # ระบบจัดการตะกร้าสินค้า (Optimistic UI + Debounced Sync)
-    │   └── ToastContext.jsx        # ระบบแสดงข้อความแจ้งเตือนป๊อปอัปสั้น (Toast Notifications)
-    ├── hooks/                      # Custom React Hooks
-    │   └── queries.js              # Hook รวมฟังก์ชัน React Query และ Smart Polling
+    ├── App.jsx                     # คอมโพเนนต์หลัก จัดการ Routing สลับระหว่างลูกค้าและแอดมิน
+    ├── index.css                   # สไตล์ Glassmorphism, Animations, Fluid Typography
+    ├── main.jsx                    # จุดเริ่มต้น React DOM Render & Wrap Context Providers ทั้งหมด
+    ├── api/api.js                  # Fetch Wrapper จัดการ Request, Error, Header ETag และ Cookies
+    ├── components/                 # คอมโพเนนต์ UI หน้าร้านและ Modals
+    │   ├── CartModal.jsx           # ตะกร้าสินค้าแบบ Bottom Sheet Drawer (Mobile)
+    │   ├── CartSidebar.jsx         # แถบตะกร้าสินค้าด้านข้างคงที่ (Desktop)
+    │   ├── CheckoutModal.jsx       # หน้าต่างตรวจสอบรายการ สรุปยอดเงิน และฟอร์มกรอกข้อมูลจัดส่ง
+    │   ├── DressingModal.jsx       # หน้าต่างเลือกน้ำสลัดสำหรับเมนูอาหาร
+    │   ├── Header.jsx              # แถบเมนูด้านบน, โลโก้, สถานะร้าน, ปุ่มติดตามออเดอร์ และตะกร้า
+    │   ├── MenuGrid.jsx            # การ์ดแสดงเมนูอาหาร, ป้ายสถานะ และตัวกรองหมวดหมู่
+    │   ├── MobileCartBar.jsx       # แถบตะกร้าสินค้าลอยตัวด้านล่างสุด (Mobile Floating Bar)
+    │   ├── OrderSlipModal.jsx      # หน้าต่างสลิปใบเสร็จอิเล็กทรอนิกส์ (E-Receipt)
+    │   └── TrackingModal.jsx       # หน้าต่างค้นหาและติดตามสถานะออเดอร์ (Smart Polling 4s)
+    ├── context/                    # ระบบจัดการสถานะส่วนกลาง (Global State Providers)
+    │   ├── AdminContext.jsx        # State หมวดหมู่และน้ำสลัดสำหรับหน้าแอดมิน
+    │   ├── AlertContext.jsx        # ระบบกล่องข้อความแจ้งเตือนและยืนยัน (Custom Modal)
+    │   ├── AuthContext.jsx         # ตรวจสอบและจดจำสถานะเข้าสู่ระบบของแอดมิน
+    │   ├── CartContext.jsx         # จัดการตะกร้าสินค้า (Optimistic UI + Debounced Sync 500ms)
+    │   └── ToastContext.jsx        # ป๊อปอัปแจ้งเตือนสั้น (Toast Notifications)
+    ├── hooks/queries.js            # Hooks รวม TanStack React Query และ Smart Polling
     ├── pages/                      # หน้าหลักของระบบ
-    │   ├── AdminApp.jsx            # โครงสร้างหน้าหลักและ Layout ของระบบแอดมิน
-    │   ├── CustomerApp.jsx         # หน้าร้านค้าหลักสำหรับลูกค้าเลือกดูและสั่งอาหาร
+    │   ├── CustomerApp.jsx         # หน้าร้านค้าหลักสำหรับลูกค้า
+    │   ├── AdminApp.jsx            # โครงสร้างหน้าหลักและ Sidebar/Header ของระบบแอดมิน
     │   └── admin/                  # หน้าย่อยแต่ละแท็บของระบบแอดมิน
-    │       ├── Dashboard.jsx       # แดชบอร์ดสรุปสถิติยอดขายวันนี้/เดือนนี้/ทั้งหมด และเมนูขายดี
+    │       ├── Dashboard.jsx       # แดชบอร์ดสรุปยอดขาย Active Batch, วันนี้, เดือนนี้, รวม และ Top 5
     │       ├── Dressings.jsx       # หน้าจัดการเพิ่ม ลบ แก้ไข รายการน้ำสลัดและสถานะเปิด/ปิด
     │       ├── Login.jsx           # หน้าฟอร์มเข้าสู่ระบบแอดมิน
     │       ├── Menu.jsx            # หน้าจัดการเพิ่ม ลบ แก้ไข รายการเมนูอาหารและหมวดหมู่
-    │       ├── Orders.jsx          # กระดานควบคุมและเปลี่ยนสถานะคำสั่งซื้อ (Smart Polling 4s)
+    │       ├── Orders.jsx          # กระดาน KDS Kanban และ Table View (Smart Polling 4s)
     │       └── Settings.jsx        # หน้าตั้งค่าชื่อร้าน, ข้อความประกาศ และสวิตช์เปิด/ปิดร้าน
-    └── utils/                      # ฟังก์ชันช่วยเหลือและยูทิลิตี้
-        └── audio.js                # ตัวกำเนิดเสียงกระดิ่งแจ้งเตือนด้วย Web Audio Context API
+    └── utils/audio.js              # เสียงกระดิ่งสังเคราะห์ด้วย Web Audio Context API
 ```
 
 ---
 
-## 🚀 เทคนิคการปรับจูนประสิทธิภาพและประสบการณ์ผู้ใช้ (Optimizations & UX)
+## 🧩 ระบบ Global State Management (React Contexts)
 
-### 1. ⚡ การอัปเดตหน้าจอทันทีและการหน่วงเวลาส่งข้อมูล (`CartContext.jsx`)
-- **การตอบสนองทันที (Optimistic UI)**: หน้าจออัปเดตจำนวนและยอดเงินทันทีที่กดปุ่ม `+` หรือ `-` โดยไม่ต้องรอเซิร์ฟเวอร์ตอบกลับ
-- **การหน่วงเวลาส่งข้อมูล (Debounced Sync 500ms)**: รวมคำขออัปเดตตะกร้าสินค้าแล้วส่งไปยัง `/api/cart/items` เพียงครั้งเดียวหลังจากผู้ใช้หยุดกด ช่วยลดภาระของเซิร์ฟเวอร์ได้กว่า 80%
-- **การคืนค่าอัตโนมัติเมื่อเกิดข้อผิดพลาด (Graceful Rollback)**: หากเกิดปัญหาเครือข่าย ระบบจะดึงข้อมูลจริงล่าสุดจากเซิร์ฟเวอร์มาแสดงผลแทนอัตโนมัติ
+1. **`CartContext.jsx`**:
+   * เก็บ State รายการในตะกร้า (`cartItems`), ฟังก์ชัน `addItemToCart`, `updateQuantity`, `removeItem`, `clearCart`
+   * คำนวณ `totalQuantity` และ `totalPrice` อัตโนมัติ
+   * รองรับ **Optimistic UI Update** ทันที และหน่วงเวลา **500ms Debounce** ก่อนยิง API
 
-### 2. ⏱️ การติดตามออเดอร์อัจฉริยะ (`TrackingModal.jsx` และ `queries.js`)
-- **ค้นหาอัตโนมัติทันที 0 คลิก (Instant Auto-Track)**: เมื่อเปิดหน้าต่างติดตาม ระบบจะดึงรหัสออเดอร์ล่าสุดของลูกค้า (`activeOrder` หรือ `lastTrackedOrder`) ขึ้นมาค้นหาและแสดงผลทันที ไม่ต้องพิมพ์รหัสซ้ำ
-- **เส้นความคืบหน้าภาพ 5 สเต็ป (Visual Animated Stepper)**:
-  1. `รอดำเนินการ`: ร้านได้รับออเดอร์และกำลังจัดคิว (~1-3 นาที)
-  2. `รับออเดอร์แล้ว`: ยืนยันคิวและเริ่มเตรียมวัตถุดิบ (~3-5 นาที)
-  3. `กำลังเตรียมอาหาร`: ครัวกำลังปรุงอาหารสดใหม่ (~10-15 นาที)
-  4. `พร้อมรับอาหาร` หรือ `กำลังจัดส่ง`: พร้อมให้มารับหรือไรเดอร์กำลังเดินทาง
-  5. `รับอาหารแล้ว` หรือ `จัดส่งแล้ว`: เสร็จสิ้นขั้นตอน
-- **Smart Polling (3-4s)**: ซิงค์สถานะออเดอร์ทุก 4 วินาทีเฉพาะขณะเปิดหน้าต่าง และหยุด Polling ทันทีเมื่อออเดอร์เสร็จสิ้นหรือปิดหน้าต่าง
+2. **`AuthContext.jsx`**:
+   * ตรวจสอบเซสชันแอดมินผ่าน `GET /api/admin/me` ตอนโหลดหน้าเว็บ
+   * ฟังก์ชัน `login(username, password)` และ `logout()` จัดการคุกกี้เซสชัน
 
-### 3. 🔔 ระบบเสียงแจ้งเตือนแบบ Web Audio API (`audio.js`)
-- สร้างคลื่นเสียงสังเคราะห์ (Harmonic Sine Wave Bell Chime) ผ่าน **Web Audio Context API**
-- ไม่ต้องโหลดไฟล์เสียง MP3 ภายนอก ทำงานได้รวดเร็วทันใจ ไม่มีปัญหาไฟล์โหลดไม่ติด และให้โทนเสียงนุ่มนวลไพเราะ
+3. **`AlertContext.jsx`**:
+   * แสดงกล่องข้อความ Alert / Confirm แบบ Custom Modal สไตล์ Glassmorphism ทดแทน `window.alert()` / `window.confirm()` แบบดั้งเดิม
 
-### 4. 🔴 การซิงค์สถานะร้านค้าเปิด/ปิดสด (`CustomerApp.jsx` และ `useStoreStatus`)
-- ซิงค์สถานะร้านค้าผ่าน TanStack React Query (`useStoreStatus`) ทุก 15 วินาที
-- ตรวจจับความเปลี่ยนแปลงของสถานะร้านและแสดงป๊อปอัปแจ้งเตือน (Toast Notification) ทันที
-- **ประหยัดพลังงาน (Tab Visibility Auto-Pause)**: หยุด Polling อัตโนมัติเมื่อผู้ใช้สลับไปแท็บอื่น และ Revalidate ดึงข้อมูลสดทันทีเมื่อสลับกลับมา (`refetchOnWindowFocus: true`)
+4. **`ToastContext.jsx`**:
+   * แสดง Toast Notification แจ้งเตือนสั้นๆ (เช่น ร้านเปิด/ปิด, เพิ่มสินค้าลงตะกร้า, คัดลอกรหัสออเดอร์) พร้อม Auto-dismiss
 
-### 5. 📱 การออกแบบสำหรับมือถือและจอสัมผัส (Mobile-First Design)
-- หน้าต่างตะกร้าสินค้าแบบ **Bottom Sheet Drawer** ที่ปัดและใช้งานได้สะดวกสบายด้วยมือเดียวบนสมาร์ทโฟน
-- ปุ่มกดและตัวเลือกขนาดใหญ่รองรับ Touch Target ตามมาตรฐานสากล
-- การปรับขนาดตัวอักษรและระยะห่างแบบ Fluid Typography สำหรับภาษาไทยทำให้อ่านง่าย สบายตา
+5. **`AdminContext.jsx`**:
+   * จัดการ State แคชของรายการหมวดหมู่และน้ำสลัดในหน้าแอดมิน
 
 ---
 
-## 🌐 การติดตั้งและ Deploy บน Vercel (Free Tier)
+## ⚡ Custom React Query Hooks (`hooks/queries.js`)
 
-กำหนดค่า Reverse Proxy / Rewrites ผ่านไฟล์ `frontend/vercel.json` เพื่อส่งคำขอ API ไปยัง Backend บน Render:
+| Hook Name | Query Key | Polling Interval | คุณสมบัติ & การทำงาน |
+|---|---|---|---|
+| `useMenu()` | `['menu_and_dressings']` | `staleTime: 5m` | ดึงข้อมูลเมนูอาหารและน้ำสลัดพร้อมกัน (Parallel Fetch) |
+| `useStoreStatus()` | `['storeStatus']` | `refetchInterval: 5s` | ตรวจสอบสถานะเปิด/ปิดร้าน ซิงค์สดไปยังลูกค้า |
+| `useActiveOrderTracking(orderNumber)` | `['activeOrder', orderNumber]` | `refetchInterval: 4s` | ซิงค์สถานะออเดอร์สด และหยุดอัตโนมัติเมื่อสถานะเสร็จสิ้น |
+| `useAdminOrders(statusFilter)` | `['adminOrders', statusFilter]` | `refetchInterval: 4s` | อัปเดตกระดาน Kitchen KDS Kanban สดทุก 4 วินาที |
+
+---
+
+## 🚀 การปรับแต่งประสิทธิภาพและประสบการณ์ผู้ใช้ (Optimizations & UX)
+
+### 1. ⚡ Optimistic UI & Debounced Sync 500ms (`CartContext.jsx`)
+* **อัปเดต UI ทันที**: ยอดเงินและจำนวนสินค้าเปลี่ยนทันทีที่กด `+` หรือ `-` โดยไม่ต้องรอเซิร์ฟเวอร์
+* **Debounced Sync (500ms)**: รวมคำขออัปเดตตะกร้าส่งไปยัง `/api/cart/update/:id` เพียงครั้งเดียวหลังจากหยุดกด ลดภาระเซิร์ฟเวอร์ > 80%
+* **Graceful Rollback**: หากเครือข่ายขัดข้อง ระบบจะดึงข้อมูลจริงล่าสุดมาคืนค่าเดิมอัตโนมัติ
+
+### 2. ⏱️ Smart Polling Auto-Track (`TrackingModal.jsx`)
+* **Instant Auto-Track (0 คลิก)**: ดึงรหัสออเดอร์ล่าสุดของเซสชันขึ้นมาแสดงผลทันที ไม่ต้องพิมพ์รหัสซ้ำ
+* **แอนิเมชันความคืบหน้า 5 สเต็ป**:
+  1. `รอดำเนินการ`: ร้านได้รับออเดอร์ กำลังจัดคิว
+  2. `รับออเดอร์แล้ว`: ยืนยันคิว เริ่มเตรียมวัตถุดิบ
+  3. `กำลังเตรียมอาหาร`: ครัวกำลังปรุงอาหารสดใหม่
+  4. `พร้อมรับอาหาร` / `กำลังจัดส่ง`: ปรุงเสร็จพร้อมรับ หรือไรเดอร์กำลังนำส่ง
+  5. `รับอาหารแล้ว` / `จัดส่งแล้ว`: เสร็จสิ้นขั้นตอน
+* **Auto-Pause**: หยุด Polling ทันทีเมื่อยุบแท็บ หรือเมื่อออเดอร์อยู่ในสถานะสุดท้าย (`Terminal Status`)
+
+### 3. 🔔 Web Audio API Bell Chime (`audio.js`)
+* สังเคราะห์เสียงผ่าน **Web Audio Context API** (Sine Waves) โดยไม่ต้องโหลดไฟล์ MP3 ภายนอก:
+  * **เสียงอัปเดตสถานะออเดอร์ (Harmonic Arpeggio)**: F5 (698.46 Hz) -> A5 (880.00 Hz) -> C6 (1046.50 Hz)
+  * **เสียงสั่งซื้อสำเร็จ (Success Ding)**: C5 (523.25 Hz) -> G5 (783.99 Hz) -> C6 (1046.50 Hz)
+
+### 4. 📱 Mobile-First Responsive Design
+* หน้าร้านค้าใช้ **Bottom Sheet Drawer** (`CartModal.jsx`) และ **Floating Bar** (`MobileCartBar.jsx`) สำหรับสมาร์ทโฟน
+* หน้าจอคอมพิวเตอร์ Desktop แสดงผลเป็น **Sticky Sidebar Cart** (`CartSidebar.jsx`)
+* Touch Target ขนาดใหญ่ สะดวกต่อการสัมผัส และรองรับ Fluid Typography ภาษาไทย
+
+---
+
+## 🌐 การคอนฟิก Deploy บน Vercel (Free Tier)
+
+กำหนดค่า Reverse Proxy ใน `frontend/vercel.json` เพื่อส่งคำขอ `/api` ไปยัง Backend บน Render:
 
 ```json
 {
