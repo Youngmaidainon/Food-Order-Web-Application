@@ -26,5 +26,13 @@
   },
   "devDependencies": {
     "wrangler": "^3.50.0"
+  },
+  "allowScripts": {
+    "esbuild": true
+  },
+  "lavamoat": {
+    "allowScripts": {
+      "esbuild": true
+    }
   }
 }

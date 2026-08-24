@@ -29,5 +29,13 @@
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "vite": "^5.4.1"
+  },
+  "allowScripts": {
+    "esbuild": true
+  },
+  "lavamoat": {
+    "allowScripts": {
+      "esbuild": true
+    }
   }
 }
