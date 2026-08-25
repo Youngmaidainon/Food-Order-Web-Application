@@ -11,10 +11,9 @@ globalThis.console.warn = (...args) => appLogger.warn({ msg: args.join(' ') });
 globalThis.console.info = (...args) => appLogger.info({ msg: args.join(' ') });
 globalThis.console.debug = (...args) => appLogger.debug({ msg: args.join(' ') });
 
-// Run database schema migrations on server initialization
+// Run database schema migrations asynchronously on server startup
 async function runDatabaseMigrations() {
   try {
-
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS restaurant_name VARCHAR(100) DEFAULT 'ร้านสปริงโรลออนไลน์'`);
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS hero_title VARCHAR(150) DEFAULT '🥗 เมนูเพื่อสุขภาพสดใหม่'`);
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS hero_subtitle VARCHAR(255) DEFAULT 'ผักสดกรอบ สะอาด อร่อยเต็มคำ — ทำสดใหม่ทุกออเดอร์'`);
@@ -56,8 +55,6 @@ async function runDatabaseMigrations() {
     `);
 
     await executeQuery(`SELECT setval('dressings_id_seq', GREATEST((SELECT MAX(id) FROM dressings WHERE id != 0), 1))`);
-
-
 
     await executeQuery(`
       CREATE TABLE IF NOT EXISTS admin_sessions (
@@ -102,47 +99,50 @@ async function runDatabaseMigrations() {
           SET password_hash = $1, password_rotated_at = NOW() 
           WHERE username = $2
         `, [hashedPassword, adminUsername]);
-        console.log('🔒 Admin password successfully rotated from ADMIN_INIT_PASSWORD');
+        appLogger.info({ msg: '🔒 Admin password successfully rotated from ADMIN_INIT_PASSWORD' });
       } else if (passwordRotatedAt && initialAdminPassword) {
-        console.warn(`⚠️ ADMIN_INIT_PASSWORD is set but password was already rotated on ${passwordRotatedAt}; ignoring`);
+        appLogger.warn({ msg: `⚠️ ADMIN_INIT_PASSWORD is set but password was already rotated on ${passwordRotatedAt}; ignoring` });
       }
     }
 
-    console.log('✅ Database migrations applied successfully');
+    appLogger.info({ msg: '✅ Database migrations applied successfully' });
   } catch (migrationError) {
-    console.error('⚠️ Migration warning (non-fatal):', migrationError.message);
+    appLogger.warn({ msg: '⚠️ Migration warning (non-fatal):', error: migrationError.message });
   }
 }
 
+// Start HTTP server immediately so Render detects port binding without delay
+const httpServer = http.createServer(app);
 
-runDatabaseMigrations().then(() => {
-  const httpServer = http.createServer(app);
+const server = httpServer.listen(applicationConfig.port, () => {
+  appLogger.info({ msg: `🌯 Spring Roll Online Store Backend running on port ${applicationConfig.port}` });
   
-  const server = httpServer.listen(applicationConfig.port, () => {
-    appLogger.info({ msg: `🌯 Spring Roll Online Store Backend running on port ${applicationConfig.port}` });
+  // Run database migrations in background without blocking server listen
+  runDatabaseMigrations().catch((migrationError) => {
+    appLogger.error({ msg: 'Failed to run database migrations during startup', error: migrationError });
+  });
+});
+
+const shutdown = async (signal) => {
+  appLogger.info({ msg: `Received ${signal}. Shutting down gracefully...` });
+  server.close(async () => {
+    appLogger.info({ msg: 'HTTP server closed.' });
+    try {
+      await databasePool.end();
+      appLogger.info({ msg: 'Database pool closed.' });
+      process.exit(0);
+    } catch (err) {
+      appLogger.error({ msg: 'Error closing database pool', error: err });
+      process.exit(1);
+    }
   });
 
-  const shutdown = async (signal) => {
-    appLogger.info({ msg: `Received ${signal}. Shutting down gracefully...` });
-    server.close(async () => {
-      appLogger.info({ msg: 'HTTP server closed.' });
-      try {
-        await databasePool.end();
-        appLogger.info({ msg: 'Database pool closed.' });
-        process.exit(0);
-      } catch (err) {
-        appLogger.error({ msg: 'Error closing database pool', error: err });
-        process.exit(1);
-      }
-    });
+  // Force close after 10s
+  setTimeout(() => {
+    appLogger.error({ msg: 'Could not close connections in time, forcefully shutting down' });
+    process.exit(1);
+  }, 10000);
+};
 
-    // Force close after 10s
-    setTimeout(() => {
-      appLogger.error({ msg: 'Could not close connections in time, forcefully shutting down' });
-      process.exit(1);
-    }, 10000);
-  };
-
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
-});
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
