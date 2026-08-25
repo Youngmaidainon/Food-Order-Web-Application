@@ -74,7 +74,7 @@ app.use('/api', (req, res, next) => {
 const generalApiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 600,
-  skip: (req) => req.method === 'HEAD' || req.originalUrl === '/api/health' || req.path === '/health',
+  skip: (req) => req.method === 'HEAD' || req.path === '/health' || req.originalUrl === '/api/health',
   message: { success: false, message: 'คำขอมากเกินไป กรุณารอสักครู่ (Too many requests)' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -101,15 +101,33 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
 
-// System Health & Keep-Alive Handler (สำหรับ Method HEAD จาก cron-job.org หรือ Uptime Monitor)
+// System Health & Keep-Alive Handler (สำหรับ cron-job.org, Uptime Monitor, หรือ Render health check)
 const handleHealthCheck = (request, response) => {
-  response.status(200).end();
+  if (request.method === 'HEAD') {
+    return response.status(200).end();
+  }
+  return response.status(200).json({
+    status: 'ok',
+    uptime: `${Math.floor(process.uptime())}s`,
+    timestamp: new Date().toISOString(),
+    service: 'springroll-backend'
+  });
 };
 
-// System Health Check Endpoint (รองรับ Method HEAD เฉพาะ /api/health)
+// System Health Check Endpoints (รองรับทั้ง GET และ HEAD เฉพาะ /api/health)
+app.get('/api/health', handleHealthCheck);
 app.head('/api/health', handleHealthCheck);
 
-// Root Status Endpoint (รองรับเฉพาะ Method HEAD)
+// Root Status Endpoint (สำหรับเปิดดู backend บน Render ผ่าน Browser หรือ ping check)
+app.get('/', (request, response) => {
+  response.status(200).json({
+    success: true,
+    message: '🌯 Spring Roll Online Store Backend is running on Render',
+    status: 'online',
+    uptime: `${Math.floor(process.uptime())}s`,
+    timestamp: new Date().toISOString()
+  });
+});
 app.head('/', (request, response) => {
   response.status(200).end();
 });
