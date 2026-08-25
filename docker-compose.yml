@@ -9,8 +9,6 @@ services:
     environment:
       POSTGRES_DB: springroll_db
       POSTGRES_USER: postgres
-    ports:
-      - "5432:5432"
     volumes:
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
       - pgdata:/var/lib/postgresql/data
@@ -32,8 +30,7 @@ services:
     environment:
       PORT: 8000
       ALLOW_DYNAMIC_CORS: 'true'
-    ports:
-      - "8000:8000"
+      DOCKER_CONTAINER: 'true'
     depends_on:
       db:
         condition: service_healthy

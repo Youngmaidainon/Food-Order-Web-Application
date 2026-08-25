@@ -13,7 +13,8 @@ const portStr = process.env.PORT || '8000';
 let dbUrl = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/springroll_db';
 
 // If running locally outside Docker but DATABASE_URL points to '@db:', adapt to localhost
-if (process.env.NODE_ENV !== 'production' && dbUrl.includes('@db:') && !process.env.DOCKER_CONTAINER) {
+const isDocker = process.env.DOCKER_CONTAINER === 'true' || process.env.IS_DOCKER === 'true' || process.env.NODE_ENV === 'production';
+if (!isDocker && dbUrl.includes('@db:')) {
   dbUrl = dbUrl.replace('@db:', '@localhost:');
 }
 

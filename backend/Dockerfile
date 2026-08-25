@@ -8,6 +8,7 @@ RUN npm install --omit=dev
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+ENV DOCKER_CONTAINER=true
 # Set up non-root user earlier
 USER node
 # Copy from builder with correct ownership

@@ -101,36 +101,32 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
 
-// System Health & Keep-Alive Handler (สำหรับ cron-job.org, Uptime Monitor, หรือ Render health check)
+// System Health Check Endpoints (รองรับทั้ง GET และ HEAD)
 const handleHealthCheck = (request, response) => {
   if (request.method === 'HEAD') {
     return response.status(200).end();
   }
   return response.status(200).json({
-    status: 'ok',
-    uptime: `${Math.floor(process.uptime())}s`,
-    timestamp: new Date().toISOString(),
-    service: 'springroll-backend'
+    status: 'ok'
   });
 };
 
-// System Health Check Endpoints (รองรับทั้ง GET และ HEAD เฉพาะ /api/health)
-app.get('/api/health', handleHealthCheck);
-app.head('/api/health', handleHealthCheck);
+app.get(['/health', '/api/health'], handleHealthCheck);
+app.head(['/health', '/api/health'], handleHealthCheck);
 
-// Root Status Endpoint (สำหรับเปิดดู backend บน Render ผ่าน Browser หรือ ping check)
-app.get('/', (request, response) => {
-  response.status(200).json({
+// Root Status & API Endpoints (รองรับ /, /api, /api/)
+const handleApiInfo = (request, response) => {
+  if (request.method === 'HEAD') {
+    return response.status(200).end();
+  }
+  return response.status(200).json({
     success: true,
-    message: '🌯 Spring Roll Online Store Backend is running on Render',
-    status: 'online',
-    uptime: `${Math.floor(process.uptime())}s`,
-    timestamp: new Date().toISOString()
+    message: 'Backend API is running'
   });
-});
-app.head('/', (request, response) => {
-  response.status(200).end();
-});
+};
+
+app.get(['/', '/api', '/api/'], handleApiInfo);
+app.head(['/', '/api', '/api/'], handleApiInfo);
 
 app.use(globalErrorHandler);
 
