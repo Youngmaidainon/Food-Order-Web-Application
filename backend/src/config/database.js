@@ -9,7 +9,7 @@ const isLocalOrDocker = applicationConfig.databaseUrl && (
   applicationConfig.databaseUrl.includes('@db:')
 );
 
-// ตั้งค่า Database Connection Pool เพื่อใช้ Connection ซ้ำและจัดการทรัพยากรฐานข้อมูลอย่างมีประสิทธิภาพ
+// Database connection pool
 export const databasePool = new Pool({
   connectionString: applicationConfig.databaseUrl,
   max: 10,
@@ -18,11 +18,11 @@ export const databasePool = new Pool({
   ssl: isLocalOrDocker ? false : { rejectUnauthorized: false }
 });
 
-// จัดการ Error ระดับ Global ของ Pool ป้องกันแอปพลิเคชัน Crash แบบเงียบๆ
+// Global pool error handler
 databasePool.on('error', (databaseError) => {
   console.error('Unexpected error on idle PostgreSQL client:', databaseError);
 });
 
-// Helper สำหรับคิวรีผ่าน Parameter (Parameterized Query) เพื่อป้องกัน SQL Injection
+// Parameterized query helpers
 export const executeQuery = (sqlText, sqlParams) => databasePool.query(sqlText, sqlParams);
 export const getDatabaseClient = () => databasePool.connect();

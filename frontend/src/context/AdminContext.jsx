@@ -3,12 +3,12 @@ import { sendApiRequest } from '../api/api.js';
 
 const AdminContext = createContext(null);
 
-// Provider จัดการสถานะการเข้าสู่ระบบของผู้ดูแลระบบ (Admin Auth State)
+// Admin auth state provider
 export function AdminProvider({ children }) {
   const [admin, setAdmin] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // ตรวจสอบสิทธิ์และดึงข้อมูลแอดมินจากเซิร์ฟเวอร์
+  // Verify admin session from server
   const checkAuth = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -29,7 +29,7 @@ export function AdminProvider({ children }) {
     checkAuth();
   }, [checkAuth]);
 
-  // ส่งข้อมูลล็อกอินและรีเฟรชสถานะเมื่อสำเร็จ
+  // Admin login
   const login = async (username, password) => {
     const res = await sendApiRequest('/admin/login', {
       method: 'POST',
@@ -41,7 +41,7 @@ export function AdminProvider({ children }) {
     return res;
   };
 
-  // ลบ Session ออกจากระบบและล้างสถานะแอดมินฝั่ง Client
+  // Admin logout
   const logout = async () => {
     try {
       await sendApiRequest('/admin/logout', { method: 'POST' });

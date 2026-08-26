@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { sendApiRequest } from '../../api/api.js';
 
+// Admin analytics dashboard & sales summary
 export default function Dashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [storeStatus, setStoreStatus] = useState(null);

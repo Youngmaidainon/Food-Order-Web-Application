@@ -1,6 +1,8 @@
 import { executeQuery } from '../config/database.js';
 
+// Orders database operations
 export class OrdersRepository {
+  // Check active pending order by phone or session
   async getActiveOrderCountByPhoneOrSession(client, phone, sessionId) {
     let query;
     let params;
@@ -21,6 +23,7 @@ export class OrdersRepository {
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
+  // Fetch menu items by IDs
   async getMenuItemsByIds(client, ids) {
     const result = await client.query(
       'SELECT id, name, price, is_available FROM menu_items WHERE id = ANY($1::int[])',
@@ -29,6 +32,7 @@ export class OrdersRepository {
     return result.rows;
   }
 
+  // Fetch dressings by IDs
   async getDressingsByIds(client, ids) {
     const result = await client.query(
       'SELECT id, name, is_available FROM dressings WHERE id = ANY($1::int[])',
@@ -37,6 +41,7 @@ export class OrdersRepository {
     return result.rows;
   }
 
+  // Increment order queue sequence
   async getAndIncrementSequence(client) {
     const seqResult = await client.query('SELECT current_sequence FROM store_status WHERE id = 1 FOR UPDATE');
     const newSequence = (seqResult.rows[0].current_sequence || 0) + 1;
@@ -44,6 +49,7 @@ export class OrdersRepository {
     return newSequence;
   }
 
+  // Insert new order
   async createOrder(client, orderData) {
     const { orderNumber, sequence, customerName, customerPhone, deliveryType, address, totalAmount, ip, sessionId } = orderData;
     const result = await client.query(
@@ -55,6 +61,7 @@ export class OrdersRepository {
     return result.rows[0];
   }
 
+  // Insert order item rows
   async createOrderItems(client, itemsParams, valuesQuery) {
     const result = await client.query(
       `INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price, dressing_id, item_notes)
@@ -65,16 +72,18 @@ export class OrdersRepository {
     return result.rows;
   }
 
+  // Update order Discord message ID
   async updateOrderDiscordMessageId(orderId, messageId) {
     await executeQuery('UPDATE orders SET discord_message_id = $1 WHERE id = $2', [messageId, orderId]);
   }
 
+  // Update order Discord cancel message ID
   async updateOrderDiscordCancelMessageId(orderId, messageId) {
     await executeQuery('UPDATE orders SET discord_cancel_message_id = $1 WHERE id = $2', [messageId, orderId]);
   }
 
+  // Fetch order by order number
   async getOrderByNumber(orderNumber) {
-    // ดึงข้อมูลออเดอร์พร้อม PII สำหรับ Masking ฝั่ง Service Layer
     const result = await executeQuery(
       'SELECT id, order_number, sequence_number, customer_name, customer_phone, delivery_type, address, status, cancel_reason, canceled_by, FLOOR(total_amount)::INT as total_amount, session_id, created_at FROM orders WHERE order_number = $1 AND deleted_at IS NULL',
       [orderNumber]
@@ -82,6 +91,7 @@ export class OrdersRepository {
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
+  // Fetch items for specific order
   async getOrderItemsByOrderId(clientOrPool, orderId) {
     const query = `SELECT 
         orderItem.id, 
@@ -107,11 +117,13 @@ export class OrdersRepository {
     return result.rows;
   }
 
+  // Lock order row for update
   async getOrderByIdForUpdate(client, orderId) {
     const result = await client.query('SELECT id, status, order_number, discord_message_id, session_id FROM orders WHERE id = $1 AND deleted_at IS NULL FOR UPDATE', [orderId]);
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
+  // Cancel order in DB
   async cancelOrder(client, orderId, previousStatus, cancelReason, canceledBy) {
     await client.query(
       'UPDATE orders SET status = $1, previous_status = $2, cancelled_at = NOW(), cancel_reason = $3, canceled_by = $4 WHERE id = $5',

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { sendApiRequest } from '../../api/api.js';
 import { useAlert } from '../../context/AlertContext';
 
+// Admin orders management view (Kanban and Table modes)
 export default function Orders() {
   const { showAlert, showPrompt } = useAlert();
   const [orders, setOrders] = useState([]);
@@ -25,7 +26,7 @@ export default function Orders() {
     localStorage.setItem('admin_orders_view', mode);
   };
 
-  // Smart Polling (4s) with Tab Visibility Optimization & Window Focus Revalidation
+  // Smart Polling (4s)
   useEffect(() => {
     fetchOrders(true);
 
@@ -48,6 +49,7 @@ export default function Orders() {
     };
   }, [statusFilter]);
 
+  // Fetch orders from API
   const fetchOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
@@ -62,6 +64,7 @@ export default function Orders() {
     }
   };
 
+  // Update order status with prompt on cancel
   const updateOrderStatus = async (orderId, newStatus) => {
     let payload = { status: newStatus };
     if (newStatus === 'ยกเลิก') {
@@ -86,6 +89,7 @@ export default function Orders() {
     }
   };
 
+  // Determine next workflow action button
   const getNextStatusAction = (order) => {
     const isPickup = order.delivery_type === 'รับเองที่ร้าน';
     switch (order.status) {
@@ -106,6 +110,7 @@ export default function Orders() {
     }
   };
 
+  // Calculate order elapsed waiting time & urgent status
   const getElapsedTimeInfo = (createdAt) => {
     const diffMs = currentTime - new Date(createdAt).getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -129,6 +134,7 @@ export default function Orders() {
     };
   };
 
+  // Status badge styling
   const getStatusBgColor = (status) => {
     switch (status) {
       case 'รอดำเนินการ': return 'bg-amber-500 text-white';

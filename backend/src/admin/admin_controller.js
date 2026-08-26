@@ -12,7 +12,7 @@ import { storeRouter } from '../store/store_controller.js';
 
 const adminRouter = express.Router();
 
-// Rate Limiting (ป้องกัน Brute Force / DoS ระดับ Router ของฝั่งแอดมิน)
+// Admin rate limiter
 const adminRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 150,
@@ -22,7 +22,7 @@ const adminRateLimiter = rateLimit({
 });
 
 adminRouter.use('/', authRouter);
-adminRouter.use(adminRateLimiter); // บังคับใช้ Rate Limiter กับทุก Route ของแอดมิน (ยกเว้น Login)
+adminRouter.use(adminRateLimiter); // Apply rate limiter to all admin sub-routes
 adminRouter.use('/orders', ordersRouter);
 adminRouter.use('/menu', menuRouter);
 adminRouter.use('/categories', categoriesRouter);

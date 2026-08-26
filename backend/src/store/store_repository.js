@@ -1,6 +1,8 @@
 import { executeQuery } from '../config/database.js';
 
+// Store database operations
 export class StoreRepository {
+  // Get store status configuration
   async getStoreStatus(databaseClient = null) {
     const queryExecutor = databaseClient ? (sqlText, sqlParams) => databaseClient.query(sqlText, sqlParams) : executeQuery;
     const statusQueryResult = await queryExecutor(
@@ -10,6 +12,7 @@ export class StoreRepository {
     return statusQueryResult.rows.length > 0 ? statusQueryResult.rows[0] : null;
   }
 
+  // Lock store status row for update
   async getStoreStatusForUpdate(databaseClient) {
     const statusQueryResult = await databaseClient.query(
       `SELECT is_open FROM store_status WHERE id = 1 FOR UPDATE`
@@ -17,6 +20,7 @@ export class StoreRepository {
     return statusQueryResult.rows.length > 0 ? statusQueryResult.rows[0] : null;
   }
 
+  // Get completed orders sales metrics
   async getTodaySales(databaseClient) {
     const res = await databaseClient.query(`
       SELECT COALESCE(SUM(total_amount), 0) as total_sales, COUNT(id) as total_orders
@@ -25,6 +29,7 @@ export class StoreRepository {
     return res.rows[0];
   }
 
+  // Count cancelled orders
   async getCancelledCount(databaseClient) {
     const res = await databaseClient.query(`
       SELECT COUNT(id) as cancelled_count FROM orders WHERE status = 'ยกเลิก'
@@ -32,6 +37,7 @@ export class StoreRepository {
     return res.rows[0].cancelled_count;
   }
 
+  // Get best selling items ranking
   async getBestSellers(databaseClient) {
     const res = await databaseClient.query(`
       SELECT menu_items.name as menu_item_name, SUM(order_items.quantity) as total_quantity 
@@ -45,21 +51,25 @@ export class StoreRepository {
     return res.rows;
   }
 
+  // Fetch Discord cancel message IDs
   async getDiscordCancelMessages(databaseClient) {
     const res = await databaseClient.query(`SELECT discord_cancel_message_id FROM orders WHERE discord_cancel_message_id IS NOT NULL`);
     return res.rows.map(r => r.discord_cancel_message_id);
   }
 
+  // Fetch Discord order message IDs
   async getDiscordOrderMessages(databaseClient) {
     const res = await databaseClient.query(`SELECT discord_message_id FROM orders WHERE discord_message_id IS NOT NULL`);
     return res.rows.map(r => r.discord_message_id);
   }
 
+  // Reset daily order queue
   async clearDailyQueue(databaseClient) {
     await databaseClient.query('DELETE FROM order_items');
     await databaseClient.query('DELETE FROM orders');
   }
 
+  // Update store status config
   async updateStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName, heroTitle, heroSubtitle, resetSequence) {
     const sequenceUpdate = resetSequence ? ', current_sequence = 0' : '';
     const updateStoreStatusSql = `
@@ -78,6 +88,7 @@ export class StoreRepository {
     return res.rows.length > 0 ? res.rows[0] : null;
   }
 
+  // Seed default store status
   async insertStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName, heroTitle, heroSubtitle) {
     const res = await databaseClient.query(
       `INSERT INTO store_status (is_open, announcement_message, restaurant_name, hero_title, hero_subtitle) 

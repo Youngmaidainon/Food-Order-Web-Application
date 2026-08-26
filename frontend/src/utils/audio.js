@@ -17,7 +17,7 @@ class CustomerSoundAlert {
     return this.audioCtx;
   }
 
-  // เล่นเสียงกระดิ่งเตือน (Soft Melodic Chime) เมื่อสถานะออเดอร์ของลูกค้ามีการอัปเดต
+  // Status update chime (F5 -> A5 -> C6)
   playStatusUpdateChime() {
     try {
       const ctx = this.getAudioContext();
@@ -25,7 +25,6 @@ class CustomerSoundAlert {
 
       const now = ctx.currentTime;
 
-      // สร้างเสียง Bell Tone นุ่มนวล 3 จังหวะ (Harmonious Arpeggio: F5 -> A5 -> C6)
       const playTone = (frequency, startTime, duration, maxVolume = 0.25) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -44,7 +43,6 @@ class CustomerSoundAlert {
         osc.stop(startTime + duration);
       };
 
-      // F5 (698.46 Hz) -> A5 (880.00 Hz) -> C6 (1046.50 Hz)
       playTone(698.46, now, 0.45, 0.18);
       playTone(880.00, now + 0.12, 0.55, 0.22);
       playTone(1046.50, now + 0.24, 0.9, 0.28);
@@ -53,7 +51,7 @@ class CustomerSoundAlert {
     }
   }
 
-  // เสียงเมื่อลูกค้าสั่งซื้อสำเร็จ (Success Ding)
+  // Order success chime (C5 -> G5 -> C6)
   playOrderSuccessChime() {
     try {
       const ctx = this.getAudioContext();

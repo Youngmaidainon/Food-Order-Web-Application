@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { sendApiRequest } from '../../api/api.js';
 import { useAlert } from '../../context/AlertContext';
 
-// หน้าสำหรับตั้งค่าข้อมูลทั่วไปของร้าน เช่น ชื่อร้าน และสถานะเปิด/ปิด
+// Admin store configuration & open/close settings
 export default function Settings() {
   const queryClient = useQueryClient();
   const { showAlert, showConfirm } = useAlert();
@@ -19,7 +19,7 @@ export default function Settings() {
     fetchSettings();
   }, []);
 
-  // โหลดข้อมูลการตั้งค่าปัจจุบันของร้าน
+  // Fetch current store settings
   const fetchSettings = async () => {
     try {
       const res = await sendApiRequest('/store/status');
@@ -36,7 +36,7 @@ export default function Settings() {
     }
   };
 
-  // บันทึกการตั้งค่าใหม่ไปยังเซิร์ฟเวอร์
+  // Save updated store settings
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     if (!storeStatus) return;

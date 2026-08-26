@@ -4,7 +4,7 @@ import { authenticateAdminSession } from '../shared/middleware/auth.js';
 
 const categoriesRouter = express.Router();
 
-// GET /api/admin/categories - ดึงข้อมูลหมวดหมู่ทั้งหมด
+// GET /api/admin/categories - Get all categories
 categoriesRouter.get('/', authenticateAdminSession, async (request, response) => {
   try {
     const categoriesQueryResult = await executeQuery('SELECT * FROM categories ORDER BY display_order ASC, id ASC');
@@ -15,7 +15,7 @@ categoriesRouter.get('/', authenticateAdminSession, async (request, response) =>
   }
 });
 
-// POST /api/admin/categories - เพิ่มหมวดหมู่ใหม่
+// POST /api/admin/categories - Create category
 categoriesRouter.post('/', authenticateAdminSession, async (request, response) => {
   const { name: categoryName, display_order: displayOrder = 0 } = request.body;
   if (!categoryName || typeof categoryName !== 'string' || categoryName.trim() === '') {
@@ -36,7 +36,7 @@ categoriesRouter.post('/', authenticateAdminSession, async (request, response) =
   }
 });
 
-// PUT /api/admin/categories/:id - แก้ไขข้อมูลหมวดหมู่
+// PUT /api/admin/categories/:id - Update category
 categoriesRouter.put('/:id', authenticateAdminSession, async (request, response) => {
   const { id: categoryId } = request.params;
   const { name: categoryName, display_order: displayOrder } = request.body;
@@ -69,7 +69,7 @@ categoriesRouter.put('/:id', authenticateAdminSession, async (request, response)
   }
 });
 
-// DELETE /api/admin/categories/:id - ลบข้อมูลหมวดหมู่
+// DELETE /api/admin/categories/:id - Delete category
 categoriesRouter.delete('/:id', authenticateAdminSession, async (request, response) => {
   const { id: categoryId } = request.params;
   const parsedId = parseInt(categoryId, 10);

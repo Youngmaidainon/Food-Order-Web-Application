@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 
-// หน้าเข้าสู่ระบบสำหรับผู้ดูแลระบบและพนักงานร้าน
+// Admin login view
 export default function Login() {
   const { login } = useAdmin();
   const [username, setUsername] = useState('');

@@ -2,13 +2,13 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const ToastContext = createContext(null);
 
-// Provider สำหรับแสดง Popup แจ้งเตือนมุมขวาบน (Global Toast Notification)
+// Global Toast notification provider
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
-  // แสดง Toast แจ้งเตือน และตั้งเวลาให้หายไปอัตโนมัติภายใน 3 วินาที (ปิดเสียงแจ้งเตือนแล้ว)
+  // Show auto-dismiss toast (3s)
   const showToast = useCallback((message, type = 'success') => {
-    const id = Date.now() + Math.random(); // ป้องกันรหัสซ้ำกัน
+    const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, message, type }]);
     
     setTimeout(() => {

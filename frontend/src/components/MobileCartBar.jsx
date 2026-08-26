@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 
+// Floating mobile bottom cart bar
 export default function MobileCartBar({ onOpenCart }) {
   const { totalQuantity, totalPrice } = useCart();
 

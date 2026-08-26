@@ -6,21 +6,21 @@
 
 @layer base {
   :root {
-    --primary: #10B981; /* สีเขียวสดใส */
+    --primary: #10B981;
     --primary-hover: #059669;
     --primary-light: rgba(16, 185, 129, 0.15);
     
-    --secondary: #F59E0B; /* สีเหลืองอำพัน */
+    --secondary: #F59E0B;
     --secondary-hover: #D97706;
     
-    --bg-color: #09090b; /* สีดำเข้มพรีเมียม */
-    --surface: #18181b; /* สีพื้นผิวดำ */
+    --bg-color: #09090b;
+    --surface: #18181b;
     --surface-hover: #27272a;
     
-    --text-main: #f4f4f5; /* สีตัวหนังสือหลัก (สว่าง) */
-    --text-muted: #a1a1aa; /* สีตัวหนังสือรอง (หม่น) */
+    --text-main: #f4f4f5;
+    --text-muted: #a1a1aa;
     
-    --border-color: rgba(255, 255, 255, 0.08); /* สีขอบแบบกระจกบางๆ */
+    --border-color: rgba(255, 255, 255, 0.08);
     
     --glass-bg: rgba(24, 24, 27, 0.65);
     --glass-border: rgba(255, 255, 255, 0.08);
@@ -39,18 +39,18 @@
   }
 
   html {
-    font-size: 13px; /* ขนาดฟอนต์พื้นฐาน */
+    font-size: 13px;
   }
 
   @media (min-width: 768px) {
     html {
-      font-size: 14px; /* ขนาดฟอนต์สำหรับ iPad */
+      font-size: 14px;
     }
   }
 
   @media (min-width: 1024px) {
     html {
-      font-size: 14px; /* ขนาดฟอนต์สำหรับ Desktop */
+      font-size: 14px;
     }
   }
 
@@ -59,8 +59,8 @@
     font-family: 'Prompt', system-ui, sans-serif;
     overflow-wrap: break-word;
     word-wrap: break-word;
-    word-break: normal; /* ปกป้องการตัดคำภาษาไทยให้สมบูรณ์ */
-    text-wrap: pretty; /* ป้องกันข้อความลอยและปรับการขึ้นบรรทัดใหม่ให้สวยงาม */
+    word-break: normal;
+    text-wrap: pretty;
   }
 
   body::before, body::after {
@@ -102,7 +102,7 @@
   }
 }
 
-/* ปรับแต่งแถบเลื่อน (Scrollbar) ให้ดูทันสมัย */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

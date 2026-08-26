@@ -12,6 +12,7 @@ import { useStoreStatus, useMenu, useActiveOrderTracking } from '../hooks/querie
 import { useToast } from '../context/ToastContext';
 import { customerSoundAlert } from '../utils/audio.js';
 
+// Main customer storefront view
 export default function CustomerApp() {
   const { addItemToCart, cartItems, totalPrice, clearCart, totalQuantity } = useCart();
   const { showToast } = useToast();
@@ -24,7 +25,7 @@ export default function CustomerApp() {
   const [selectedMenuItem, setSelectedMenuItem] = useState(null);
   const [selectedDressing, setSelectedDressing] = useState(null);
 
-  // Queries from React Query (Smart Polling + Smart Cache)
+  // Queries from React Query (smart polling & cache)
   const { data: storeStatusData } = useStoreStatus();
   const { data: menuData } = useMenu();
 
@@ -35,10 +36,10 @@ export default function CustomerApp() {
   const [activeOrder, setActiveOrder] = useState(() => localStorage.getItem('activeOrder'));
   const [activeOrderStatus, setActiveOrderStatus] = useState(null);
 
-  // Smart Polling query for Active Order
+  // Live order tracking query
   const { data: activeOrderData } = useActiveOrderTracking(activeOrder);
 
-  // Store status change detection & Toast notification
+  // Store status change notification
   const prevIsOpenRef = useRef();
   useEffect(() => {
     if (storeStatusData && typeof storeStatusData.is_open === 'boolean') {
@@ -53,7 +54,7 @@ export default function CustomerApp() {
     }
   }, [storeStatusData, showToast]);
 
-  // Check URL param for ?track=ORD-...
+  // Handle ?track=ORD-... query parameter
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const trackParam = params.get('track');
@@ -63,7 +64,7 @@ export default function CustomerApp() {
     }
   }, []);
 
-  // Active Order tracking & Audio alert
+  // Order status update chime & auto-clear on completion
   const prevOrderStatusRef = useRef();
   useEffect(() => {
     if (activeOrderData) {
@@ -87,7 +88,7 @@ export default function CustomerApp() {
     }
   }, [activeOrderData, activeOrder, showToast]);
 
-  // Add Item to Cart Flow
+  // Open dressing modal
   const handleAddItem = (item) => {
     if (!storeStatus.is_open) {
       showToast('ขออภัย ขณะนี้ร้านปิดรับออเดอร์ชั่วคราว', 'warning');
@@ -98,6 +99,7 @@ export default function CustomerApp() {
     setIsDressingModalOpen(true);
   };
 
+  // Add item with dressing to cart
   const handleConfirmDressing = async () => {
     if (selectedMenuItem) {
       const currentMenu = selectedMenuItem;
@@ -116,6 +118,7 @@ export default function CustomerApp() {
     }
   };
 
+  // On successful checkout
   const handleCheckoutSuccess = async (order) => {
     customerSoundAlert.playOrderSuccessChime();
     showToast(`สั่งซื้อสำเร็จ! คิว #${order.sequence_number || ''} (${order.order_number})`, 'success');

@@ -4,17 +4,20 @@ import { applicationConfig } from '../config/config.js';
 import { sendDiscordDailySummary } from '../discord.js';
 
 
+// Store status business logic
 export class StoreService {
   constructor(storeRepository) {
     this.storeRepository = storeRepository;
   }
 
+  // Check if store is open
   async checkStoreIsOpen(databaseClient = null) {
     const status = await this.storeRepository.getStoreStatus(databaseClient);
     if (!status) return false;
     return !!status.is_open;
   }
 
+  // Get current store status & announcement
   async getStatus() {
     const resultData = await this.storeRepository.getStoreStatus();
     if (!resultData) {
@@ -41,6 +44,7 @@ export class StoreService {
     return resultData;
   }
 
+  // Update store status, announcement, or close store with report
   async updateStatus(data) {
     const { 
       is_open: isOpen, 
@@ -69,19 +73,16 @@ export class StoreService {
       const existingStatus = await this.storeRepository.getStoreStatusForUpdate(databaseClient);
       const wasOpen = existingStatus ? existingStatus.is_open : true;
 
-      // Extract discord messages for async deletion later
       let cancelMessages = [];
       let orderMessages = [];
       let dailySummaryData = null;
 
-      // If closing the store
+      // When closing store: trigger summary & queue reset
       if (wasOpen && isOpen === false) {
-        // 1. Gather stats
         const { total_sales: totalSales, total_orders: totalOrders } = await this.storeRepository.getTodaySales(databaseClient);
         const cancelledCount = await this.storeRepository.getCancelledCount(databaseClient);
         const bestSellers = await this.storeRepository.getBestSellers(databaseClient);
 
-        // Prepare messages to delete outside transaction
         if (applicationConfig.discordCancelWebhookUrl) {
           cancelMessages = await this.storeRepository.getDiscordCancelMessages(databaseClient);
         }
@@ -89,14 +90,10 @@ export class StoreService {
           orderMessages = await this.storeRepository.getDiscordOrderMessages(databaseClient);
         }
 
-        // Cache summary stats to send asynchronously outside DB transaction
         dailySummaryData = { totalSales, bestSellers, cancelledCount, totalOrders };
-
-        // 2. Clear DB queue
         await this.storeRepository.clearDailyQueue(databaseClient);
       }
 
-      // Reset queue sequence if state changed
       const stateChanged = (isOpen !== undefined && isOpen !== wasOpen);
 
       let updateResult = await this.storeRepository.updateStoreStatus(databaseClient, isOpen, announcementMessage, restaurantName, heroTitle, heroSubtitle, stateChanged);
@@ -107,7 +104,7 @@ export class StoreService {
 
       await databaseClient.query('COMMIT');
 
-      // 3. Async Background Discord Operations (Non-blocking)
+      // Async Discord summary & message cleanup
       if (dailySummaryData) {
         this._asyncSendDiscordDailySummary(dailySummaryData);
       }
@@ -125,6 +122,7 @@ export class StoreService {
     }
   }
 
+  // Non-blocking Discord daily summary
   _asyncSendDiscordDailySummary(summaryData) {
     const { totalSales, bestSellers, cancelledCount, totalOrders } = summaryData;
     sendDiscordDailySummary(totalSales, bestSellers, cancelledCount, totalOrders).catch(err => {
@@ -132,6 +130,7 @@ export class StoreService {
     });
   }
 
+  // Non-blocking Discord message cleanup
   _asyncCleanupDiscordMessages(cancelMessages, orderMessages) {
     if (cancelMessages.length > 0 && applicationConfig.discordCancelWebhookUrl) {
       Promise.allSettled(cancelMessages.map(id => 

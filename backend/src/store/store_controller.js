@@ -10,12 +10,9 @@ const storeRouter = express.Router();
 const storeRepository = new StoreRepository();
 const storeService = new StoreService(storeRepository);
 
-// Export Service และ Repository เผื่อระบบอื่นเรียกใช้ข้าม Domain (เช่น สั่งอาหารต้องเช็คร้านเปิดไหม)
 export { storeService, storeRepository };
 
-
-
-// Rate Limiter: ป้องกัน DoS บน Endpoint สถานะร้าน
+// Store status rate limiter
 const storeRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -24,7 +21,7 @@ const storeRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// GET /api/store/status - ดึงสถานะเปิด/ปิดร้าน
+// GET /api/store/status - Get store open/closed status
 storeRouter.get('/status', storeRateLimiter, async (req, res, next) => {
   try {
     const data = await storeService.getStatus();
@@ -34,7 +31,7 @@ storeRouter.get('/status', storeRateLimiter, async (req, res, next) => {
   }
 });
 
-// PATCH /api/store/status - อัปเดตสถานะการเปิด/ปิดร้าน (Admin Only)
+// PATCH /api/store/status - Update store status (Admin only)
 storeRouter.patch('/status', authenticateAdminSession, async (req, res, next) => {
   try {
     const data = await storeService.updateStatus(req.body);

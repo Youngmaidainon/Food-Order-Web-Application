@@ -4,19 +4,21 @@ import { storeService } from '../store/store_controller.js';
 import { sendDiscordOrderNotification, deleteDiscordOrderNotification, sendDiscordCancelNotification } from '../discord.js';
 
 
+// Orders business logic
 export class OrdersService {
   constructor(ordersRepository) {
     this.ordersRepository = ordersRepository;
   }
 
+  // Generate unique order number (e.g. ORD-20260826-123)
   generateUniqueOrderNumber() {
     const currentDateString = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const randomThreeDigitNumber = Math.floor(100 + Math.random() * 900);
     return `ORD-${currentDateString}-${randomThreeDigitNumber}`;
   }
 
+  // Create new customer order with transaction & anti-spam checks
   async createOrder(data, ip, cartSessionId) {
-    // แยกส่วนประกอบของข้อมูล (Destructuring)
     const { customer_name: customerName, customer_phone: customerPhone, delivery_type: deliveryType, address: deliveryAddress, items: orderItemsList } = data;
 
     if (!customerName || !customerPhone || !deliveryType || !orderItemsList || !Array.isArray(orderItemsList) || orderItemsList.length === 0) {
@@ -38,19 +40,18 @@ export class OrdersService {
     const databaseClient = await getDatabaseClient();
 
     try {
-      // เช็คว่าร้านเปิดอยู่หรือไม่ (Business Rule: เปิดรับออเดอร์)
+      // Verify store is open
       const isStoreCurrentlyOpen = await storeService.checkStoreIsOpen(databaseClient);
       if (!isStoreCurrentlyOpen) {
         throw new ValidationError('ขออภัย ขณะนี้ร้านปิดรับออเดอร์');
       }
 
+      // Check for active pending order (Anti-spam)
       const activeOrderCheck = await this.ordersRepository.getActiveOrderCountByPhoneOrSession(databaseClient, customerPhone.trim(), cartSessionId);
       if (activeOrderCheck) {
-        // Business Rule: ห้ามสั่งออเดอร์ซ้อนกันถ้าอันเดิมยังไม่เสร็จ (Anti Spam)
         throw new AppError(`คุณมีออเดอร์ที่กำลังดำเนินการอยู่ (รหัส: ${activeOrderCheck.order_number}) กรุณารอให้ออเดอร์ปัจจุบันเสร็จสิ้นก่อนสั่งใหม่`, 'TOO_MANY_REQUESTS', 429);
       }
 
-      // เริ่มต้น Transaction (ป้องกัน Data Inconsistency หากระหว่างบันทึกข้อมูลมีข้อผิดพลาด)
       await databaseClient.query('BEGIN');
 
       let calculatedTotalAmount = 0;
@@ -136,12 +137,11 @@ export class OrdersService {
         items: completeOrderItemsList
       };
 
-      // Async Non-blocking Discord Notification
+      // Async Discord Notification
       this._asyncSendOrderNotification(completeOrderPayload, createdOrderRecord.id);
 
       return completeOrderPayload;
     } catch (error) {
-      // ยกเลิกการเปลี่ยนแปลงทั้งหมดใน Transaction หากมี Error เกิดขึ้น (Rollback)
       await databaseClient.query('ROLLBACK');
       throw error;
     } finally {
@@ -149,6 +149,7 @@ export class OrdersService {
     }
   }
 
+  // Non-blocking Discord notification
   _asyncSendOrderNotification(orderPayload, orderId) {
     sendDiscordOrderNotification(orderPayload).then(async (messageId) => {
       if (messageId) {
@@ -163,6 +164,7 @@ export class OrdersService {
     });
   }
 
+  // Track order with PII masking for non-owners
   async trackOrder(orderNumber, cartSessionId, isAdmin) {
     const orderRecord = await this.ordersRepository.getOrderByNumber(orderNumber);
     if (!orderRecord) throw new AppError('ไม่พบรหัสคำสั่งซื้อนี้', 'NOT_FOUND', 404);
@@ -170,7 +172,7 @@ export class OrdersService {
     const items = await this.ordersRepository.getOrderItemsByOrderId(null, orderRecord.id);
     orderRecord.items = items;
 
-    // PII Masking: If not admin and not the owner of the session, mask PII
+    // PII Masking
     if (!isAdmin && orderRecord.session_id !== cartSessionId) {
       if (orderRecord.customer_name) {
         orderRecord.customer_name = '*** ข้อมูลถูกซ่อนเพื่อความปลอดภัย ***';
@@ -186,6 +188,7 @@ export class OrdersService {
     return orderRecord;
   }
 
+  // Customer order cancellation
   async cancelOrderCustomer(orderId, targetStatus, cancelReason, cartSessionId) {
     if (targetStatus !== 'ยกเลิก') throw new ValidationError('ลูกค้าสามารถทำการยกเลิกออเดอร์ได้เท่านั้น');
     if (!cancelReason || cancelReason.trim().length < 1 || cancelReason.trim().length > 20) {
@@ -199,7 +202,7 @@ export class OrdersService {
       const currentOrderRecord = await this.ordersRepository.getOrderByIdForUpdate(databaseClient, orderId);
       if (!currentOrderRecord) throw new ValidationError('ไม่พบออเดอร์ที่ต้องการยกเลิก');
 
-      // ป้องกัน IDOR: ตรวจสอบว่า session_id ตรงกับคนที่สั่งหรือไม่
+      // IDOR prevention
       if (currentOrderRecord.session_id !== cartSessionId) {
         throw new AppError('ไม่มีสิทธิ์เข้าถึงออเดอร์นี้', 'FORBIDDEN', 403);
       }
@@ -217,7 +220,7 @@ export class OrdersService {
 
       const updatedOrderPayload = { id: parseInt(orderId, 10), order_number: currentOrderRecord.order_number, status: 'ยกเลิก' };
 
-      // Async Non-blocking Discord Cancellation Notification
+      // Async Discord cancellation notification
       this._asyncSendCancelNotification(currentOrderRecord, orderId, 'ลูกค้า');
 
       return updatedOrderPayload;
@@ -229,6 +232,7 @@ export class OrdersService {
     }
   }
 
+  // Non-blocking Discord cancel notification
   _asyncSendCancelNotification(orderRecord, orderId, canceledBy) {
     if (orderRecord.discord_message_id) {
       deleteDiscordOrderNotification(orderRecord.discord_message_id, orderRecord, canceledBy);

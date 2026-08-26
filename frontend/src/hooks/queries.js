@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { sendApiRequest } from '../api/api.js';
 
+// Query menu items and dressings
 export function useMenu() {
   return useQuery({
     queryKey: ['menu_and_dressings'],
@@ -23,6 +24,7 @@ export function useMenu() {
   });
 }
 
+// Query live store status (5s polling)
 export function useStoreStatus() {
   return useQuery({
     queryKey: ['storeStatus'],
@@ -38,6 +40,7 @@ export function useStoreStatus() {
   });
 }
 
+// Query live order tracking by order number (4s polling)
 export function useActiveOrderTracking(orderNumber) {
   return useQuery({
     queryKey: ['activeOrder', orderNumber],
@@ -63,6 +66,7 @@ export function useActiveOrderTracking(orderNumber) {
   });
 }
 
+// Query admin orders list (4s polling)
 export function useAdminOrders(statusFilter = 'ทั้งหมด') {
   return useQuery({
     queryKey: ['adminOrders', statusFilter],

@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { customerSoundAlert } from '../utils/audio.js';
 import OrderSlipModal from './OrderSlipModal.jsx';
 
+// Customer live order tracking & status stepper modal
 export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
   const { showAlert, showPrompt } = useAlert();
   const { showToast } = useToast();

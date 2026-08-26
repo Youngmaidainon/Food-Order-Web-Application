@@ -4,34 +4,34 @@ import { authenticateAdminSession } from '../shared/middleware/auth.js';
 
 const analyticsRouter = express.Router();
 
-// GET /api/admin/analytics - ดึงข้อมูลสถิติและรายงานยอดขายสำหรับรอบปัจจุบันและภาพรวม
+// GET /api/admin/analytics - Sales analytics & metrics
 analyticsRouter.get('/', authenticateAdminSession, async (request, response) => {
   try {
-    // 1. สถิติภาพรวมและรอบปัจจุบัน (Active Queue Batch)
+    // 1. Batch & historical metrics
     const salesMetricsQueryResult = await executeQuery(`
       SELECT 
-        -- ยอดขายรอบปัจจุบัน (Active Batch)
+        -- Active batch
         COALESCE(SUM(CASE WHEN status IN ('รับอาหารแล้ว', 'จัดส่งแล้ว') THEN total_amount ELSE 0 END), 0) as active_sales,
         COUNT(CASE WHEN status IN ('รับอาหารแล้ว', 'จัดส่งแล้ว') THEN id ELSE NULL END) as active_completed_orders,
         COUNT(CASE WHEN status = 'ยกเลิก' THEN id ELSE NULL END) as active_canceled_orders,
         COUNT(id) as active_total_orders,
 
-        -- ยอดขายวันนี้ (Today)
+        -- Today
         COALESCE(SUM(CASE WHEN created_at >= CURRENT_DATE AND status IN ('รับอาหารแล้ว', 'จัดส่งแล้ว') THEN total_amount ELSE 0 END), 0) as today_sales,
         COUNT(CASE WHEN created_at >= CURRENT_DATE AND status IN ('รับอาหารแล้ว', 'จัดส่งแล้ว') THEN id ELSE NULL END) as today_orders,
 
-        -- ยอดขายเดือนนี้ (This Month)
+        -- Month
         COALESCE(SUM(CASE WHEN created_at >= DATE_TRUNC('month', CURRENT_DATE) AND status IN ('รับอาหารแล้ว', 'จัดส่งแล้ว') THEN total_amount ELSE 0 END), 0) as month_sales,
         COUNT(CASE WHEN created_at >= DATE_TRUNC('month', CURRENT_DATE) AND status IN ('รับอาหารแล้ว', 'จัดส่งแล้ว') THEN id ELSE NULL END) as month_orders,
 
-        -- ยอดขายรวมทั้งหมด (Total)
+        -- Total
         COALESCE(SUM(CASE WHEN status IN ('รับอาหารแล้ว', 'จัดส่งแล้ว') THEN total_amount ELSE 0 END), 0) as total_sales,
         COUNT(CASE WHEN status IN ('รับอาหารแล้ว', 'จัดส่งแล้ว') THEN id ELSE NULL END) as total_orders
       FROM orders
       WHERE deleted_at IS NULL
     `);
 
-    // 2. เมนูขายดี Top 5
+    // 2. Top 5 best sellers
     const topSellersQueryResult = await executeQuery(`
       SELECT 
         menuItem.name, 

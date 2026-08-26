@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 
+// Mobile and tablet slide-up cart drawer modal
 export default function CartModal({ isOpen, onClose, isStoreOpen, onCheckout }) {
   const { cartItems, updateQuantity, removeItem, totalPrice } = useCart();
 

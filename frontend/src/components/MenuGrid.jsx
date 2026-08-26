@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 
-// Component แสดงรายการเมนูอาหารทั้งหมด พร้อมระบบคัดกรองตามหมวดหมู่ (Category Filter)
+// Menu grid with dynamic category filters
 export default function MenuGrid({ menuItems, isStoreOpen, onAddItem, dressings }) {
   const { cartItems } = useCart();
   const [selectedCategory, setSelectedCategory] = useState('all');

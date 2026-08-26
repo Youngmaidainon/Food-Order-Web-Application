@@ -18,7 +18,7 @@ if (!isDocker && dbUrl.includes('@db:')) {
   dbUrl = dbUrl.replace('@db:', '@localhost:');
 }
 
-// ส่งออกตัวแปร Config กลางเพื่อใช้งานร่วมกันทั้งระบบ
+// Centralized application configuration
 export const applicationConfig = {
   port: parseInt(portStr, 10),
   databaseUrl: dbUrl,

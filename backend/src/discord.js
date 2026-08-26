@@ -1,8 +1,9 @@
 import { applicationConfig } from './config/config.js';
 
+// Send new order webhook embed
 export const sendDiscordOrderNotification = async (customerOrderDetails) => {
   if (!applicationConfig.discordWebhookUrl) {
-    return; // Do nothing if no webhook is configured
+    return;
   }
 
   try {
@@ -49,7 +50,7 @@ export const sendDiscordOrderNotification = async (customerOrderDetails) => {
 
     const discordEmbedMessage = {
       title: `ออเดอร์ใหม่ #${orderNumber}`,
-      color: 0x0ea5e9, // Clean modern blue
+      color: 0x0ea5e9,
       description: `**ข้อมูลลูกค้า**\nชื่อ: ${customerName}\nโทร: ${customerPhone}\n\n**การรับสินค้า**\nรูปแบบ: ${deliveryType}${deliveryAddress ? `\nที่อยู่: ${deliveryAddress}` : ''}\n\n**รายการสินค้า**\n${formattedItemsDescription}\n\n**ยอดรวมทั้งสิ้น**\n\`${parseInt(totalAmount, 10)} บาท\``,
       timestamp: new Date().toISOString()
     };
@@ -74,15 +75,16 @@ export const sendDiscordOrderNotification = async (customerOrderDetails) => {
   }
 };
 
+// Delete/update cancelled order webhook notification
 export const deleteDiscordOrderNotification = async (messageId, customerOrderDetails = null, canceledBy = null) => {
   if (!applicationConfig.discordWebhookUrl || !messageId) return;
   try {
     if (customerOrderDetails && canceledBy) {
-      // Edit the original new order message to show it's cancelled
+      // Edit original message to cancelled state
       const editUrl = `${applicationConfig.discordWebhookUrl}/messages/${messageId}`;
       const discordEmbedMessage = {
         title: `❌ ออเดอร์ #${customerOrderDetails.order_number} ถูกยกเลิก!`,
-        color: 0xef4444, // Red
+        color: 0xef4444,
         description: `กำลังจะลบข้อความนี้ใน 5 วินาที...\n\n**ผู้ยกเลิก:** ${canceledBy}\n**เหตุผล:** ${customerOrderDetails.cancel_reason || 'ไม่ระบุ'}`
       };
       
@@ -92,7 +94,7 @@ export const deleteDiscordOrderNotification = async (messageId, customerOrderDet
         body: JSON.stringify({ embeds: [discordEmbedMessage] })
       });
 
-      // Wait 5 seconds, then delete
+      // Delayed delete after 5s
       setTimeout(async () => {
         try {
           const deleteUrl = `${applicationConfig.discordWebhookUrl}/messages/${messageId}`;
@@ -103,7 +105,7 @@ export const deleteDiscordOrderNotification = async (messageId, customerOrderDet
       }, 5000);
       
     } else {
-      // Normal immediate delete
+      // Immediate delete
       const deleteUrl = `${applicationConfig.discordWebhookUrl}/messages/${messageId}`;
       await fetch(deleteUrl, { method: 'DELETE' });
     }
@@ -112,6 +114,7 @@ export const deleteDiscordOrderNotification = async (messageId, customerOrderDet
   }
 };
 
+// Send cancel notification webhook embed
 export const sendDiscordCancelNotification = async (customerOrderDetails, canceledBy) => {
   if (!applicationConfig.discordCancelWebhookUrl) return;
 
@@ -155,7 +158,7 @@ export const sendDiscordCancelNotification = async (customerOrderDetails, cancel
 
     const discordEmbedMessage = {
       title: `ยกเลิกออเดอร์ #${orderNumber}`,
-      color: 0xef4444, // Red
+      color: 0xef4444,
       description: `**ผู้ที่ทำการยกเลิก:** ${canceledBy}\n**เหตุผล:** ${cancelReason || 'ไม่ระบุ'}\n\n**รายการที่ถูกยกเลิก**\n${formattedItemsDescription}`,
       timestamp: new Date().toISOString()
     };
@@ -178,6 +181,7 @@ export const sendDiscordCancelNotification = async (customerOrderDetails, cancel
   }
 };
 
+// Send daily sales summary webhook report
 export const sendDiscordDailySummary = async (sales, bestSellers, cancelledCount, ordersCount) => {
   if (!applicationConfig.discordReportWebhookUrl) return;
 
@@ -188,7 +192,7 @@ export const sendDiscordDailySummary = async (sales, bestSellers, cancelledCount
 
     const discordEmbedMessage = {
       title: `📊 สรุปยอดขายประจำวัน`,
-      color: 0x10b981, // Emerald Green
+      color: 0x10b981,
       description: `**ยอดขายรวม:** \`${parseInt(sales, 10)} บาท\`\n**จำนวนออเดอร์:** ${ordersCount} ออเดอร์\n**จำนวนออเดอร์ที่ถูกยกเลิก:** ${cancelledCount} ออเดอร์\n\n**🔥 เมนูขายดี:**\n${formattedBestSellers}`,
       timestamp: new Date().toISOString()
     };
@@ -210,6 +214,6 @@ export const sendDiscordDailySummary = async (sales, bestSellers, cancelledCount
     }
   } catch (error) {
     console.error('Error sending Discord daily summary:', error);
-    throw error; // Re-throw to allow caller to rollback
+    throw error;
   }
 };

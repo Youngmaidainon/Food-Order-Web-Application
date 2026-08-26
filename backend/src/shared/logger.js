@@ -1,6 +1,6 @@
 import pino from 'pino';
 
-// ระบบ Structured JSON Logging (เพื่อความสะดวกในฝั่ง Observability และ SIEM)
+// Structured JSON Logger (Pino)
 export const appLogger = pino({
   level: process.env.LOG_LEVEL || 'info',
   transport: process.env.NODE_ENV !== 'production' ? {

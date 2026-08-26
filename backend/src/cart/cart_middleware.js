@@ -3,6 +3,7 @@ import { CartRepository } from './cart_repository.js';
 
 const cartRepository = new CartRepository();
 
+// Ensure customer cart session cookie exists
 export const ensureCartSessionMiddleware = async (req, res, next) => {
   let cartSessionId = req.cookies.springroll_cart_session;
 
@@ -26,6 +27,7 @@ export const ensureCartSessionMiddleware = async (req, res, next) => {
   }
 };
 
+// Set HTTP-only cart session cookie
 function setSessionCookie(res, cartSessionId) {
   res.cookie('springroll_cart_session', cartSessionId, {
     httpOnly: true,

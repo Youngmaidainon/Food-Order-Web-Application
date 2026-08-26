@@ -4,14 +4,14 @@ import { applicationConfig } from './src/config/config.js';
 import { executeQuery, databasePool } from './src/config/database.js';
 import { appLogger } from './src/shared/logger.js';
 
-// Override global console methods with Pino logger for structured logging
+// Override global console methods with Pino structured logger
 globalThis.console.log = (...args) => appLogger.info({ msg: args.join(' ') });
 globalThis.console.error = (...args) => appLogger.error({ msg: args.join(' ') });
 globalThis.console.warn = (...args) => appLogger.warn({ msg: args.join(' ') });
 globalThis.console.info = (...args) => appLogger.info({ msg: args.join(' ') });
 globalThis.console.debug = (...args) => appLogger.debug({ msg: args.join(' ') });
 
-// Run database schema migrations asynchronously on server startup
+// Run DB schema migrations (non-blocking background task)
 async function runDatabaseMigrations() {
   try {
     await executeQuery(`ALTER TABLE store_status ADD COLUMN IF NOT EXISTS restaurant_name VARCHAR(100) DEFAULT 'ร้านสปริงโรลออนไลน์'`);
@@ -111,7 +111,7 @@ async function runDatabaseMigrations() {
   }
 }
 
-// Start HTTP server immediately (Non-blocking) so Render detects port binding in <2s
+// Start HTTP server immediately (Non-blocking startup for Render / PaaS)
 const httpServer = http.createServer(app);
 const PORT = applicationConfig.port || 8000;
 const HOST = '0.0.0.0';
@@ -119,7 +119,7 @@ const HOST = '0.0.0.0';
 const server = httpServer.listen(PORT, HOST, () => {
   appLogger.info({ msg: `🌯 Spring Roll Online Store Backend listening on ${HOST}:${PORT}` });
   
-  // Run database migrations in background without blocking server port binding
+  // Defer migrations to next tick to ensure port binding completes first
   setImmediate(() => {
     runDatabaseMigrations().catch((migrationError) => {
       appLogger.error({ msg: 'Failed to run database migrations during startup', error: migrationError });
@@ -127,6 +127,7 @@ const server = httpServer.listen(PORT, HOST, () => {
   });
 });
 
+// Graceful shutdown handler
 const shutdown = async (signal) => {
   appLogger.info({ msg: `Received ${signal}. Shutting down gracefully...` });
   server.close(async () => {

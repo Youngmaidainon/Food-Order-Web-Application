@@ -1,14 +1,17 @@
 import { ValidationError } from '../shared/errors.js';
 
+// Cart business logic
 export class CartService {
   constructor(cartRepository) {
     this.cartRepository = cartRepository;
   }
 
+  // Get all items in cart session
   async getCartItems(cartSessionId) {
     return await this.cartRepository.fetchCartItems(cartSessionId);
   }
 
+  // Add item or increment quantity
   async addItem(cartSessionId, data) {
     const { menu_item_id: menuItemId, dressing_id: dressingId, quantity = 1, item_notes: itemNotes = '' } = data;
 
@@ -27,6 +30,7 @@ export class CartService {
     }
   }
 
+  // Update item quantity or remove if 0
   async updateItemQuantity(cartSessionId, cartItemId, newQuantity) {
     if (newQuantity !== undefined && (newQuantity < 0 || newQuantity > 99)) {
       throw new ValidationError('จำนวนสินค้าไม่ถูกต้อง');
@@ -39,10 +43,12 @@ export class CartService {
     }
   }
 
+  // Remove item from cart
   async removeItem(cartSessionId, cartItemId) {
     await this.cartRepository.removeItem(cartItemId, cartSessionId);
   }
 
+  // Clear all items in cart
   async clearCart(cartSessionId) {
     await this.cartRepository.clearCart(cartSessionId);
   }

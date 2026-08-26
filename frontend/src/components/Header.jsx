@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-// แถบเมนูด้านบนสุดของฝั่งลูกค้า (แสดงโลโก้, สถานะออเดอร์ปัจจุบัน, ปุ่มตะกร้าสำหรับมือถือ/iPad, และปุ่มติดตาม)
+// Top navigation bar & announcement banner
 export default function Header({ storeStatus, onTrackOrder, activeOrder, activeOrderStatus, totalCartQuantity = 0, onOpenCart }) {
   const isOpen = storeStatus?.is_open ?? true;
   const storeName = storeStatus?.restaurant_name || 'ร้านสปริงโรลออนไลน์';

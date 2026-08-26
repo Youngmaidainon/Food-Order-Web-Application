@@ -5,7 +5,7 @@ import { deleteDiscordOrderNotification, sendDiscordCancelNotification } from '.
 
 const ordersRouter = express.Router();
 
-// GET /api/admin/orders - ดึงข้อมูลออเดอร์ทั้งหมดพร้อมไอเทม (มี Filter สถานะ และ Sort)
+// GET /api/admin/orders - Get orders with items (status filter & sort)
 ordersRouter.get('/', authenticateAdminSession, async (request, response) => {
   try {
     const { status: filterStatus, sort: sortDirection = 'desc', page = '1', limit = '50' } = request.query;
@@ -89,7 +89,7 @@ ordersRouter.get('/', authenticateAdminSession, async (request, response) => {
   }
 });
 
-// PATCH /api/admin/orders/:id/status - อัปเดตสถานะคำสั่งซื้อตาม Workflow
+// PATCH /api/admin/orders/:id/status - Update order workflow status
 ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, response) => {
   const databaseClient = await getDatabaseClient();
   try {
@@ -160,7 +160,7 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
 
     await databaseClient.query('COMMIT');
 
-    // Async Non-blocking Discord Notification for Cancellation
+    // Async Discord Notification for Cancellation
     if (cancelOrderDetails) {
       if (cancelOrderDetails.discord_message_id) {
         deleteDiscordOrderNotification(cancelOrderDetails.discord_message_id, cancelOrderDetails, 'ร้านค้า');
@@ -190,7 +190,7 @@ ordersRouter.patch('/:id/status', authenticateAdminSession, async (request, resp
   }
 });
 
-// DELETE /api/admin/orders/:id - Soft delete ออเดอร์ (ย้ายไปประวัติที่ถูกลบ)
+// DELETE /api/admin/orders/:id - Soft delete order
 ordersRouter.delete('/:id', authenticateAdminSession, async (request, response) => {
   try {
     const { id: orderId } = request.params;

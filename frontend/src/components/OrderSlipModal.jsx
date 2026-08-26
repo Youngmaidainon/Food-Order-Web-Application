@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useStoreStatus } from '../hooks/queries.js';
 
+// Printable and digital receipt (E-Receipt) modal
 export default function OrderSlipModal({ isOpen, onClose, order, restaurantName: propRestaurantName }) {
   const { data: storeStatus } = useStoreStatus();
   const restaurantName = propRestaurantName || storeStatus?.restaurant_name || 'ร้านสปริงโรลออนไลน์';

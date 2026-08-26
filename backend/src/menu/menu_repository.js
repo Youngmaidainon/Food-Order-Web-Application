@@ -1,6 +1,8 @@
 import { executeQuery } from '../config/database.js';
 
+// Menu database operations
 export class MenuRepository {
+  // Fetch available menu items
   async fetchAvailableMenuItems() {
     const fetchMenuItemsSql = `
       SELECT 

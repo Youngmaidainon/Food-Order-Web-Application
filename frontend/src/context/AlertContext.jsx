@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const AlertContext = createContext();
 
-// Provider สำหรับจัดการ Modal Alert แบบ Custom ทั่วทั้งระบบ (Global Modal State)
+// Global Modal Alert Provider
 export function AlertProvider({ children }) {
   const [alertConfig, setAlertConfig] = useState({
     isOpen: false,
@@ -14,7 +14,7 @@ export function AlertProvider({ children }) {
   
   const [promptValue, setPromptValue] = useState('');
 
-  // แสดง Modal แจ้งเตือนแบบพื้นฐาน
+  // Show basic alert modal
   const showAlert = useCallback((message) => {
     setAlertConfig({
       isOpen: true,
@@ -25,7 +25,7 @@ export function AlertProvider({ children }) {
     });
   }, []);
 
-  // แสดง Modal ยืนยันการทำรายการ (คืนค่าเป็น Promise)
+  // Show confirm modal (returns Promise<boolean>)
   const showConfirm = useCallback((message) => {
     return new Promise((resolve) => {
       setAlertConfig({
@@ -44,7 +44,7 @@ export function AlertProvider({ children }) {
     });
   }, []);
 
-  // แสดง Modal รับค่าข้อมูลจากผู้ใช้ (มีช่อง Input)
+  // Show prompt modal (returns Promise<string|null>)
   const showPrompt = useCallback((message, defaultValue = '') => {
     setPromptValue(defaultValue);
     return new Promise((resolve) => {

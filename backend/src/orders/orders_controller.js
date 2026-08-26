@@ -14,7 +14,7 @@ const ordersService = new OrdersService(ordersRepository);
 
 
 
-// Rate Limiter: ป้องกันสแปมและ DoS จำกัดโควต้าสร้างออเดอร์ 10 ครั้งต่อ 15 นาที
+// Rate limiters for orders
 const createOrderRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -39,7 +39,7 @@ const cancelOrderRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// POST /api/orders - รับออเดอร์ใหม่ พร้อม Validate Input (ป้องกัน Payload Injection) และ Rate Limiting
+// POST /api/orders - Create new order
 ordersRouter.post('/', createOrderRateLimiter, validate(createOrderSchema), async (req, res, next) => {
   try {
     const data = await ordersService.createOrder(req.body, req.ip, req.cookies?.springroll_cart_session);
@@ -52,16 +52,15 @@ ordersRouter.post('/', createOrderRateLimiter, validate(createOrderSchema), asyn
     if (error.statusCode) {
       return next(error);
     }
-    // ส่ง Error กลับไปที่ Global Error Handler แทนการคืน Stack Trace (ป้องกัน Information Leak)
-    error.statusCode = error.statusCode || 400; // Validation errors default to 400
+    error.statusCode = error.statusCode || 400;
     next(error);
   }
 });
 
-// GET /api/orders/track/:order_number - Track order status by order number
+// GET /api/orders/track/:order_number - Track order by order number
 ordersRouter.get('/track/:order_number', trackOrderRateLimiter, async (req, res, next) => {
   try {
-    const isAdmin = !!req.user; // Assuming req.user is set by auth middleware if admin is logged in
+    const isAdmin = !!req.user;
     const data = await ordersService.trackOrder(req.params.order_number.trim(), req.cookies?.springroll_cart_session, isAdmin);
     return res.json({ success: true, data });
   } catch (error) {
@@ -69,7 +68,7 @@ ordersRouter.get('/track/:order_number', trackOrderRateLimiter, async (req, res,
   }
 });
 
-// PATCH /api/orders/:id/status - ยกเลิกออเดอร์โดยลูกค้า (ส่งต่อให้ Service จัดการ Logic)
+// PATCH /api/orders/:id/status - Cancel order by customer
 ordersRouter.patch('/:id/status', cancelOrderRateLimiter, validate(cancelOrderSchema), async (req, res, next) => {
   try {
     const data = await ordersService.cancelOrderCustomer(req.params.id, req.body.status, req.body.cancel_reason, req.cookies?.springroll_cart_session);

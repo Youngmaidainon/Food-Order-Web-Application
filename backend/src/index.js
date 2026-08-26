@@ -17,13 +17,9 @@ import { ForbiddenError } from './shared/errors.js';
 
 const app = express();
 
-app.set('trust proxy', 'loopback, linklocal, uniquelocal'); // Trust internal proxies (Docker/Nginx/Render)
+app.set('trust proxy', 'loopback, linklocal, uniquelocal'); // Trust proxy headers (Docker/Nginx/Render)
 
-// ============================================================================
-// 1. Ultra-Fast Health Check & Keep-Alive Endpoints (Zero Middleware / Zero DB)
-// Bypasses Helmet, CORS, BodyParser, Cookies, RateLimiter & Database calls.
-// Responds instantly (<2ms) for Render Deploy Probes and cron-job.org Pings.
-// ============================================================================
+// --- Fast Health Check & Keep-Alive Probes (Zero Middleware / Zero DB) ---
 app.get(['/api/health', '/health'], (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.status(200).json({
@@ -38,7 +34,7 @@ app.head(['/api/health', '/health'], (req, res) => {
   res.status(200).end();
 });
 
-// Root Keep-Alive for Uptime Monitors (GET / HEAD)
+// Root keep-alive for uptime monitors (GET / HEAD)
 app.get(['/', '/api', '/api/'], (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.status(200).json({
@@ -52,24 +48,19 @@ app.head(['/', '/api', '/api/'], (req, res) => {
   res.status(200).end();
 });
 
-// ============================================================================
-// 2. Application Middlewares & Security Layer (For all other business routes)
-// ============================================================================
+// --- Middlewares & Security Layer ---
 app.use(requestContext);
-
-// ติดตั้ง Security Headers ด้วย Helmet ป้องกัน XSS, Clickjacking, MIME Sniffing
 app.use(helmet());
-// ตั้งค่า CORS (Cross-Origin Resource Sharing) แบบ Whitelist (Security First)
+
+// CORS config
 app.use(cors({
   origin: (origin, callback) => {
-    // Always allow all origins in development (for Cloudflare tunnels, etc.)
     if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
 
-    if (!origin) return callback(null, true); // Allow same-origin, curl, or server-to-server requests
+    if (!origin) return callback(null, true);
     
-    // อนุญาตทุก Origin หากเปิดใช้งาน ALLOW_DYNAMIC_CORS หรือตั้ง CORS_ORIGIN=*
     if (process.env.ALLOW_DYNAMIC_CORS === 'true' || process.env.CORS_ORIGIN === '*') {
       return callback(null, true);
     }
@@ -82,7 +73,6 @@ app.use(cors({
 
     const cleanOrigin = origin.replace(/\/+$/, '');
 
-    // Allow if in whitelist or from any *.vercel.app domain
     if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
@@ -91,14 +81,12 @@ app.use(cors({
   },
   credentials: true
 }));
-// จำกัดขนาด Request Body (Payload Size Limit) ป้องกัน DoS จาก Payload ขนาดใหญ่
-app.use(express.json({ limit: '100kb' }));
+
+app.use(express.json({ limit: '100kb' })); // Max 100KB payload limit
 app.use(cookieParser());
+app.set('etag', 'strong'); // Smart ETag cache (HTTP 304)
 
-// เปิด ETag สำหรับ Smart Cache (HTTP 304 Not Modified) เพื่อประหยัด Bandwidth ขณะ Polling
-app.set('etag', 'strong');
-
-// ตั้งค่า Cache Headers สำหรับ Dynamic API: ป้องกัน Browser/Proxy Cache แต่อนุญาต Conditional Requests (ETag/If-None-Match)
+// Prevent cache for dynamic API routes
 app.use('/api', (req, res, next) => {
   res.set('Cache-Control', 'no-cache, must-revalidate, private');
   res.set('Pragma', 'no-cache');
@@ -106,7 +94,7 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Global Rate Limiter: ป้องกัน DoS ระดับ API ทั้งระบบ
+// Rate limiters
 const generalApiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 600,
@@ -116,7 +104,6 @@ const generalApiRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Rate Limiter พิเศษสำหรับ Login (จำกัด 5 ครั้งต่อ 15 นาที เพื่อป้องกัน Brute-Force Password)
 const adminLoginRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -125,11 +112,10 @@ const adminLoginRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Apply rate limiters
 app.use('/api/', generalApiRateLimiter);
 app.use('/api/admin/login', adminLoginRateLimiter);
 
-// API Route Endpoints
+// API Routes
 app.use('/api/menu', menuRouter);
 app.use('/api/dressings', dressingsRouter);
 app.use('/api/store', storeRouter);

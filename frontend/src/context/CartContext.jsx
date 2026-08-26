@@ -3,12 +3,12 @@ import { sendApiRequest } from '../api/api.js';
 
 const CartContext = createContext(null);
 
-// Provider สำหรับจัดการสถานะของตะกร้าสินค้าแบบ Global (Cart State Management)
+// Global Cart state provider
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
   const updateTimeoutRef = useRef({});
   
-  // โหลดข้อมูลตะกร้าล่าสุดจากเซิร์ฟเวอร์
+  // Fetch cart items from server
   const fetchCart = useCallback(async () => {
     try {
       const res = await sendApiRequest('/cart');
@@ -16,7 +16,7 @@ export function CartProvider({ children }) {
         setCartItems(res.data);
       }
     } catch (err) {
-      console.error('ไม่สามารถโหลดข้อมูลตะกร้าสินค้าได้:', err);
+      console.error('Failed to fetch cart:', err);
     }
   }, []);
 
@@ -24,7 +24,7 @@ export function CartProvider({ children }) {
     fetchCart();
   }, [fetchCart]);
 
-  // เพิ่มสินค้าลงตะกร้าพร้อมตัวเลือกน้ำสลัดและหมายเหตุ
+  // Add item to cart
   const addItemToCart = async (menuItem, dressing = null, notes = '') => {
     try {
       const res = await sendApiRequest('/cart/add', {
@@ -39,17 +39,17 @@ export function CartProvider({ children }) {
       if (res.success) await fetchCart();
       return res;
     } catch (err) {
-      console.error('ไม่สามารถเพิ่มสินค้าได้:', err);
+      console.error('Failed to add item to cart:', err);
       throw err;
     }
   };
 
-  // ปรับจำนวนสินค้าพร้อมระบบ Optimistic Update และ Debounce ป้องกัน API ทำงานหนัก
+  // Update quantity (Optimistic UI + Debounced API call)
   const updateQuantity = async (cartItemId, newQty) => {
     if (newQty <= 0) {
       return removeItem(cartItemId);
     }
-    // อัปเดต UI ทันทีโดยไม่ต้องรอ API (Optimistic Update)
+    // Optimistic update
     setCartItems(prevItems => prevItems.map(item => {
       if (item.cart_item_id === cartItemId) {
         return { ...item, quantity: newQty };
@@ -57,7 +57,7 @@ export function CartProvider({ children }) {
       return item;
     }).filter(item => item.quantity > 0));
 
-    // หน่วงเวลาการเรียก API เพื่อลดภาระเซิร์ฟเวอร์
+    // Debounce API call
     if (updateTimeoutRef.current[cartItemId]) {
       clearTimeout(updateTimeoutRef.current[cartItemId]);
     }
@@ -69,19 +69,19 @@ export function CartProvider({ children }) {
           body: JSON.stringify({ quantity: newQty })
         });
         if (!res.success) {
-          console.error('ไม่สามารถอัปเดตจำนวนสินค้าได้ กำลังคืนค่าเดิม...');
+          console.error('Failed to update quantity, reverting...');
           await fetchCart();
         }
       } catch (err) {
-        console.error('ไม่สามารถอัปเดตจำนวนสินค้าได้:', err);
+        console.error('Failed to update quantity:', err);
         await fetchCart();
       }
     }, 500);
   };
 
-  // ลบสินค้าออกจากตะกร้า
+  // Remove item from cart
   const removeItem = async (cartItemId) => {
-    // อัปเดต UI ทันทีโดยไม่ต้องรอ API (Optimistic Update)
+    // Optimistic update
     setCartItems(prevItems => prevItems.filter(item => item.cart_item_id !== cartItemId));
 
     try {
@@ -90,21 +90,21 @@ export function CartProvider({ children }) {
       });
       if (!res.success) await fetchCart();
     } catch (err) {
-      console.error('ไม่สามารถลบสินค้าได้:', err);
+      console.error('Failed to remove item:', err);
       await fetchCart();
     }
   };
   
-  // ล้างตะกร้าสินค้าทั้งหมด
+  // Clear cart
   const clearCart = async () => {
-    // อัปเดต UI ทันทีโดยไม่ต้องรอ API (Optimistic Update)
+    // Optimistic update
     setCartItems([]);
 
     try {
       const res = await sendApiRequest('/cart/clear', { method: 'DELETE' });
       if (!res.success) await fetchCart();
     } catch (err) {
-      console.error('ไม่สามารถล้างตะกร้าสินค้าได้:', err);
+      console.error('Failed to clear cart:', err);
       await fetchCart();
     }
   };

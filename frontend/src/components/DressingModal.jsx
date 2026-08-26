@@ -1,6 +1,6 @@
 import React from 'react';
 
-// Modal สำหรับเลือกตัวเลือกน้ำสลัดก่อนเพิ่มสินค้าลงตะกร้า
+// Salad dressing selection modal before cart insertion
 export default function DressingModal({ isOpen, onClose, dressings, onConfirm, selectedDressing, setSelectedDressing }) {
   if (!isOpen) return null;
 

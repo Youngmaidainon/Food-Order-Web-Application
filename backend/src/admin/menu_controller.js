@@ -4,7 +4,7 @@ import { authenticateAdminSession } from '../shared/middleware/auth.js';
 
 const menuRouter = express.Router();
 
-// GET /api/admin/menu - ดึงข้อมูลเมนูทั้งหมด (รวมเมนูที่ซ่อนอยู่)
+// GET /api/admin/menu - Get all menu items (including hidden)
 menuRouter.get('/', authenticateAdminSession, async (request, response) => {
   try {
     const fetchAdminMenuItemsSql = `
@@ -30,7 +30,7 @@ menuRouter.get('/', authenticateAdminSession, async (request, response) => {
   }
 });
 
-// POST /api/admin/menu - เพิ่มเมนูใหม่
+// POST /api/admin/menu - Create menu item
 menuRouter.post('/', authenticateAdminSession, async (request, response) => {
   const { category_id: categoryId, name: menuItemName, description: menuItemDescription, price: menuItemPrice, image_url: menuItemImageUrl, is_available: isAvailable } = request.body;
 
@@ -72,7 +72,7 @@ menuRouter.post('/', authenticateAdminSession, async (request, response) => {
   }
 });
 
-// PUT /api/admin/menu/:id - แก้ไขข้อมูลเมนู
+// PUT /api/admin/menu/:id - Update menu item
 menuRouter.put('/:id', authenticateAdminSession, async (request, response) => {
   const { id: menuItemId } = request.params;
   const { category_id: categoryId, name: menuItemName, description: menuItemDescription, price: menuItemPrice, image_url: menuItemImageUrl, is_available: isAvailable } = request.body;
@@ -117,7 +117,7 @@ menuRouter.put('/:id', authenticateAdminSession, async (request, response) => {
   }
 });
 
-// DELETE /api/admin/menu/:id - ลบข้อมูลเมนู
+// DELETE /api/admin/menu/:id - Delete menu item
 menuRouter.delete('/:id', authenticateAdminSession, async (request, response) => {
   const { id: menuItemId } = request.params;
   try {

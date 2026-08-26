@@ -14,7 +14,7 @@ const queryClient = new QueryClient({
   },
 })
 
-// Entry Point ของ React สำหรับเรนเดอร์ลงใน DOM (HTML) พร้อมเปิด StrictMode ป้องกันบั๊ก
+// Mount React root
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
