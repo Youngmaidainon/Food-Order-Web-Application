@@ -240,8 +240,8 @@ Food-Order-Web-Application/
    * **Branch**: `main`
    * **Root Directory**: `backend` *(⚠️ ต้องระบุ `backend`)*
    * **Runtime**: `Node`
-   * **Build Command**: `npm install`
-   * **Start Command**: `npm start`
+   * **Build Command**: `npm ci --omit=dev`
+   * **Start Command**: `node server.js`
    * **Instance Type**: `Free`
 3. เพิ่ม Environment Variables:
 
