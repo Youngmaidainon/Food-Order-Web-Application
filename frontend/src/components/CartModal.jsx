@@ -117,12 +117,6 @@ export default function CartModal({ isOpen, onClose, isStoreOpen, onCheckout }) 
               <p className="text-[10px] text-gray-400">
                 {cartItems.reduce((acc, i) => acc + i.quantity, 0)} รายการ
               </p>
-              {!isStoreOpen && (
-                <span className="inline-flex items-center gap-1 mt-1 text-[10px] px-2 py-0.5 rounded-full font-medium bg-red-500/10 text-red-400 border border-red-500/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
-                  <span>ร้านปิดชั่วคราว</span>
-                </span>
-              )}
             </div>
             <div className="text-right">
               <p className="text-xl sm:text-2xl font-black text-primary leading-tight font-mono">{parseInt(totalPrice, 10)} ฿</p>
