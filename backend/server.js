@@ -111,15 +111,19 @@ async function runDatabaseMigrations() {
   }
 }
 
-// Start HTTP server immediately so Render detects port binding without delay
+// Start HTTP server immediately (Non-blocking) so Render detects port binding in <2s
 const httpServer = http.createServer(app);
+const PORT = applicationConfig.port || 8000;
+const HOST = '0.0.0.0';
 
-const server = httpServer.listen(applicationConfig.port, () => {
-  appLogger.info({ msg: `🌯 Spring Roll Online Store Backend running on port ${applicationConfig.port}` });
+const server = httpServer.listen(PORT, HOST, () => {
+  appLogger.info({ msg: `🌯 Spring Roll Online Store Backend listening on ${HOST}:${PORT}` });
   
-  // Run database migrations in background without blocking server listen
-  runDatabaseMigrations().catch((migrationError) => {
-    appLogger.error({ msg: 'Failed to run database migrations during startup', error: migrationError });
+  // Run database migrations in background without blocking server port binding
+  setImmediate(() => {
+    runDatabaseMigrations().catch((migrationError) => {
+      appLogger.error({ msg: 'Failed to run database migrations during startup', error: migrationError });
+    });
   });
 });
 

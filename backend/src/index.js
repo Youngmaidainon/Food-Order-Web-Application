@@ -19,6 +19,42 @@ const app = express();
 
 app.set('trust proxy', 'loopback, linklocal, uniquelocal'); // Trust internal proxies (Docker/Nginx/Render)
 
+// ============================================================================
+// 1. Ultra-Fast Health Check & Keep-Alive Endpoints (Zero Middleware / Zero DB)
+// Bypasses Helmet, CORS, BodyParser, Cookies, RateLimiter & Database calls.
+// Responds instantly (<2ms) for Render Deploy Probes and cron-job.org Pings.
+// ============================================================================
+app.get(['/api/health', '/health'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.status(200).json({
+    status: 'ok',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.head(['/api/health', '/health'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.status(200).end();
+});
+
+// Root Keep-Alive for Uptime Monitors (GET / HEAD)
+app.get(['/', '/api', '/api/'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.status(200).json({
+    success: true,
+    message: 'Backend API is running'
+  });
+});
+
+app.head(['/', '/api', '/api/'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.status(200).end();
+});
+
+// ============================================================================
+// 2. Application Middlewares & Security Layer (For all other business routes)
+// ============================================================================
 app.use(requestContext);
 
 // ติดตั้ง Security Headers ด้วย Helmet ป้องกัน XSS, Clickjacking, MIME Sniffing
@@ -70,7 +106,7 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Global Rate Limiter: ป้องกัน DoS ระดับ API ทั้งระบบ (ข้ามการจำกัดสำหรับ HEAD request หรือ Health Check จาก cron-job.org)
+// Global Rate Limiter: ป้องกัน DoS ระดับ API ทั้งระบบ
 const generalApiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 600,
@@ -100,33 +136,6 @@ app.use('/api/store', storeRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
-
-// System Health Check Endpoints (รองรับทั้ง GET และ HEAD)
-const handleHealthCheck = (request, response) => {
-  if (request.method === 'HEAD') {
-    return response.status(200).end();
-  }
-  return response.status(200).json({
-    status: 'ok'
-  });
-};
-
-app.get(['/health', '/api/health'], handleHealthCheck);
-app.head(['/health', '/api/health'], handleHealthCheck);
-
-// Root Status & API Endpoints (รองรับ /, /api, /api/)
-const handleApiInfo = (request, response) => {
-  if (request.method === 'HEAD') {
-    return response.status(200).end();
-  }
-  return response.status(200).json({
-    success: true,
-    message: 'Backend API is running'
-  });
-};
-
-app.get(['/', '/api', '/api/'], handleApiInfo);
-app.head(['/', '/api', '/api/'], handleApiInfo);
 
 app.use(globalErrorHandler);
 
