@@ -19,31 +19,14 @@ const app = express();
 
 app.set('trust proxy', 'loopback, linklocal, uniquelocal'); // Trust proxy headers (Docker/Nginx/Render)
 
-// --- Fast Health Check & Keep-Alive Probes (Zero Middleware / Zero DB) ---
+// --- Fast Health Check & Keep-Alive Probes (Zero Middleware / Zero DB / 0-Byte) ---
 app.get(['/api/health', '/health'], (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.status(200).json({
-    status: 'ok',
-    uptime: Math.floor(process.uptime()),
-    timestamp: new Date().toISOString()
-  });
-});
-
-app.head(['/api/health', '/health'], (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.status(200).end();
 });
 
-// Root keep-alive for uptime monitors (GET / HEAD)
+// Root keep-alive for uptime monitors (0-Byte)
 app.get(['/', '/api', '/api/'], (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.status(200).json({
-    success: true,
-    message: 'Backend API is running'
-  });
-});
-
-app.head(['/', '/api', '/api/'], (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.status(200).end();
 });
@@ -60,7 +43,7 @@ app.use(cors({
     }
 
     if (!origin) return callback(null, true);
-    
+
     if (process.env.ALLOW_DYNAMIC_CORS === 'true' || process.env.CORS_ORIGIN === '*') {
       return callback(null, true);
     }
@@ -98,7 +81,7 @@ app.use('/api', (req, res, next) => {
 const generalApiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 600,
-  skip: (req) => req.method === 'HEAD' || req.path === '/health' || req.originalUrl === '/api/health',
+  skip: (req) => req.path === '/health' || req.originalUrl === '/api/health',
   message: { success: false, message: 'คำขอมากเกินไป กรุณารอสักครู่ (Too many requests)' },
   standardHeaders: true,
   legacyHeaders: false,
