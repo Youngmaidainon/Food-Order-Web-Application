@@ -2,14 +2,17 @@ services:
   - type: web
     name: springroll-backend
     env: node
-    buildCommand: npm install
-    startCommand: npm start
+    plan: free
+    region: singapore
+    # ใช้ npm ci พร้อมตัด devDependencies เพื่อให้ Build ไวและไฟล์เล็กลง
+    buildCommand: npm ci --omit=dev
+    # รันตรงไปยังไฟล์เริ่มต้น เพื่อลด memory overhead ของ npm บน Free Tier (512MB)
+    startCommand: node server.js
+    # ตรวจสอบ Health Check endpoint
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: HTTPS_ENABLED
-        value: "true"
       - key: CORS_ORIGIN
         sync: false
       - key: DATABASE_URL
