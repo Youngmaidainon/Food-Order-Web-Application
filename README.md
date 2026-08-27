@@ -142,7 +142,6 @@ Food-Order-Web-Application/
 │   ├── Dockerfile                  # Docker Image สำหรับ Backend
 │   ├── package.json                # Dependencies & Scripts ของ Backend
 │   ├── README.md                   # คู่มือสถาปัตยกรรมและ API Backend
-│   ├── render.yaml                 # คอนฟิก IaC สำหรับ Render
 │   ├── server.js                   # บูตเซิร์ฟเวอร์, ตรวจ Database Pool & Auto-Migration
 │   └── src/                        # ซอร์สโค้ดจัดโครงสร้าง Feature-First
 │       ├── discord.js              # โมดูล Discord Webhook (#orders, #cancels, #reports)

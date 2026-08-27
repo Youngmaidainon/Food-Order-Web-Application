@@ -11,7 +11,6 @@
 backend/
 ├── Dockerfile                      # คำสั่งสร้าง Docker Image สำหรับ Production
 ├── package.json                    # รายการไลบรารีและ Scripts
-├── render.yaml                     # คอนฟิก IaC สำหรับ Render
 ├── server.js                       # บูตเซิร์ฟเวอร์, ตรวจ Database Pool & Auto-Migration
 └── src/
     ├── discord.js                  # ระบบส่ง Webhook แจ้งเตือน (#orders, #cancels, #reports)
