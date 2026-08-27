@@ -45,14 +45,12 @@ async function checkDatabaseHealth(timeoutMs = 2000) {
 }
 
 // ============================================================================
-// Health Check & Keep-Alive Probes (Zero Heavy Middleware)
+// Health Check & Keep-Alive Probes (Bypasses Heavy Middlewares / Auto HEAD)
 // ============================================================================
 
 // 1. Liveness Probe (Zero DB / Ultra Fast < 1ms)
 app.get(['/api/health', '/health', '/api/health/live', '/health/live'], (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.status(200).json({
     status: 'ok',
     uptime: Math.floor(process.uptime()),
@@ -62,10 +60,7 @@ app.get(['/api/health', '/health', '/api/health/live', '/health/live'], (req, re
 
 // 2. Readiness Probe (Deep Check: Database connection & latency)
 app.get(['/api/health/ready', '/health/ready', '/ready'], async (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   const dbHealth = await checkDatabaseHealth();
   const isHealthy = dbHealth.status === 'connected';
 
@@ -79,9 +74,7 @@ app.get(['/api/health/ready', '/health/ready', '/ready'], async (req, res) => {
 
 // 3. Root API info for Uptime Monitors & Browser inspection
 app.get(['/', '/api', '/api/'], (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.status(200).json({
     status: 'ok',
     service: 'springroll-backend',
@@ -90,47 +83,25 @@ app.get(['/', '/api', '/api/'], (req, res) => {
   });
 });
 
-// 4. Zero-Byte HEAD support across all probes for bandwidth saving
-app.head([
-  '/api/health', '/health',
-  '/api/health/live', '/health/live',
-  '/api/health/ready', '/health/ready', '/ready',
-  '/', '/api', '/api/'
-], (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.status(200).end();
-});
-
 // --- Middlewares & Security Layer ---
 app.use(requestContext);
 app.use(helmet());
 
 // CORS config
+const defaultAllowedOrigins = ['http://localhost', 'http://localhost:80', 'http://localhost:8080', 'http://localhost:5173', 'http://localhost:3000'];
+const envOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/+$/, '')) : [];
+const allowedOrigins = [...defaultAllowedOrigins, ...envOrigins];
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (process.env.NODE_ENV !== 'production') {
+    if (!origin || process.env.NODE_ENV !== 'production' || process.env.ALLOW_DYNAMIC_CORS === 'true' || process.env.CORS_ORIGIN === '*') {
       return callback(null, true);
     }
-
-    if (!origin) return callback(null, true);
-
-    if (process.env.ALLOW_DYNAMIC_CORS === 'true' || process.env.CORS_ORIGIN === '*') {
-      return callback(null, true);
-    }
-
-    let allowedOrigins = ['http://localhost', 'http://localhost:80', 'http://localhost:8080', 'http://localhost:5173', 'http://localhost:3000'];
-    if (process.env.CORS_ORIGIN) {
-      const origins = process.env.CORS_ORIGIN.split(',').map(o => o.trim().replace(/\/+$/, ''));
-      allowedOrigins = [...allowedOrigins, ...origins];
-    }
-
     const cleanOrigin = origin.replace(/\/+$/, '');
-
     if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new ForbiddenError(`Not allowed by CORS: ${origin}`));
+      return callback(null, true);
     }
+    callback(new ForbiddenError(`Not allowed by CORS: ${origin}`));
   },
   credentials: true
 }));
@@ -151,7 +122,6 @@ app.use('/api', (req, res, next) => {
 const generalApiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 600,
-  skip: (req) => req.path.startsWith('/health') || req.originalUrl.startsWith('/api/health') || req.path === '/ready' || req.originalUrl === '/api/ready',
   message: { success: false, message: 'คำขอมากเกินไป กรุณารอสักครู่ (Too many requests)' },
   standardHeaders: true,
   legacyHeaders: false,
