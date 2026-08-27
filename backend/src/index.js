@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 
+import { executeQuery } from './config/database.js';
+
 import { menuRouter } from './menu/menu_controller.js';
 import { dressingsRouter } from './dressings/dressings_controller.js';
 import { storeRouter } from './store/store_controller.js';
@@ -19,14 +21,82 @@ const app = express();
 
 app.set('trust proxy', 'loopback, linklocal, uniquelocal'); // Trust proxy headers (Docker/Nginx/Render)
 
-// --- Fast Health Check & Keep-Alive Probes (Zero Middleware / Zero DB / 0-Byte) ---
-app.get(['/api/health', '/health'], (req, res) => {
+// Helper: Ping database with timeout
+async function checkDatabaseHealth(timeoutMs = 2000) {
+  const startTime = Date.now();
+  let timer;
+  try {
+    const timeoutPromise = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Database ping timeout')), timeoutMs);
+    });
+    await Promise.race([executeQuery('SELECT 1'), timeoutPromise]);
+    return {
+      status: 'connected',
+      latency_ms: Date.now() - startTime
+    };
+  } catch (error) {
+    return {
+      status: 'disconnected',
+      error: error.message || 'Database unreachable'
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// ============================================================================
+// Health Check & Keep-Alive Probes (Zero Heavy Middleware)
+// ============================================================================
+
+// 1. Liveness Probe (Zero DB / Ultra Fast < 1ms)
+app.get(['/api/health', '/health', '/api/health/live', '/health/live'], (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.status(200).end();
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.status(200).json({
+    status: 'ok',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Root keep-alive for uptime monitors (0-Byte)
+// 2. Readiness Probe (Deep Check: Database connection & latency)
+app.get(['/api/health/ready', '/health/ready', '/ready'], async (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  const dbHealth = await checkDatabaseHealth();
+  const isHealthy = dbHealth.status === 'connected';
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'ready' : 'unhealthy',
+    database: dbHealth,
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 3. Root API info for Uptime Monitors & Browser inspection
 app.get(['/', '/api', '/api/'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.status(200).json({
+    status: 'ok',
+    service: 'springroll-backend',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 4. Zero-Byte HEAD support across all probes for bandwidth saving
+app.head([
+  '/api/health', '/health',
+  '/api/health/live', '/health/live',
+  '/api/health/ready', '/health/ready', '/ready',
+  '/', '/api', '/api/'
+], (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.status(200).end();
 });
@@ -81,7 +151,7 @@ app.use('/api', (req, res, next) => {
 const generalApiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 600,
-  skip: (req) => req.path === '/health' || req.originalUrl === '/api/health',
+  skip: (req) => req.path.startsWith('/health') || req.originalUrl.startsWith('/api/health') || req.path === '/ready' || req.originalUrl === '/api/ready',
   message: { success: false, message: 'คำขอมากเกินไป กรุณารอสักครู่ (Too many requests)' },
   standardHeaders: true,
   legacyHeaders: false,
