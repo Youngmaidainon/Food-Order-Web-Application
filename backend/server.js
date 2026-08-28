@@ -113,7 +113,7 @@ async function runDatabaseMigrations() {
 
 // Start HTTP server immediately (Non-blocking startup for Render / PaaS)
 const httpServer = http.createServer(app);
-const PORT = applicationConfig.port || 8000;
+const PORT = process.env.PORT || applicationConfig.port || 8000;
 const HOST = '0.0.0.0';
 
 const server = httpServer.listen(PORT, HOST, () => {
