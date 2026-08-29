@@ -151,3 +151,17 @@ const shutdown = async (signal) => {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+
+// Prevent process crashes from unhandled errors
+process.on('uncaughtException', (err) => {
+  appLogger.error({ msg: 'Uncaught Exception detected', error: err.message, stack: err.stack });
+});
+
+process.on('unhandledRejection', (reason) => {
+  appLogger.error({ 
+    msg: 'Unhandled Promise Rejection detected', 
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined 
+  });
+});
+

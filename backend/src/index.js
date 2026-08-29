@@ -22,7 +22,7 @@ const app = express();
 app.set('trust proxy', 'loopback, linklocal, uniquelocal'); // Trust proxy headers (Docker/Nginx/Render)
 
 // Helper: Ping database with timeout
-async function checkDatabaseHealth(timeoutMs = 2000) {
+async function checkDatabaseHealth(timeoutMs = 5000) {
   const startTime = Date.now();
   let timer;
   try {
@@ -48,8 +48,8 @@ async function checkDatabaseHealth(timeoutMs = 2000) {
 // Health Check & Keep-Alive Probes (Bypasses Heavy Middlewares / Auto HEAD)
 // ============================================================================
 
-// 1. Liveness Probe (Zero DB / Ultra Fast < 1ms)
-app.get(['/api/health', '/health', '/api/health/live', '/health/live'], (req, res) => {
+// 1. Liveness & Keep-Alive Probe (Zero DB / Ultra Fast < 1ms - Best for cron-job.org & Render)
+app.all(['/api/health', '/health', '/api/health/live', '/health/live', '/api/ping', '/ping'], (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.status(200).json({
     status: 'ok',
@@ -59,9 +59,9 @@ app.get(['/api/health', '/health', '/api/health/live', '/health/live'], (req, re
 });
 
 // 2. Readiness Probe (Deep Check: Database connection & latency)
-app.get(['/api/health/ready', '/health/ready', '/ready'], async (req, res) => {
+app.all(['/api/health/ready', '/health/ready', '/ready'], async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-  const dbHealth = await checkDatabaseHealth();
+  const dbHealth = await checkDatabaseHealth(5000);
   const isHealthy = dbHealth.status === 'connected';
 
   res.status(isHealthy ? 200 : 503).json({
@@ -73,7 +73,7 @@ app.get(['/api/health/ready', '/health/ready', '/ready'], async (req, res) => {
 });
 
 // 3. Root API info for Uptime Monitors & Browser inspection
-app.get(['/', '/api', '/api/'], (req, res) => {
+app.all(['/', '/api', '/api/'], (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.status(200).json({
     status: 'ok',
