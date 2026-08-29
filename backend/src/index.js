@@ -48,8 +48,8 @@ async function checkDatabaseHealth(timeoutMs = 5000) {
 // Health Check & Keep-Alive Probes (Bypasses Heavy Middlewares / Auto HEAD)
 // ============================================================================
 
-// 1. Liveness & Keep-Alive Probe (Zero DB / Ultra Fast < 1ms - Best for cron-job.org & Render)
-app.all(['/api/health', '/health', '/api/health/live', '/health/live', '/api/ping', '/ping'], (req, res) => {
+// 1. Liveness & Keep-Alive Probe (Zero DB / Ultra Fast < 1ms)
+app.all(['/api/health', '/health'], (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.status(200).json({
     status: 'ok',
@@ -59,7 +59,7 @@ app.all(['/api/health', '/health', '/api/health/live', '/health/live', '/api/pin
 });
 
 // 2. Readiness Probe (Deep Check: Database connection & latency)
-app.all(['/api/health/ready', '/health/ready', '/ready'], async (req, res) => {
+app.all(['/api/health/ready', '/health/ready'], async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   const dbHealth = await checkDatabaseHealth(5000);
   const isHealthy = dbHealth.status === 'connected';
@@ -73,7 +73,7 @@ app.all(['/api/health/ready', '/health/ready', '/ready'], async (req, res) => {
 });
 
 // 3. Root API info for Uptime Monitors & Browser inspection
-app.all(['/', '/api', '/api/'], (req, res) => {
+app.all(['/', '/api'], (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.status(200).json({
     status: 'ok',
