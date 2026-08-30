@@ -4,8 +4,6 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 
-import { executeQuery } from './config/database.js';
-
 import { menuRouter } from './menu/menu_controller.js';
 import { dressingsRouter } from './dressings/dressings_controller.js';
 import { storeRouter } from './store/store_controller.js';
@@ -21,34 +19,11 @@ const app = express();
 
 app.set('trust proxy', 'loopback, linklocal, uniquelocal'); // Trust proxy headers (Docker/Nginx/Render)
 
-// Helper: Ping database with timeout
-async function checkDatabaseHealth(timeoutMs = 5000) {
-  const startTime = Date.now();
-  let timer;
-  try {
-    const timeoutPromise = new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error('Database ping timeout')), timeoutMs);
-    });
-    await Promise.race([executeQuery('SELECT 1'), timeoutPromise]);
-    return {
-      status: 'connected',
-      latency_ms: Date.now() - startTime
-    };
-  } catch (error) {
-    return {
-      status: 'disconnected',
-      error: error.message || 'Database unreachable'
-    };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 // ============================================================================
-// Health Check & Keep-Alive Probes (Bypasses Heavy Middlewares / Auto HEAD)
+// Health Check & Keep-Alive Endpoints (Fast & Zero DB)
 // ============================================================================
 
-// 1. Liveness & Keep-Alive Probe (Zero DB / Ultra Fast < 1ms)
+// Health Check & Keep-Alive Probe (for cron-job.org / Render)
 app.all(['/api/health', '/health'], (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.status(200).json({
@@ -58,21 +33,7 @@ app.all(['/api/health', '/health'], (req, res) => {
   });
 });
 
-// 2. Readiness Probe (Deep Check: Database connection & latency)
-app.all(['/api/health/ready', '/health/ready'], async (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-  const dbHealth = await checkDatabaseHealth(5000);
-  const isHealthy = dbHealth.status === 'connected';
-
-  res.status(isHealthy ? 200 : 503).json({
-    status: isHealthy ? 'ready' : 'unhealthy',
-    database: dbHealth,
-    uptime: Math.floor(process.uptime()),
-    timestamp: new Date().toISOString()
-  });
-});
-
-// 3. Root API info for Uptime Monitors & Browser inspection
+// Root API info for Uptime Monitors & Browser inspection
 app.all(['/', '/api'], (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.status(200).json({
