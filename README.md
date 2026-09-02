@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>🥗 Spring Roll Online Store (Food Order Web Application)</h1>
+  <h1>🥗 Spring Roll Online Store</h1>
   <p><strong>A modern Glassmorphism food ordering web application built with Feature-First architecture, real-time synchronization via Smart Polling + Smart Cache (HTTP 304 ETag), Optimistic UI, Discord Webhook notifications, and 100% Cloud Free Tier compatibility.</strong></p>
 
   <br />
