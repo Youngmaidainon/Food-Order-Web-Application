@@ -1,172 +1,172 @@
 <div align="center">
-  <h1>⚙️ ระบบบริการส่วนหลังบ้าน (Backend API Architecture)</h1>
-  <p><strong>พัฒนาด้วย Node.js (ESM) + Express.js สถาปัตยกรรม Feature-First ระบบตรวจสอบสิทธิ์เซสชันคุกกี้ Rate Limiting, Database Connection Pool, Zod Validation และ Smart Cache (HTTP 304 ETag)</strong></p>
+  <h1>⚙️ Backend API Architecture</h1>
+  <p><strong>Built with Node.js (ESM) + Express.js featuring Feature-First modular architecture, session cookie authentication, rate limiting, PostgreSQL connection pool, Zod validation, and Smart Cache (HTTP 304 ETag).</strong></p>
 </div>
 
 ---
 
-## 🧩 สถาปัตยกรรมซอร์สโค้ด (Feature-First Architecture)
+## 🧩 Source Code Architecture (Feature-First)
 
 ```
 backend/
-├── Dockerfile                      # คำสั่งสร้าง Docker Image สำหรับ Production
-├── package.json                    # รายการไลบรารีและ Scripts
-├── server.js                       # บูตเซิร์ฟเวอร์, ตรวจ Database Pool & Auto-Migration
+├── Dockerfile                      # Production Docker Image definition
+├── package.json                    # Dependencies & npm scripts
+├── server.js                       # Server entry point, DB pool connection check & auto-migration
 └── src/
-    ├── discord.js                  # ระบบส่ง Webhook แจ้งเตือน (#orders, #cancels, #reports)
-    ├── index.js                    # Express App, Security Middlewares, Rate Limiting, Routes
-    ├── admin/                      # ฟีเจอร์: การจัดการระบบแอดมินหลังบ้าน
-    │   ├── admin_controller.js     # Router รวมของแอดมิน (/api/admin)
-    │   ├── analytics_controller.js # คำนวณสถิติยอดขายรอบปัจจุบัน/วัน/เดือน/รวม (Dashboard Analytics)
-    │   ├── auth_controller.js      # จัดการ Login, Logout และตรวจสอบเซสชันแอดมิน
-    │   ├── categories_controller.js# CRUD หมวดหมู่อาหาร
-    │   ├── dressings_controller.js # CRUD รายการน้ำสลัด
-    │   ├── menu_controller.js      # CRUD รายการเมนูอาหาร
-    │   └── orders_controller.js    # จัดการเปลี่ยนสถานะออเดอร์ (Workflow), Soft Delete
-    ├── cart/                       # ฟีเจอร์: ตะกร้าสินค้าของลูกค้า
-    │   ├── cart_controller.js      # Router ตะกร้าสินค้า (/api/cart)
-    │   ├── cart_middleware.js      # ตรวจจับและสร้าง Guest Session ตะกร้าสินค้าอัตโนมัติ
-    │   ├── cart_repository.js      # คำสั่ง SQL ตาราง cart_sessions และ cart_items
-    │   └── cart_service.js         # ตรรกะทางธุรกิจตะกร้าสินค้า
-    ├── config/                     # ฟีเจอร์: การตั้งค่าและการเชื่อมต่อฐานข้อมูล
-    │   ├── config.js               # Centralized Config พร้อมระบบ Fail-Fast
-    │   └── database.js             # pg.Pool พร้อม Dynamic SSL และ Helper คิวรี่
-    ├── dressings/                  # ฟีเจอร์: ข้อมูลน้ำสลัดฝั่งลูกค้า
-    │   ├── dressings_controller.js # Router ดึงน้ำสลัดที่พร้อมให้บริการ (/api/dressings)
-    │   ├── dressings_repository.js # คำสั่ง SQL ตาราง dressings
-    │   └── dressings_service.js    # ตรรกะตรวจสอบสถานะน้ำสลัด
-    ├── menu/                       # ฟีเจอร์: ข้อมูลเมนูอาหารฝั่งลูกค้า
-    │   ├── menu_controller.js      # Router ดึงเมนูและหมวดหมู่ (/api/menu)
-    │   ├── menu_repository.js      # คำสั่ง SQL ตาราง menu_items และ categories
-    │   └── menu_service.js         # ตรรกะจัดกลุ่มเมนูตามหมวดหมู่
-    ├── orders/                     # ฟีเจอร์: คำสั่งซื้อและการติดตามสถานะ
-    │   ├── orders_controller.js    # Router รับคำสั่งซื้อและค้นหาสถานะ (/api/orders)
-    │   ├── orders_repository.js    # คำสั่ง SQL ตาราง orders และ order_items
-    │   └── orders_service.js       # ตรรกะสร้างออเดอร์, คิว, Anti-Spam, แจ้งเตือน Discord
-    ├── shared/                     # มิดเดิลแวร์และโมดูลส่วนกลาง
-    │   ├── errors.js               # โครงสร้าง Error คลาส (RFC 9457 Problem Details)
-    │   ├── logger.js               # Structured JSON Logger (Pino)
+    ├── discord.js                  # Discord Webhook notification engine (#orders, #cancels, #reports)
+    ├── index.js                    # Express app initialization, security middlewares, rate limits, routes
+    ├── admin/                      # Feature: Admin portal management
+    │   ├── admin_controller.js     # Admin root router aggregator (/api/admin)
+    │   ├── analytics_controller.js # Sales analytics for current batch/today/month/all-time (Dashboard)
+    │   ├── auth_controller.js      # Admin login, logout & session verification
+    │   ├── categories_controller.js# Food categories CRUD
+    │   ├── dressings_controller.js # Salad dressings CRUD
+    │   ├── menu_controller.js      # Menu items CRUD
+    │   └── orders_controller.js    # Order status workflow transitions & soft delete
+    ├── cart/                       # Feature: Customer shopping cart
+    │   ├── cart_controller.js      # Cart API router (/api/cart)
+    │   ├── cart_middleware.js      # Automatic guest cart session detection & initialization
+    │   ├── cart_repository.js      # SQL queries for cart_sessions and cart_items
+    │   └── cart_service.js         # Cart business logic & validations
+    ├── config/                     # Feature: Central configuration & database connection
+    │   ├── config.js               # Centralized configuration with Fail-Fast startup checks
+    │   └── database.js             # pg.Pool with dynamic SSL & query helpers
+    ├── dressings/                  # Feature: Customer salad dressings
+    │   ├── dressings_controller.js # Active dressings router (/api/dressings)
+    │   ├── dressings_repository.js # SQL queries for dressings table
+    │   └── dressings_service.js    # Dressing availability business logic
+    ├── menu/                       # Feature: Customer menu items
+    │   ├── menu_controller.js      # Menu items & categories router (/api/menu)
+    │   ├── menu_repository.js      # SQL queries for menu_items and categories
+    │   └── menu_service.js         # Menu categorization business logic
+    ├── orders/                     # Feature: Customer orders & live tracking
+    │   ├── orders_controller.js    # Order creation & tracking router (/api/orders)
+    │   ├── orders_repository.js    # SQL queries for orders and order_items
+    │   └── orders_service.js       # Order creation, queue sequence, anti-spam, Discord alerts
+    ├── shared/                     # Shared cross-cutting modules & middlewares
+    │   ├── errors.js               # Standardized Error classes (RFC 9457 Problem Details)
+    │   ├── logger.js               # Structured JSON logger (Pino)
     │   ├── middleware/             # auth.js, errorHandler.js, requestContext.js, validate.js
-    │   └── validators/             # index.js (Zod Validation Schemas)
-    └── store/                      # ฟีเจอร์: สถานะร้านค้าและคิวคำสั่งซื้อ
-        ├── store_controller.js     # Router สถานะร้านค้า (/api/store)
-        ├── store_repository.js     # คำสั่ง SQL ตาราง store_status และ sequence คิว
-        └── store_service.js        # ตรรกะเปิด/ปิดร้าน, รีเซ็ตคิว, สรุปยอดขาย
+    │   └── validators/             # index.js (Zod validation schemas)
+    └── store/                      # Feature: Store status & queue sequence
+        ├── store_controller.js     # Store status router (/api/store)
+        ├── store_repository.js     # SQL queries for store_status and queue sequence
+        └── store_service.js        # Store toggle, queue reset, sales summary generation
 ```
 
 ---
 
-## 🌐 รายการ API Endpoints ทั้งหมด (Complete API Reference)
+## 🌐 Complete API Reference
 
-### 1. หมวดทั่วไปและตรวจสอบสถานะ (General & Health)
-| Method | Endpoint | คำอธิบาย | สิทธิ์ | Rate Limit |
+### 1. General & Health Check
+| Method | Endpoint | Description | Auth | Rate Limit |
 |---|---|---|---|---|
-| `GET` / `HEAD` | `/api/health` | ตรวจสอบสถานะเซิร์ฟเวอร์ (Health Check & Keep-Alive) | สาธารณะ | ไม่จำกัด (Skip) |
-| `HEAD` | `/` | Root Health Check สำหรับ Uptime Monitor | สาธารณะ | ไม่จำกัด (Skip) |
+| `GET` / `HEAD` | `/api/health` | Server health check & Keep-Alive endpoint | Public | Unlimited (Bypassed) |
+| `HEAD` | `/` | Root health check for Uptime monitoring | Public | Unlimited (Bypassed) |
 
-### 2. เมนูอาหารและน้ำสลัด (Menu & Dressings)
-| Method | Endpoint | คำอธิบาย | สิทธิ์ | Response ตัวอย่าง |
+### 2. Menu Items & Salad Dressings
+| Method | Endpoint | Description | Auth | Example Response |
 |---|---|---|---|---|
-| `GET` | `/api/menu` | ดึงรายการเมนูอาหารที่เปิดจำหน่าย จัดกลุ่มตามหมวดหมู่ | สาธารณะ | `{"success":true,"data":[{"id":1,"name":"สปริงโรลแซลม่อน","price":40,...}]}` |
-| `GET` | `/api/dressings` | ดึงรายการน้ำสลัดที่เปิดให้บริการ | สาธารณะ | `{"success":true,"data":[{"id":0,"name":"ไม่รับน้ำสลัด"},...]}` |
+| `GET` | `/api/menu` | Fetch available menu items grouped by category | Public | `{"success":true,"data":[{"id":1,"name":"Salmon Spring Roll","price":40,...}]}` |
+| `GET` | `/api/dressings` | Fetch available salad dressing options | Public | `{"success":true,"data":[{"id":0,"name":"No Dressing"},...]}` |
 
-### 3. สถานะร้านค้า (Store Status)
-| Method | Endpoint | คำอธิบาย | สิทธิ์ | Rate Limit |
+### 3. Store Status
+| Method | Endpoint | Description | Auth | Rate Limit |
 |---|---|---|---|---|
-| `GET` | `/api/store/status` | ดึงสถานะเปิด/ปิดร้าน, ชื่อร้าน, ข้อความประกาศ, คิวล่าสุด | สาธารณะ | 300 / 15 นาที |
+| `GET` | `/api/store/status` | Get store open/closed status, name, announcement, latest queue | Public | 300 req / 15 min |
 
-### 4. ตะกร้าสินค้า (Cart Sessions - Rate Limit: 150 / 15 นาที)
-| Method | Endpoint | คำอธิบาย | Cookie | Request Body ตัวอย่าง |
+### 4. Shopping Cart Sessions (Rate Limit: 150 req / 15 min)
+| Method | Endpoint | Description | Auth / Cookie | Example Request Body |
 |---|---|---|---|---|
-| `GET` | `/api/cart` | ดึงรายการสินค้าในตะกร้า | Cart Session | - |
-| `POST` | `/api/cart/add` | เพิ่มสินค้าลงตะกร้า | Cart Session | `{"menu_item_id":1,"dressing_id":2,"quantity":1,"item_notes":""}` |
-| `PUT` | `/api/cart/update/:id` | ปรับปรุงจำนวนสินค้าในตะกร้า | Cart Session | `{"quantity":2}` |
-| `DELETE` | `/api/cart/remove/:id` | ลบสินค้า 1 รายการออกจากตะกร้า | Cart Session | - |
-| `DELETE` | `/api/cart/clear` | ล้างสินค้าทั้งหมดในตะกร้า | Cart Session | - |
+| `GET` | `/api/cart` | Get current cart items and totals | Cart Session | - |
+| `POST` | `/api/cart/add` | Add item to cart | Cart Session | `{"menu_item_id":1,"dressing_id":2,"quantity":1,"item_notes":""}` |
+| `PUT` | `/api/cart/update/:id` | Update item quantity in cart | Cart Session | `{"quantity":2}` |
+| `DELETE` | `/api/cart/remove/:id` | Remove single item from cart | Cart Session | - |
+| `DELETE` | `/api/cart/clear` | Clear all items from cart | Cart Session | - |
 
-### 5. คำสั่งซื้อและการติดตามสถานะ (Orders & Tracking)
-| Method | Endpoint | คำอธิบาย | Rate Limit | Request Body ตัวอย่าง |
+### 5. Orders & Live Tracking
+| Method | Endpoint | Description | Rate Limit | Example Request Body |
 |---|---|---|---|---|
-| `POST` | `/api/orders` | สร้างคำสั่งซื้อใหม่ (Anti-Spam 1 ออเดอร์/เบอร์) | 10 / 15 นาที | `{"customer_name":"สมชาย","customer_phone":"0812345678","delivery_type":"รับเองที่ร้าน","items":[{"menu_item_id":1,"dressing_id":0,"quantity":2}]}` |
-| `GET` | `/api/orders/track/:order_number` | ดูสถานะออเดอร์ (Smart Polling 4s, PII Masked) | 300 / 15 นาที | - |
-| `PATCH` | `/api/orders/:id/status` | ลูกค้ายกเลิกออเดอร์ตนเอง (เฉพาะสถานะ `รอดำเนินการ`) | 5 / 15 นาที | `{"status":"ยกเลิก","cancel_reason":"ติดธุระด่วน"}` |
+| `POST` | `/api/orders` | Create new order (Anti-spam 1 active order per phone) | 10 req / 15 min | `{"customer_name":"John Doe","customer_phone":"0812345678","delivery_type":"รับเองที่ร้าน","items":[{"menu_item_id":1,"dressing_id":0,"quantity":2}]}` |
+| `GET` | `/api/orders/track/:order_number` | Live order tracking (Smart Polling 4s, PII Masked) | 300 req / 15 min | - |
+| `PATCH` | `/api/orders/:id/status` | Customer cancels their order (Only in `Pending` status) | 5 req / 15 min | `{"status":"ยกเลิก","cancel_reason":"Emergency"}` |
 
-### 6. ระบบผู้ดูแลระบบ (Admin Portal Endpoints - สิทธิ์: คุกกี้แอดมิน)
-| Method | Endpoint | คำอธิบาย | Rate Limit / หมายเหตุ |
+### 6. Admin Portal Endpoints (Auth: Admin Session Cookie)
+| Method | Endpoint | Description | Rate Limit / Notes |
 |---|---|---|---|
-| `POST` | `/api/admin/login` | เข้าสู่ระบบผู้ดูแลระบบ | 5 / 15 นาที (Brute Force Protection) |
-| `POST` | `/api/admin/logout` | ออกจากระบบและลบเซสชัน | คุกกี้แอดมิน |
-| `GET` | `/api/admin/me` | ตรวจสอบเซสชันผู้ดูแลระบบปัจจุบัน | คุกกี้แอดมิน |
-| `GET` | `/api/admin/analytics` | สถิติยอดขาย Active Batch, วันนี้, เดือนนี้, รวม และ Top 5 | Smart Polling 15s |
-| `GET` | `/api/admin/orders` | ดึงรายการออเดอร์ (Query: `status`, `sort`, `page`, `limit`) | Smart Polling 4s |
-| `PATCH` | `/api/admin/orders/:id/status` | เปลี่ยนสถานะออเดอร์ตาม Workflow State Machine | บังคับลำดับขั้นตอน |
-| `DELETE` | `/api/admin/orders/:id` | Soft Delete ออเดอร์ (`deleted_at = NOW()`) | คุกกี้แอดมิน |
-| `PATCH` | `/api/admin/store/status` | เปิด/ปิดร้านค้า, แก้ไขชื่อร้าน, ประกาศ | คุกกี้แอดมิน |
-| `POST` | `/api/admin/store/reset-queue` | สรุปยอดขายส่งเข้า Discord (#reports) และรีเซ็ตคิว | คุกกี้แอดมิน |
-| `GET` | `/api/admin/categories` | ดึงรายการหมวดหมู่ทั้งหมด | คุกกี้แอดมิน |
-| `POST` | `/api/admin/categories` | เพิ่มหมวดหมู่ใหม่ | Request: `{"name":"...","display_order":1}` |
-| `PUT` | `/api/admin/categories/:id` | แก้ไขชื่อและลำดับหมวดหมู่ | คุกกี้แอดมิน |
-| `DELETE` | `/api/admin/categories/:id` | ลบหมวดหมู่ (ไม่อนุญาตหากมีเมนูอยู่ในหมวด) | คุกกี้แอดมิน |
-| `GET` | `/api/admin/menu` | ดึงรายการเมนูอาหารทั้งหมด (รวมที่ปิดจำหน่าย) | คุกกี้แอดมิน |
-| `POST` | `/api/admin/menu` | เพิ่มรายการเมนูอาหารใหม่ | Request: `{"name":"...","price":40,...}` |
-| `PUT` | `/api/admin/menu/:id` | แก้ไขข้อมูลเมนูอาหาร | คุกกี้แอดมิน |
-| `DELETE` | `/api/admin/menu/:id` | ลบเมนูอาหาร (ไม่อนุญาตหากเคยมีประวัติถูกสั่งซื้อ) | คุกกี้แอดมิน |
-| `GET` | `/api/admin/dressings` | ดึงรายการน้ำสลัดทั้งหมด | คุกกี้แอดมิน |
-| `POST` | `/api/admin/dressings` | เพิ่มรายการน้ำสลัดใหม่ | Request: `{"name":"...","is_available":true}` |
-| `PUT` | `/api/admin/dressings/:id` | แก้ไขข้อมูลน้ำสลัด | คุกกี้แอดมิน |
-| `DELETE` | `/api/admin/dressings/:id` | ลบน้ำสลัด (ไม่อนุญาตให้ลบ id=0 หรือมีประวัติถูกสั่ง) | คุกกี้แอดมิน |
+| `POST` | `/api/admin/login` | Administrator login | 5 req / 15 min (Brute Force Protection) |
+| `POST` | `/api/admin/logout` | Administrator logout & session revocation | Admin Session |
+| `GET` | `/api/admin/me` | Verify active admin session | Admin Session |
+| `GET` | `/api/admin/analytics` | Sales statistics (Active Batch, Today, Month, All-Time, Top 5) | Smart Polling 15s |
+| `GET` | `/api/admin/orders` | List orders (Query params: `status`, `sort`, `page`, `limit`) | Smart Polling 4s |
+| `PATCH` | `/api/admin/orders/:id/status` | Transition order status via Workflow State Machine | Strict step validation |
+| `DELETE` | `/api/admin/orders/:id` | Soft delete order (`deleted_at = NOW()`) | Admin Session |
+| `PATCH` | `/api/admin/store/status` | Toggle open/closed, update store name, announcement banner | Admin Session |
+| `POST` | `/api/admin/store/reset-queue` | Dispatch sales summary to Discord (#reports) and reset queue | Admin Session |
+| `GET` | `/api/admin/categories` | List all menu categories | Admin Session |
+| `POST` | `/api/admin/categories` | Create new category | Request: `{"name":"...","display_order":1}` |
+| `PUT` | `/api/admin/categories/:id` | Update category name and display order | Admin Session |
+| `DELETE` | `/api/admin/categories/:id` | Delete category (Forbidden if menu items are attached) | Admin Session |
+| `GET` | `/api/admin/menu` | List all menu items (including unavailable items) | Admin Session |
+| `POST` | `/api/admin/menu` | Create new menu item | Request: `{"name":"...","price":40,...}` |
+| `PUT` | `/api/admin/menu/:id` | Update menu item details, pricing, image | Admin Session |
+| `DELETE` | `/api/admin/menu/:id` | Delete menu item (Forbidden if referenced in order history) | Admin Session |
+| `GET` | `/api/admin/dressings` | List all salad dressings | Admin Session |
+| `POST` | `/api/admin/dressings` | Create new salad dressing option | Request: `{"name":"...","is_available":true}` |
+| `PUT` | `/api/admin/dressings/:id` | Update salad dressing details & availability | Admin Session |
+| `DELETE` | `/api/admin/dressings/:id` | Delete salad dressing (Forbidden for id=0 or with order history) | Admin Session |
 
 ---
 
-## 🛡️ มาตรฐานความปลอดภัยและข้อผิดพลาด (Security & Error Standards)
+## 🛡️ Security & Error Standards
 
-1. **Fail-Fast Configuration (`src/config/config.js`)**
-   * ตรวจสอบค่าจำเป็น (`DATABASE_URL`, `JWT_SECRET`) เมื่อเริ่มบูต หยุดทันทีหากค่าไม่ครบ
+1. **Fail-Fast Startup Configuration (`src/config/config.js`)**
+   * Verifies all critical environment variables (`DATABASE_URL`, `JWT_SECRET`) during boot and halts startup immediately if values are missing.
 
 2. **RFC 9457 Problem Details (`src/shared/errors.js`)**
-   * คลาส Error เฉพาะทาง: `NotFoundError` (404), `ValidationError` (400), `UnauthorizedError` (401), `ForbiddenError` (403), `ConflictError` (409)
-   * `globalErrorHandler` ตอบกลับเป็น JSON มาตรฐาน พร้อมซ่อน Stack Trace บน Production
+   * Specialized error classes: `NotFoundError` (404), `ValidationError` (400), `UnauthorizedError` (401), `ForbiddenError` (403), `ConflictError` (409).
+   * Centralized `globalErrorHandler` returns clean, standardized JSON errors while hiding internal stack traces in production mode.
 
 3. **Database Connection Pool Optimization (`src/config/database.js`)**
-   * `max: 10`: จำกัดขนาด Pool เหมาะสำหรับ Cloud Database Free Tier (Neon)
-   * `idleTimeoutMillis: 30000`: ปิด Connection ที่ไม่ใช้งานใน 30 วินาที
-   * `connectionTimeoutMillis: 5000`: ตัดการเชื่อมต่อทันทีหาก DB ไม่ตอบสนองใน 5s (Fail-Fast)
-   * Dynamic SSL: เปิด SSL อัตโนมัติเมื่อเชื่อมต่อกับ Cloud Database ภายนอก
+   * `max: 10`: Pool size capped to stay comfortably within Cloud Database Free Tier limits (Neon).
+   * `idleTimeoutMillis: 30000`: Closes idle connections after 30 seconds.
+   * `connectionTimeoutMillis: 5000`: Fails fast if the database does not respond within 5 seconds.
+   * Dynamic SSL: Automatically enables secure SSL connections when targeting remote cloud databases.
 
 4. **Structured JSON Logging (`src/shared/logger.js`, `requestContext.js`)**
-   * แนบ `requestId` (UUIDv4) ในทุก Request เพื่อตรวจสอบ Log ย้อนหลังได้แม่นยำ
+   * Attaches a unique `requestId` (UUIDv4) to every incoming request for distributed tracing across logs.
 
 5. **PII Masking**
-   * บน `GET /api/orders/track/:order_number` หากไม่ใช่แอดมินและไม่ใช่เจ้าของเซสชัน ซ่อนฟิลด์ `customer_name`, `customer_phone`, `address` เป็น `'*** ข้อมูลถูกซ่อนเพื่อความปลอดภัย ***'`
+   * On `GET /api/orders/track/:order_number`, if the requester is neither the order owner nor an authenticated admin, sensitive fields (`customer_name`, `customer_phone`, `address`) are masked as `'*** Hidden for privacy ***'`.
 
 ---
 
-## 🤖 ระบบ Smart Cache และ Discord Engine
+## 🤖 Smart Cache & Discord Engine
 
 ### 1. Smart Cache (HTTP 304 & ETag)
-* เปิดใช้ Strong ETag (`app.set('etag', 'strong')`)
-* เมื่อไคลเอนต์ Polling ด้วย `If-None-Match: <etag>` หากข้อมูลไม่เปลี่ยน ส่งกลับ `304 Not Modified` ทันทีโดยไม่มี Body
-* ประหยัด Bandwidth และลดโหลด CPU ได้มากกว่า 95%
+* Strong ETags enabled (`app.set('etag', 'strong')`).
+* When clients poll with `If-None-Match: <etag>` and data has not changed, the server immediately responds with `304 Not Modified` and zero payload body.
+* Saves bandwidth and eliminates over 95% of unnecessary CPU processing during polling.
 
 ### 2. Discord Webhook Notifications (`src/discord.js`)
-* **แจ้งเตือนออเดอร์ใหม่ (`DISCORD_WEBHOOK_URL`)**: การ์ดสีฟ้า Embed รวมรายการอาหาร, น้ำสลัด, โน้ตพิเศษ, ยอดเงิน, รูปแบบจัดส่ง, เบอร์โทร
-* **แจ้งเตือนยกเลิกออเดอร์ (`DISCORD_CANCEL_WEBHOOK_URL`)**: แก้ไขข้อความเดิมพร้อมลบใน 5s และส่งการ์ดสีแดงแจ้งเตือนยกเลิกใหม่ ป้องกันครัวทำซ้ำ
-* **รายงานสรุปยอดประจำวัน (`DISCORD_REPORT_WEBHOOK_URL`)**: ส่งการ์ดสีเขียวมรกต สรุปยอดขายรวม, จำนวนออเดอร์, เมนูขายดี ส่งเข้า Discord อัตโนมัติเมื่อปิดร้าน
+* **New Order Alert (`DISCORD_WEBHOOK_URL`)**: Sky blue embed card detailing ordered items, dressings, special notes, total amount, delivery method, and phone number.
+* **Order Cancellation Alert (`DISCORD_CANCEL_WEBHOOK_URL`)**: Edits and cleans up the original alert within 5s, dispatching a red cancellation embed card with the cancellation initiator and reason to prevent kitchen waste.
+* **Daily Sales Report (`DISCORD_REPORT_WEBHOOK_URL`)**: Emerald green embed card summarizing daily revenue, order volume, cancellation rates, and top-selling items dispatched automatically upon store closing.
 
 ---
 
-## 🚀 ตัวแปรสภาพแวดล้อม (`backend/.env`)
+## 🚀 Environment Variables (`backend/.env`)
 
-| ตัวแปร (Variable) | ตัวอย่างค่า (Example) | ความสำคัญ | คำอธิบาย |
+| Variable | Example Value | Importance | Description |
 |---|---|---|---|
-| `PORT` | `8000` | ตัวเลือก | พอร์ตเซิร์ฟเวอร์ (ค่าเริ่มต้น: 8000) |
-| `NODE_ENV` | `production` | สำคัญ | โหมดทำงาน (`development` / `production`) |
-| `DATABASE_URL` | `postgres://user:pass@host/db?sslmode=require` | จำเป็น | Connection String ฐานข้อมูล PostgreSQL |
-| `JWT_SECRET` | `your_super_secret_jwt_key_here` | จำเป็น | กุญแจลับลงนาม JWT Session (32 ตัวอักษรขึ้นไป) |
-| `CORS_ORIGIN` | `https://your-app.vercel.app,http://localhost:5173` | จำเป็น | โดเมน Frontend ที่อนุญาต (คั่นด้วยจุลภาค) |
-| `ALLOW_DYNAMIC_CORS` | `false` | ตัวเลือก | อนุญาตทุก Origin อัตโนมัติ (`true`/`false`) |
-| `ADMIN_INIT_USERNAME` | `admin` | ตัวเลือก | ชื่อแอดมินเริ่มต้นสำหรับการล็อกอินครั้งแรก |
-| `ADMIN_INIT_PASSWORD` | `YourStrongPassword123` | ตัวเลือก | รหัสผ่านแอดมินเริ่มต้น (จะถูก Hash ด้วย bcrypt ทันที) |
-| `DISCORD_WEBHOOK_URL` | `https://discord.com/api/webhooks/...` | ตัวเลือก | Webhook แจ้งเตือนออเดอร์ใหม่ (#orders) |
-| `DISCORD_CANCEL_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | ตัวเลือก | Webhook แจ้งเตือนยกเลิกออเดอร์ (#cancels) |
-| `DISCORD_REPORT_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | ตัวเลือก | Webhook สรุปยอดขายประจำวัน (#reports) |
+| `PORT` | `8000` | Optional | Server port (Default: 8000) |
+| `NODE_ENV` | `production` | Important | Environment mode (`development` / `production`) |
+| `DATABASE_URL` | `postgres://user:pass@host/db?sslmode=require` | Required | PostgreSQL connection string |
+| `JWT_SECRET` | `your_super_secret_jwt_key_here` | Required | Secret key for signing JWT sessions (32+ chars) |
+| `CORS_ORIGIN` | `https://your-app.vercel.app,http://localhost:5173` | Required | Allowed frontend origins (comma-separated) |
+| `ALLOW_DYNAMIC_CORS` | `false` | Optional | Allow any origin dynamically (`true`/`false`) |
+| `ADMIN_INIT_USERNAME` | `admin` | Optional | Default admin username initialized on first boot |
+| `ADMIN_INIT_PASSWORD` | `YourStrongPassword123` | Optional | Default admin password (hashed with bcrypt immediately) |
+| `DISCORD_WEBHOOK_URL` | `https://discord.com/api/webhooks/...` | Optional | Webhook for new order alerts (#orders) |
+| `DISCORD_CANCEL_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | Optional | Webhook for order cancellations (#cancels) |
+| `DISCORD_REPORT_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | Optional | Webhook for daily sales reports (#reports) |

@@ -1,6 +1,6 @@
 <div align="center">
-  <h1>🥗 ระบบสั่งอาหารออนไลน์ (Spring Roll Online Store)</h1>
-  <p><strong>เว็บแอปพลิเคชันสั่งอาหารออนไลน์สไตล์ Glassmorphism สถาปัตยกรรม Feature-First ซิงค์เรียลไทม์ผ่าน Smart Polling + Smart Cache (HTTP 304 ETag), Optimistic UI, แจ้งเตือน Discord Webhook และรองรับ Cloud Free Tier 100%</strong></p>
+  <h1>🥗 Spring Roll Online Store (Food Order Web Application)</h1>
+  <p><strong>A modern Glassmorphism food ordering web application built with Feature-First architecture, real-time synchronization via Smart Polling + Smart Cache (HTTP 304 ETag), Optimistic UI, Discord Webhook notifications, and 100% Cloud Free Tier compatibility.</strong></p>
 
   <br />
 
@@ -16,11 +16,11 @@
 <br />
 
 > [!NOTE]  
-> พัฒนาตามหลัก **Separation of Concerns (SoC)**, **Feature-First Architecture** และ **OWASP Security Best Practices** รันได้ทั้ง Docker Compose ในเครื่อง หรือ Cloud Production Free Tier
+> Designed following **Separation of Concerns (SoC)**, **Feature-First Architecture**, and **OWASP Security Best Practices**. Deployable via local Docker Compose or 100% Cloud Production Free Tier.
 
 ---
 
-## 📐 สถาปัตยกรรมระบบ (System Architecture)
+## 📐 System Architecture
 
 ```mermaid
 flowchart TD
@@ -30,239 +30,239 @@ flowchart TD
     classDef db fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#f8fafc,rx:8px
     classDef ext fill:#2a1b4e,stroke:#c084fc,stroke-width:2px,color:#f8fafc,rx:8px
 
-    subgraph CLIENTS ["🌐 1. ส่วนติดต่อผู้ใช้ (Frontend Clients)"]
-        Customer["📱 ลูกค้า (Customer Storefront)<br/>• React 18 & TanStack Query<br/>• Smart Polling & Auto-Tracking"]:::client
-        Admin["💻 แอดมิน (Admin Management Portal)<br/>• Smart Polling KDS Kanban (4s)<br/>• Real-time Analytics Dashboard"]:::client
+    subgraph CLIENTS ["🌐 1. Frontend Clients"]
+        Customer["📱 Customer Storefront<br/>• React 18 & TanStack Query<br/>• Smart Polling & Auto-Tracking"]:::client
+        Admin["💻 Admin Management Portal<br/>• Smart Polling KDS Kanban (4s)<br/>• Real-time Analytics Dashboard"]:::client
     end
 
-    subgraph GATEWAY ["🛡️ 2. ทางผ่านและกระจายโหลด (Edge & Reverse Proxy)"]
-        Proxy["🌐 Vercel Edge / Nginx Server<br/>• จัดการ HTTPS & Static Assets (Cache 1y)<br/>• Reverse Proxy ส่งต่อคำขอ /api"]:::proxy
+    subgraph GATEWAY ["🛡️ 2. Edge & Reverse Proxy"]
+        Proxy["🌐 Vercel Edge / Nginx Server<br/>• HTTPS & Static Assets (Cache 1y)<br/>• Reverse Proxy routing /api"]:::proxy
     end
 
-    subgraph BACKEND ["⚙️ 3. เซิร์ฟเวอร์และตรรกะระบบ (Backend Engine)"]
-        API["🚀 Express.js API Core<br/>• สถาปัตยกรรมแบบ Feature-First<br/>• Smart Cache (HTTP 304 ETag)<br/>• เซสชันปลอดภัย & Rate Limiting"]:::backend
-        DiscordModule["🤖 Discord Webhook Engine<br/>• แจ้งเตือนออเดอร์ใหม่ & ยกเลิก<br/>• ส่งรายงานสรุปยอดขายอัตโนมัติ"]:::backend
+    subgraph BACKEND ["⚙️ 3. Backend Engine"]
+        API["🚀 Express.js API Core<br/>• Feature-First Architecture<br/>• Smart Cache (HTTP 304 ETag)<br/>• Secure Sessions & Rate Limiting"]:::backend
+        DiscordModule["🤖 Discord Webhook Engine<br/>• Order creation & cancellation alerts<br/>• Automated daily sales reports"]:::backend
     end
 
-    subgraph STORAGE ["🗄️ 4. แหล่งจัดเก็บข้อมูล (Database Layer)"]
-        Database[("🐘 PostgreSQL 17+ Database<br/>• เมนูอาหาร, ออเดอร์, เซสชัน<br/>• B-Tree Indexes & Connection Pool")]:::db
+    subgraph STORAGE ["🗄️ 4. Database Layer"]
+        Database[("🐘 PostgreSQL 17+ Database<br/>• Menu, orders, cart & admin sessions<br/>• B-Tree Indexes & Connection Pool")]:::db
     end
 
-    subgraph EXTERNAL ["☁️ 5. บริการภายนอก (External Cloud Services)"]
-        CronBot["⏰ cron-job.org (Keep-Alive)<br/>• ยิง Ping /api/health ทุก 10-12 นาที<br/>• ป้องกัน Render Sleep"]:::ext
+    subgraph EXTERNAL ["☁️ 5. External Cloud Services"]
+        CronBot["⏰ cron-job.org (Keep-Alive)<br/>• Pings /api/health every 10-12 min<br/>• Prevents Render spin-down"]:::ext
         DiscordApp["💬 Discord Channels<br/>• #orders • #cancels • #reports"]:::ext
     end
 
-    Customer -->|"ส่งคำสั่งซื้อ / Polling สถานะ (4s)"| Proxy
-    Admin -->|"จัดการออเดอร์ / ดูสถิติ (4s & 15s)"| Proxy
-    Proxy -->|"Proxy Pass /api (พร้อม ETag If-None-Match)"| API
+    Customer -->|"Place order / Poll status (4s)"| Proxy
+    Admin -->|"Manage orders / View stats (4s & 15s)"| Proxy
+    Proxy -->|"Proxy Pass /api (with ETag If-None-Match)"| API
     API <-->|"Query & Mutate Data (pg.Pool + Indexes)"| Database
     API -->|"Trigger Webhook Events"| DiscordModule
-    DiscordModule ==>|"ส่งการ์ดแจ้งเตือน Embeds"| DiscordApp
-    CronBot -.->|"HTTP GET/HEAD Ping ปลุกเซิร์ฟเวอร์"| API
+    DiscordModule ==>|"Send Embed Notification Cards"| DiscordApp
+    CronBot -.->|"HTTP GET/HEAD Ping (Wake up server)"| API
 ```
 
 ---
 
-## 🌟 ฟีเจอร์หลักของระบบ (Key Features)
+## 🌟 Key Features
 
-### 🛍️ หน้าร้านค้าลูกค้า (Customer Storefront)
-* **Glassmorphism UI + Fluid Typography**: แสดงผลสวยงาม Responsive บนมือถือ แท็บเล็ต และคอมพิวเตอร์
-* **เลือกน้ำสลัดยืดหยุ่น**: จับคู่น้ำสลัดตามใจชอบ หรือเลือก "ไม่รับน้ำสลัด" (`dressing_id: 0`)
-* **ตะกร้า Optimistic UI + Debounce (500ms)**: ปรับจำนวนสินค้าทันที ไม่ต้องรอโหลด รวมคำขอลดภาระเซิร์ฟเวอร์
-* **Smart Polling Auto-Track (0 คลิก)**: ดึงออเดอร์ล่าสุดของเซสชันขึ้นมาติดตามอัตโนมัติ ซิงค์ทุก 4s และหยุดเมื่อเสร็จสิ้น
-* **แอนิเมชันความคืบหน้า 5 สเต็ป**:
-  1. `รอดำเนินการ` -> 2. `รับออเดอร์แล้ว` -> 3. `กำลังเตรียมอาหาร` -> 4. `พร้อมรับอาหาร` หรือ `กำลังจัดส่ง` -> 5. `รับอาหารแล้ว` หรือ `จัดส่งแล้ว`
-* **Web Audio Context Bell Chime**: เสียงกระดิ่งสังเคราะห์ (Harmonic Sine Wave) แจ้งเตือนเมื่อออเดอร์เปลี่ยนสถานะและสั่งซื้อสำเร็จ
-* **E-Receipt Modal**: หน้าต่างสลิปคำสั่งซื้ออิเล็กทรอนิกส์ พร้อมสรุปค่าจัดส่งตามรูปแบบการรับอาหาร
+### 🛍️ Customer Storefront
+* **Glassmorphism UI + Fluid Typography**: Sleek, fully responsive interface for mobile, tablet, and desktop viewports.
+* **Flexible Salad Dressing Selection**: Pick custom salad dressings or opt for "No Dressing" (`dressing_id: 0`).
+* **Optimistic UI Cart + Debounce (500ms)**: Real-time cart quantity updates with immediate visual feedback, debouncing requests to drastically reduce server overhead.
+* **Smart Polling Auto-Track (Zero-Click)**: Automatically recovers and tracks the session's latest active order, syncing every 4s and pausing upon completion.
+* **5-Step Animated Order Progress**:
+  1. `Pending` -> 2. `Order Accepted` -> 3. `Preparing Food` -> 4. `Ready for Pickup` / `Out for Delivery` -> 5. `Picked Up` / `Delivered`
+* **Web Audio Context Bell Chime**: Harmonic sine wave synthetic bell audio notifying customers on status transitions and successful checkout.
+* **E-Receipt Modal**: Clean electronic receipt modal summarizing ordered items, notes, and delivery surcharge breakdown.
 
-### ⚙️ ระบบผู้ดูแลระบบ (Admin Management Portal)
-* **KDS Kanban & Table View (Smart Polling 4s)**: อัปเดตออเดอร์เข้าใหม่ทุก 4s แยกคอลัมน์ตามขั้นตอนครัว พร้อมปุ่มเปลี่ยนสถานะ
-* **Analytics Dashboard (Smart Polling 15s)**: สรุปยอดขายรอบปัจจุบัน (Active Batch), วันนี้, เดือนนี้, รวมทั้งหมด, อัตราการยกเลิก และ 5 เมนูขายดี
-* **Menu & Category CRUD**: เพิ่ม ลบ แก้ไข รายการอาหาร รูปภาพ ราคา หมวดหมู่ และสวิตช์เปิด/ปิดจำหน่าย
-* **Dressing Management**: จัดการเพิ่ม แก้ไข ปิดใช้งานน้ำสลัด (ป้องกันการลบหากมีประวัติการสั่งซื้อ)
-* **Store Control & Announcements**: สลับเปิด/ปิดร้าน พิมพ์ข้อความประกาศหน้าร้าน ซิงค์สดไปยังลูกค้าทันที
-* **Daily Closing & Reset Queue**: สรุปยอดขายส่งเข้า Discord อัตโนมัติเมื่อปิดร้าน พร้อมรีเซ็ตลำดับคิวประจำวัน
+### ⚙️ Admin Management Portal
+* **KDS Kanban & Table View (Smart Polling 4s)**: Real-time incoming kitchen orders updating every 4s, separated into kitchen workflow columns with quick status transitions.
+* **Analytics Dashboard (Smart Polling 15s)**: Live sales breakdown for Active Batch, Today, This Month, All-Time, Cancellation Rate, and Top 5 Best Sellers.
+* **Menu & Category CRUD**: Full lifecycle management for menu items, pictures, prices, categories, and availability toggles.
+* **Dressing Management**: Add, update, and toggle availability for salad dressings (deletion blocked if referenced in order history).
+* **Store Control & Announcements**: One-click store open/close toggle and live broadcast announcement banner synced instantly to customers.
+* **Daily Closing & Reset Queue**: Automated daily sales report dispatched to Discord on queue reset and store closing.
 
-### 🤖 ระบบแจ้งเตือน Discord Webhook อัตโนมัติ
-* **#orders (แจ้งเตือนออเดอร์ใหม่)**: การ์ดสีฟ้า แสดงรหัสออเดอร์, คิว, รายการอาหาร, น้ำสลัด, โน้ตพิเศษ, ยอดเงิน, รูปแบบจัดส่ง, เบอร์โทร
-* **#cancels (แจ้งเตือนยกเลิกออเดอร์)**: แก้ไขข้อความในห้องเดิมและสั่งลบใน 5s พร้อมส่งการ์ดสีแดงเข้าห้องยกเลิก แจ้งผู้ยกเลิกและเหตุผล ป้องกันครัวทำซ้ำ
-* **#reports (รายงานสรุปยอดประจำวัน)**: ส่งการ์ดสีเขียวมรกต สรุปยอดขายรวม, จำนวนออเดอร์, อัตราการยกเลิก และเมนูขายดีประจำวัน เมื่อกดรีเซ็ตคิว
+### 🤖 Automated Discord Webhook Engine
+* **#orders (New Order Notifications)**: Sky blue embed card with Order ID, Queue Number, items, dressings, special notes, total amount, delivery type, and contact phone.
+* **#cancels (Order Cancellation Notifications)**: Edits and deletes the original message within 5s, sending a red embed card to the cancellation room detailing the cancellation reason and initiator to prevent duplicate kitchen work.
+* **#reports (Daily Sales Summary)**: Emerald green embed card summarizing gross revenue, total orders, cancellation rate, and best-selling items when resetting the daily queue.
 
 ---
 
-## 🚦 กฎเกณฑ์ทางธุรกิจและความปลอดภัย (Business Rules & Security)
+## 🚦 Business Rules & Security
 
-### 📌 กฎเกณฑ์ทางธุรกิจ (Business Rules)
-* **Anti-Spam / Concurrent Order Guard**: 1 เบอร์โทรศัพท์ หรือ 1 ตะกร้าเซสชัน สั่งได้ทีละ 1 ออเดอร์ (ตอบกลับ `HTTP 429` หากยังมีออเดอร์ดำเนินการอยู่)
-* **Store Status Guard**: ไม่อนุญาตให้สร้างออเดอร์ใหม่เมื่อร้านปิด (`is_open = false`)
+### 📌 Business Rules
+* **Anti-Spam / Concurrent Order Guard**: Only 1 active in-flight order allowed per phone number or cart session (returns `HTTP 429` if an existing order is active).
+* **Store Status Guard**: Rejects new order submissions when the store is closed (`is_open = false`).
 * **Order Cancellation Rules**:
-  * ลูกค้ายกเลิกได้เฉพาะสถานะ `รอดำเนินการ` เท่านั้น และต้องระบุเหตุผล 1-20 ตัวอักษร
-  * ป้องกัน IDOR: ตรวจสอบ `session_id` ต้องตรงกับผู้สั่งซื้อเท่านั้น
+  * Customers may only cancel orders in `Pending` (`รอดำเนินการ`) status, requiring a valid reason (1–20 characters).
+  * IDOR Protection: Verifies `session_id` strictly matches the order creator.
 * **Admin Workflow State Machine**:
-  * *รับเองที่ร้าน*: `รอดำเนินการ` -> `รับออเดอร์แล้ว` -> `กำลังเตรียมอาหาร` -> `พร้อมรับอาหาร` -> `รับอาหารแล้ว`
-  * *จัดส่ง*: `รอดำเนินการ` -> `รับออเดอร์แล้ว` -> `กำลังเตรียมอาหาร` -> `กำลังจัดส่ง` -> `จัดส่งแล้ว`
-  * ไม่อนุญาตให้ข้ามขั้นตอน หรือย้อนกลับสถานะ
+  * *Store Pickup*: `Pending` -> `Order Accepted` -> `Preparing Food` -> `Ready for Pickup` -> `Picked Up`
+  * *Delivery*: `Pending` -> `Order Accepted` -> `Preparing Food` -> `Out for Delivery` -> `Delivered`
+  * Skipping steps or reverting states is strictly prevented.
 * **Data Deletion Safety**:
-  * ไม่อนุญาตให้ลบเมนูอาหาร หรือน้ำสลัด หากเคยมีประวัติถูกสั่งซื้อในระบบ (แนะนำให้ปิดจำหน่ายแทน)
-  * การลบออเดอร์ในหน้าแอดมินใช้ระบบ **Soft Delete** (`deleted_at = NOW()`)
+  * Prevents deletion of menu items or dressings that have order history (toggle availability instead).
+  * Admin order removal employs **Soft Delete** (`deleted_at = NOW()`).
 
-### 🔒 มาตรฐานความปลอดภัย (Security Standards)
-* **RFC 9457 Problem Details**: คลาสข้อผิดพลาดเฉพาะทาง (`NotFoundError`, `ValidationError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`) ซ่อน Stack Trace ใน Production
+### 🔒 Security Standards
+* **RFC 9457 Problem Details**: Structured error classes (`NotFoundError`, `ValidationError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`) with stack traces masked in production.
 * **Secure Cookie Sessions**:
-  * `springroll_admin_session`: คุกกี้แอดมิน (UUIDv4, `HttpOnly`, `SameSite`, `Secure` ในโหมด Prod, อายุ 24 ชม.)
-  * `springroll_cart_session`: คุกกี้ตะกร้าสินค้าของลูกค้า (UUIDv4, `HttpOnly`, `SameSite`)
-* **PII Masking**: ซ่อนข้อมูลส่วนบุคคล (`customer_name`, `customer_phone`, `address`) เป็น `'*** ข้อมูลถูกซ่อนเพื่อความปลอดภัย ***'` บน API ตรวจสอบสถานะ หากไม่ใช่แอดมินและไม่ใช่เจ้าของออเดอร์
-* **100% Parameterized SQL**: ใช้ `$1, $2, ...` ทุกจุด ป้องกัน SQL Injection สมบูรณ์
-* **Payload Limit**: จำกัดขนาด JSON Body สูงสุด `100kb` ป้องกัน DoS
-* **Dynamic CORS Whitelist**: รองรับ `localhost`, `CORS_ORIGIN`, โดเมน `*.vercel.app` อัตโนมัติ หรือเปิด `ALLOW_DYNAMIC_CORS=true`
+  * `springroll_admin_session`: Admin session cookie (UUIDv4, `HttpOnly`, `SameSite`, `Secure` in production, 24h expiration).
+  * `springroll_cart_session`: Customer cart session cookie (UUIDv4, `HttpOnly`, `SameSite`).
+* **PII Masking**: Masks sensitive personal information (`customer_name`, `customer_phone`, `address`) as `'*** Hidden for privacy ***'` on public tracking endpoints if the request is not from the order owner or admin.
+* **100% Parameterized SQL**: Prepared queries (`$1, $2, ...`) across all database operations, eliminating SQL Injection vulnerabilities.
+* **Payload Limit**: Strict JSON payload ceiling of `100kb` to guard against DoS memory attacks.
+* **Dynamic CORS Whitelist**: Supports `localhost`, `CORS_ORIGIN`, automatic `*.vercel.app` domain matching, or explicit `ALLOW_DYNAMIC_CORS=true`.
 
-### ⏱️ การจำกัดอัตราคำขอ (Rate Limiting Breakdown)
-| ขอบเขต / Endpoint | โควต้าคำขอ (Quota) | หน้าที่ |
+### ⏱️ Rate Limiting Breakdown
+| Scope / Endpoint | Rate Limit Quota | Purpose |
 |---|---|---|
-| `POST /api/orders` | 10 ครั้ง / 15 นาที | ป้องกันสแปมการสร้างออเดอร์ |
-| `PATCH /api/orders/:id/status` | 5 ครั้ง / 15 นาที | ป้องกันสแปมการกดยกเลิกออเดอร์ |
-| `POST /api/admin/login` | 5 ครั้ง / 15 นาที | ป้องกัน Brute-Force Password |
-| `/api/cart/*` | 150 ครั้ง / 15 นาที | ป้องกันการยิงสแปมตะกร้าสินค้า |
-| `GET /api/orders/track/:order_number` | 300 ครั้ง / 15 นาที | รองรับ Customer Smart Polling (4s) |
-| `/api/store/*` | 300 ครั้ง / 15 นาที | รองรับ Store Status Polling (5-15s) |
-| `/api/*` (General API) | 600 ครั้ง / 15 นาที | ป้องกัน DoS ทั่วไป (ข้ามการจำกัดสำหรับ Health Check) |
+| `POST /api/orders` | 10 req / 15 min | Prevents order creation spam |
+| `PATCH /api/orders/:id/status` | 5 req / 15 min | Prevents cancellation spam |
+| `POST /api/admin/login` | 5 req / 15 min | Brute-force password protection |
+| `/api/cart/*` | 150 req / 15 min | Guards cart session manipulation |
+| `GET /api/orders/track/:order_number` | 300 req / 15 min | Accommodates Customer Smart Polling (4s) |
+| `/api/store/*` | 300 req / 15 min | Accommodates Store Status Polling (5–15s) |
+| `/api/*` (General API) | 600 req / 15 min | General DoS protection (bypassed for health checks) |
 
 ---
 
-## 📁 โครงสร้างโปรเจกต์ (Repository Structure)
+## 📁 Repository Structure
 
 ```
 Food-Order-Web-Application/
-├── .env.example                    # ตัวอย่าง Environment Variables
-├── docker-compose.yml              # ควบคุม Container Orchestration ทั้งระบบ (Full-Stack)
-├── LICENSE                         # ใบอนุญาต MIT
-├── README.md                       # เอกสารหลักของโปรเจกต์
-├── backend/                        # เซิร์ฟเวอร์หลังบ้าน (Node.js + Express)
-│   ├── Dockerfile                  # Docker Image สำหรับ Backend
-│   ├── package.json                # Dependencies & Scripts ของ Backend
-│   ├── README.md                   # คู่มือสถาปัตยกรรมและ API Backend
-│   ├── server.js                   # บูตเซิร์ฟเวอร์, ตรวจ Database Pool & Auto-Migration
-│   └── src/                        # ซอร์สโค้ดจัดโครงสร้าง Feature-First
-│       ├── discord.js              # โมดูล Discord Webhook (#orders, #cancels, #reports)
-│       ├── index.js                # รวม Express App, Middlewares, Rate Limiting, Routes
-│       ├── admin/                  # ฟีเจอร์: แอดมินหลังบ้าน (CRUD, Analytics, Auth)
-│       ├── cart/                   # ฟีเจอร์: ตะกร้าสินค้าและการจัดการเซสชัน
-│       ├── config/                 # คอนฟิกส่วนกลาง & Database Pool
-│       ├── dressings/              # ฟีเจอร์: น้ำสลัดฝั่งลูกค้า
-│       ├── menu/                   # ฟีเจอร์: เมนูอาหารและหมวดหมู่
-│       ├── orders/                 # ฟีเจอร์: คำสั่งซื้อและการติดตามสถานะ
-│       ├── shared/                 # Error classes, Logger (Pino), Middleware, Validators (Zod)
-│       └── store/                  # ฟีเจอร์: สถานะร้านค้า, ลำดับคิว, ประกาศ
-├── frontend/                       # ส่วนติดต่อผู้ใช้ (React 18 + Vite)
-│   ├── Dockerfile                  # Docker Image สำหรับ Frontend (Nginx)
-│   ├── index.html                  # HTML หลักของ React SPA
-│   ├── nginx.conf                  # คอนฟิก Nginx Web Server & API Reverse Proxy
-│   ├── package.json                # Dependencies & Scripts ของ Frontend
-│   ├── postcss.config.js           # คอนฟิก PostCSS
-│   ├── README.md                   # คู่มือสถาปัตยกรรมและ UX/UI Frontend
-│   ├── tailwind.config.js          # คอนฟิก Tailwind CSS
-│   ├── vercel.json                 # คอนฟิก Reverse Proxy & Rewrites บน Vercel
-│   ├── vite.config.js              # คอนฟิก Vite
+├── .env.example                    # Environment variables template
+├── docker-compose.yml              # Full-stack Docker Compose container orchestration
+├── LICENSE                         # MIT License
+├── README.md                       # Main project documentation
+├── backend/                        # Backend API service (Node.js + Express)
+│   ├── Dockerfile                  # Production Docker Image for Backend
+│   ├── package.json                # Backend dependencies & scripts
+│   ├── README.md                   # Backend architecture and API reference
+│   ├── server.js                   # Server bootstrap, DB pool validation & auto-migration
+│   └── src/                        # Feature-First source code
+│       ├── discord.js              # Discord Webhook integration (#orders, #cancels, #reports)
+│       ├── index.js                # Express app setup, middlewares, rate limiting, routes
+│       ├── admin/                  # Feature: Admin portal (CRUD, Analytics, Auth)
+│       ├── cart/                   # Feature: Cart session management & operations
+│       ├── config/                 # Central configuration & PostgreSQL connection pool
+│       ├── dressings/              # Feature: Customer dressing selection
+│       ├── menu/                   # Feature: Menu items & categories
+│       ├── orders/                 # Feature: Order placement & tracking
+│       ├── shared/                 # Error classes, Logger (Pino), Middlewares, Validators (Zod)
+│       └── store/                  # Feature: Store status, queue sequence, announcements
+├── frontend/                       # Frontend SPA (React 18 + Vite)
+│   ├── Dockerfile                  # Production Docker Image for Frontend (Nginx)
+│   ├── index.html                  # Main HTML entry point for React SPA
+│   ├── nginx.conf                  # Nginx web server & API reverse proxy configuration
+│   ├── package.json                # Frontend dependencies & scripts
+│   ├── postcss.config.js           # PostCSS configuration
+│   ├── README.md                   # Frontend architecture & UX/UI guide
+│   ├── tailwind.config.js          # Tailwind CSS theme & utility configuration
+│   ├── vercel.json                 # Vercel reverse proxy & URL rewrites configuration
+│   ├── vite.config.js              # Vite configuration
 │   └── src/
-│       ├── App.jsx                 # คอมโพเนนต์หลัก & Routing
-│       ├── index.css               # สไตล์ Glassmorphism, Animations, Fluid Typography
-│       ├── main.jsx                # จุดเริ่มต้น React DOM Render
-│       ├── api/api.js              # Fetch Wrapper จัดการ Request, Error, Cookies
+│       ├── App.jsx                 # Main component & customer/admin routing
+│       ├── index.css               # Glassmorphism styling, animations & fluid typography
+│       ├── main.jsx                # React DOM render entry point & Context Providers
+│       ├── api/api.js              # Fetch wrapper handling requests, errors, ETag & cookies
 │       ├── components/             # CartModal, CartSidebar, CheckoutModal, DressingModal, Header, MenuGrid, MobileCartBar, OrderSlipModal, TrackingModal
 │       ├── context/                # AdminContext, AlertContext, AuthContext, CartContext, ToastContext
-│       ├── hooks/queries.js        # Smart Polling & TanStack React Query Hooks
+│       ├── hooks/queries.js        # Smart Polling & TanStack React Query custom hooks
 │       ├── pages/                  # CustomerApp.jsx, AdminApp.jsx & admin tabs
-│       └── utils/audio.js          # Web Audio Context Bell Chime
-└── database/                       # ฐานข้อมูล PostgreSQL
-    ├── README.md                   # คู่มือโครงสร้าง Database, ENUMs, Indexes
-    └── schema.sql                  # สคริปต์สร้างตาราง, ENUMs, Foreign Keys, Indexes, Seed Data
+│       └── utils/audio.js          # Synthetic bell chime via Web Audio Context API
+└── database/                       # PostgreSQL database scripts & schema
+    ├── README.md                   # Database schema, ER diagram, ENUMs & indexes guide
+    └── schema.sql                  # Schema DDL, ENUMs, foreign keys, indexes & seed data
 ```
 
 ---
 
-## 🚀 การติดตั้งและเปิดใช้งาน (Getting Started)
+## 🚀 Getting Started
 
-### วิธีที่ 1: รันด้วย Docker Compose (Local Development)
+### Method 1: Running with Docker Compose (Local Development)
 
-1. คัดลอกและตั้งค่า Environment Variables:
+1. Copy and configure the environment variables:
    ```bash
    cp .env.example .env
    ```
-2. Build และเปิด Containers:
+2. Build and start the containers:
    ```bash
    docker compose up -d --build
    ```
-3. เข้าใช้งานระบบ:
-   * **หน้าร้านค้าลูกค้า**: `http://localhost`
-   * **ระบบจัดการแอดมิน**: `http://localhost/admin`
+3. Access the application:
+   * **Customer Storefront**: `http://localhost`
+   * **Admin Management Portal**: `http://localhost/admin`
    * **Backend API**: `http://localhost/api`
    * **Health Check**: `http://localhost/api/health`
 
-### การทดสอบออนไลน์ด้วย Cloudflare Tunnel (ทดสอบ Webhook & อุปกรณ์จริง)
+### Online Testing with Cloudflare Tunnel (Webhook & Mobile Testing)
 
-1. รัน Docker Compose: `docker compose up -d --build`
-2. เปิด Tunnel ชี้ไปที่พอร์ต Frontend (Port 80):
+1. Start Docker Compose: `docker compose up -d --build`
+2. Open a tunnel pointing to the Frontend web port (Port 80):
    ```bash
    npx cloudflared tunnel --url http://localhost
    ```
-3. นำ URL ที่ได้ (`https://xxxx.trycloudflare.com`) ไปเปิดทดสอบบนมือถือหรือตั้งค่า Discord Webhook
+3. Use the generated URL (`https://xxxx.trycloudflare.com`) to test on real mobile devices or configure Discord Webhooks.
 
 ---
 
-### วิธีที่ 2: Deploy ฟรีผ่าน Cloud 100% (Neon + Render + Vercel + cron-job.org)
+### Method 2: 100% Free Cloud Deployment (Neon + Render + Vercel + cron-job.org)
 
-| ส่วนประกอบ | แพลตฟอร์ม | แผนบริการ (Tier) | หน้าที่ |
+| Component | Platform | Service Tier | Role |
 |---|---|---|---|
-| 🐘 **Database** | [Neon.tech](https://neon.tech) | Free Tier (0.5 GiB) | PostgreSQL Serverless เก็บเมนู, ออเดอร์, คิว |
-| ⚙️ **Backend API** | [Render.com](https://render.com) | Free Web Service | Node.js + Express API, ประมวลผลคำสั่งซื้อ & แจ้งเตือน Discord |
-| 🌐 **Frontend** | [Vercel.com](https://vercel.com) | Free Hobby | React 18 SPA + Reverse Proxy ส่งต่อ `/api` ไปยัง Render |
-| ⏰ **Keep-Alive** | [cron-job.org](https://cron-job.org) | Free 100% | Ping `/api/health` ทุก 10-12 นาที ป้องกัน Render Sleep |
+| 🐘 **Database** | [Neon.tech](https://neon.tech) | Free Tier (0.5 GiB) | Serverless PostgreSQL for menu, orders, sessions, and queue |
+| ⚙️ **Backend API** | [Render.com](https://render.com) | Free Web Service | Node.js + Express API, order processing & Discord alerts |
+| 🌐 **Frontend** | [Vercel.com](https://vercel.com) | Free Hobby | React 18 SPA + Edge Reverse Proxy forwarding `/api` to Render |
+| ⏰ **Keep-Alive** | [cron-job.org](https://cron-job.org) | Free 100% | Pings `/api/health` every 10–12 minutes to prevent Render idle sleep |
 
 ---
 
-#### 🐘 ขั้นตอนที่ 1: เตรียมฐานข้อมูลบน Neon.tech
+#### 🐘 Step 1: Set Up Database on Neon.tech
 
-1. เข้า [Neon.tech](https://neon.tech) -> **Create Project** -> ตั้งชื่อ `springroll-db` -> เลือก Region `Singapore (ap-southeast-1)`
-2. ไปที่ **SQL Editor** -> คัดลอกโค้ดจาก [database/schema.sql](file:///d:/Food-Order-Web-Application/database/schema.sql) ทั้งหมดมาวาง -> กด **Run**
-3. ไปที่ **Dashboard** -> คัดลอก **Connection string** (`Pooled connection` พร้อม `?sslmode=require`)
-   * *ตัวอย่าง*: `postgres://username:password@ep-xyz.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`
+1. Go to [Neon.tech](https://neon.tech) -> **Create Project** -> Name it `springroll-db` -> Select Region `Singapore (ap-southeast-1)`
+2. Navigate to **SQL Editor** -> Copy the full content of [database/schema.sql](database/schema.sql) -> Click **Run**
+3. Go to **Dashboard** -> Copy the **Connection string** (`Pooled connection` with `?sslmode=require`)
+   * *Example*: `postgres://username:password@ep-xyz.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`
 
 ---
 
-#### ⚙️ ขั้นตอนที่ 2: Deploy Backend API บน Render.com
+#### ⚙️ Step 2: Deploy Backend API on Render.com
 
-1. เข้า [Render.com](https://render.com) -> **New +** -> **Web Service** -> เลือก Repo `Food-Order-Web-Application`
-2. กำหนดค่า Build & Deploy:
+1. Go to [Render.com](https://render.com) -> **New +** -> **Web Service** -> Select the `Food-Order-Web-Application` repository
+2. Configure Build & Deploy settings:
    * **Name**: `springroll-backend`
    * **Region**: `Singapore (Southeast Asia)`
    * **Branch**: `main`
-   * **Root Directory**: `backend` *(⚠️ ต้องระบุ `backend`)*
+   * **Root Directory**: `backend` *(⚠️ Make sure to specify `backend`)*
    * **Runtime**: `Node`
    * **Build Command**: `npm ci --omit=dev`
    * **Start Command**: `node server.js`
    * **Instance Type**: `Free`
-3. เพิ่ม Environment Variables:
+3. Configure Environment Variables:
 
-   | Key | Value ตัวอย่าง / คำแนะนำ | ความจำเป็น |
+   | Key | Example Value / Notes | Required |
    |---|---|---|
-   | `NODE_ENV` | `production` | จำเป็น |
-   | `DATABASE_URL` | *Connection string จาก Neon* | จำเป็น |
-   | `JWT_SECRET` | *สุ่ม 32 ตัวอักษรขึ้นไป* | จำเป็น |
-   | `CORS_ORIGIN` | `https://your-app.vercel.app` *(ใส่ `*` ก่อนได้ แล้วแก้เป็นโดเมน Vercel หลัง Deploy)* | จำเป็น |
-   | `ADMIN_INIT_USERNAME` | `admin` | ตัวเลือก |
-   | `ADMIN_INIT_PASSWORD` | `YourStrongAdminPassword123` | ตัวเลือก |
-   | `DISCORD_WEBHOOK_URL` | `https://discord.com/api/webhooks/...` | ตัวเลือก |
-   | `DISCORD_CANCEL_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | ตัวเลือก |
-   | `DISCORD_REPORT_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | ตัวเลือก |
+   | `NODE_ENV` | `production` | Required |
+   | `DATABASE_URL` | *Connection string from Neon* | Required |
+   | `JWT_SECRET` | *Random string (32+ characters)* | Required |
+   | `CORS_ORIGIN` | `https://your-app.vercel.app` *(Can use `*` initially, then update with Vercel domain)* | Required |
+   | `ADMIN_INIT_USERNAME` | `admin` | Optional |
+   | `ADMIN_INIT_PASSWORD` | `YourStrongAdminPassword123` | Optional |
+   | `DISCORD_WEBHOOK_URL` | `https://discord.com/api/webhooks/...` | Optional |
+   | `DISCORD_CANCEL_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | Optional |
+   | `DISCORD_REPORT_WEBHOOK_URL`| `https://discord.com/api/webhooks/...` | Optional |
 
-4. กด **Deploy Web Service** -> รอสถานะ `Live` -> ทดสอบเปิด `https://springroll-backend.onrender.com/api/health`
+4. Click **Deploy Web Service** -> Wait until status is `Live` -> Test by opening `https://springroll-backend.onrender.com/api/health`
 
 ---
 
-#### 🌐 ขั้นตอนที่ 3: Deploy Frontend บน Vercel.com
+#### 🌐 Step 3: Deploy Frontend on Vercel.com
 
-1. แก้ไข [frontend/vercel.json](file:///d:/Food-Order-Web-Application/frontend/vercel.json) ชี้ `destination` ไปที่ Render URL:
+1. Update [frontend/vercel.json](frontend/vercel.json) to point `destination` to your Render Backend URL:
    ```json
    "rewrites": [
      {
@@ -275,34 +275,34 @@ Food-Order-Web-Application/
      }
    ]
    ```
-2. Commit และ Push:
+2. Commit and push the changes:
    ```bash
    git add frontend/vercel.json
    git commit -m "Update backend API proxy URL in vercel.json"
    git push
    ```
-3. เข้า [Vercel.com](https://vercel.com) -> **Add New...** -> **Project** -> Import Repo
-4. กำหนดการตั้งค่า:
+3. Go to [Vercel.com](https://vercel.com) -> **Add New...** -> **Project** -> Import the repository
+4. Configure project settings:
    * **Framework Preset**: `Vite`
-   * **Root Directory**: `frontend` *(⚠️ ต้องเลือก `frontend`)*
-   * **Build and Output Settings**: ค่าเริ่มต้น (`npm run build`, output: `dist`)
-   * กด **Deploy**
-5. นำ Domain ที่ได้จาก Vercel (เช่น `https://springroll-store.vercel.app`) ไปอัปเดต `CORS_ORIGIN` ใน Render Service
+   * **Root Directory**: `frontend` *(⚠️ Make sure to select `frontend`)*
+   * **Build and Output Settings**: Defaults (`npm run build`, output directory: `dist`)
+   * Click **Deploy**
+5. Take your deployed Vercel domain (e.g. `https://springroll-store.vercel.app`) and update the `CORS_ORIGIN` environment variable in your Render service.
 
 ---
 
-#### ⏰ ขั้นตอนที่ 4: ตั้งค่า cron-job.org ป้องกัน Render Sleep (Keep-Alive 24/7)
+#### ⏰ Step 4: Configure cron-job.org to Prevent Render Spin-Down (24/7 Keep-Alive)
 
-1. เข้าสู่ระบบ [cron-job.org](https://cron-job.org) -> **Cronjobs** -> **CREATE CRONJOB**
-2. ตั้งค่า:
+1. Sign in to [cron-job.org](https://cron-job.org) -> Navigate to **Cronjobs** -> Click **CREATE CRONJOB**
+2. Configure:
    * **Title**: `Springroll Backend Keep-Alive`
    * **URL**: `https://springroll-backend.onrender.com/api/health`
-   * **Schedule**: **Every 10 minutes** หรือ **Every 12 minutes**
-   * **Method**: `GET` หรือ `HEAD`
-3. กด **CREATE**
+   * **Schedule**: **Every 10 minutes** or **Every 12 minutes**
+   * **Method**: `GET` or `HEAD`
+3. Click **CREATE**
 
 ---
 
-## 📜 ใบอนุญาต (License)
+## 📜 License
 
-เผยแพร่ภายใต้ [MIT License](LICENSE) ใช้งานและพัฒนาต่อยอดได้อย่างอิสระ
+Distributed under the [MIT License](LICENSE). Free for personal, commercial, and educational use.
