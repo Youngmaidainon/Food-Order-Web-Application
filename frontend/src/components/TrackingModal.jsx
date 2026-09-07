@@ -85,7 +85,7 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
 
   const handleCancel = async () => {
     if (!trackingData) return;
-    const reason = await showPrompt('กรุณาระบุเหตุผลการยกเลิกออเดอร์นี้ (1-20 ตัวอักษร)');
+    const reason = await showPrompt('กรุณาระบุเหตุผลการยกเลิกออเดอร์นี้');
     if (!reason || reason.trim().length === 0) return;
 
     try {
