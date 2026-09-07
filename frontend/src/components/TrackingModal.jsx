@@ -38,7 +38,7 @@ export default function TrackingModal({ isOpen, onClose, initialOrderNum }) {
     setIsLoading(true);
 
     try {
-      const res = await sendApiRequest(`/orders/track/${numToSearch}`);
+      const res = await sendApiRequest(`/orders/track/${encodeURIComponent(numToSearch)}`);
       if (res.success && res.data) {
         setTrackingData(res.data);
         localStorage.setItem('lastTrackedOrder', res.data.order_number);

@@ -46,7 +46,7 @@ export function useActiveOrderTracking(orderNumber) {
     queryKey: ['activeOrder', orderNumber],
     queryFn: async () => {
       if (!orderNumber) return null;
-      const response = await sendApiRequest(`/orders/track/${orderNumber}`);
+      const response = await sendApiRequest(`/orders/track/${encodeURIComponent(orderNumber)}`);
       if (!response.success) throw new Error(response.message || 'ไม่พบออเดอร์');
       return response.data;
     },

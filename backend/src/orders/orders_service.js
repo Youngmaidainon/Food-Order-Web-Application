@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { ValidationError, AppError } from '../shared/errors.js';
 import { getDatabaseClient } from '../config/database.js';
 import { storeService } from '../store/store_controller.js';
@@ -10,11 +11,31 @@ export class OrdersService {
     this.ordersRepository = ordersRepository;
   }
 
-  // Generate unique order number (e.g. ORD-20260826-123)
-  generateUniqueOrderNumber() {
-    const currentDateString = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const randomThreeDigitNumber = Math.floor(100 + Math.random() * 900);
-    return `ORD-${currentDateString}-${randomThreeDigitNumber}`;
+  // Generate unique order number (e.g. #1234)
+  async generateUniqueOrderNumber(databaseClient = null) {
+    let orderNumber;
+    let isUnique = false;
+    let attempts = 0;
+
+    while (!isUnique && attempts < 20) {
+      attempts++;
+      const randomFourDigits = crypto.randomInt(1000, 10000);
+      orderNumber = `#${randomFourDigits}`;
+
+      if (!databaseClient) {
+        break;
+      }
+
+      const existingOrder = await databaseClient.query(
+        'SELECT id FROM orders WHERE order_number = $1 LIMIT 1',
+        [orderNumber]
+      );
+      if (existingOrder.rows.length === 0) {
+        isUnique = true;
+      }
+    }
+
+    return orderNumber;
   }
 
   // Create new customer order with transaction & anti-spam checks
@@ -100,7 +121,7 @@ export class OrdersService {
       }
 
       const newSequence = await this.ordersRepository.getAndIncrementSequence(databaseClient);
-      const generatedOrderNumber = this.generateUniqueOrderNumber();
+      const generatedOrderNumber = await this.generateUniqueOrderNumber(databaseClient);
 
       const createdOrderRecord = await this.ordersRepository.createOrder(databaseClient, {
         orderNumber: generatedOrderNumber,
@@ -166,7 +187,13 @@ export class OrdersService {
 
   // Track order with PII masking for non-owners
   async trackOrder(orderNumber, cartSessionId, isAdmin) {
-    const orderRecord = await this.ordersRepository.getOrderByNumber(orderNumber);
+    const rawNumber = (orderNumber || '').trim();
+    let orderRecord = await this.ordersRepository.getOrderByNumber(rawNumber);
+    if (!orderRecord && !rawNumber.startsWith('#')) {
+      orderRecord = await this.ordersRepository.getOrderByNumber(`#${rawNumber}`);
+    } else if (!orderRecord && rawNumber.startsWith('#')) {
+      orderRecord = await this.ordersRepository.getOrderByNumber(rawNumber.replace(/^#+/, ''));
+    }
     if (!orderRecord) throw new AppError('ไม่พบรหัสคำสั่งซื้อนี้', 'NOT_FOUND', 404);
 
     const items = await this.ordersRepository.getOrderItemsByOrderId(null, orderRecord.id);

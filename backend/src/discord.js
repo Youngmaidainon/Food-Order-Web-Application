@@ -48,8 +48,9 @@ export const sendDiscordOrderNotification = async (customerOrderDetails) => {
       return description;
     }).join('\n\n');
 
+    const displayOrderNum = orderNumber?.startsWith('#') ? orderNumber : `#${orderNumber}`;
     const discordEmbedMessage = {
-      title: `ออเดอร์ใหม่ #${orderNumber}`,
+      title: `ออเดอร์ใหม่ ${displayOrderNum}`,
       color: 0x0ea5e9,
       description: `**ข้อมูลลูกค้า**\nชื่อ: ${customerName}\nโทร: ${customerPhone}\n\n**การรับสินค้า**\nรูปแบบ: ${deliveryType}${deliveryAddress ? `\nที่อยู่: ${deliveryAddress}` : ''}\n\n**รายการสินค้า**\n${formattedItemsDescription}\n\n**ยอดรวมทั้งสิ้น**\n\`${parseInt(totalAmount, 10)} บาท\``,
       timestamp: new Date().toISOString()
@@ -82,8 +83,9 @@ export const deleteDiscordOrderNotification = async (messageId, customerOrderDet
     if (customerOrderDetails && canceledBy) {
       // Edit original message to cancelled state
       const editUrl = `${applicationConfig.discordWebhookUrl}/messages/${messageId}`;
+      const displayOrderNum = customerOrderDetails.order_number?.startsWith('#') ? customerOrderDetails.order_number : `#${customerOrderDetails.order_number}`;
       const discordEmbedMessage = {
-        title: `❌ ออเดอร์ #${customerOrderDetails.order_number} ถูกยกเลิก!`,
+        title: `❌ ออเดอร์ ${displayOrderNum} ถูกยกเลิก!`,
         color: 0xef4444,
         description: `กำลังจะลบข้อความนี้ใน 5 วินาที...\n\n**ผู้ยกเลิก:** ${canceledBy}\n**เหตุผล:** ${customerOrderDetails.cancel_reason || 'ไม่ระบุ'}`
       };
@@ -156,8 +158,9 @@ export const sendDiscordCancelNotification = async (customerOrderDetails, cancel
       return description;
     }).join('\n\n');
 
+    const displayOrderNum = orderNumber?.startsWith('#') ? orderNumber : `#${orderNumber}`;
     const discordEmbedMessage = {
-      title: `ยกเลิกออเดอร์ #${orderNumber}`,
+      title: `ยกเลิกออเดอร์ ${displayOrderNum}`,
       color: 0xef4444,
       description: `**ผู้ที่ทำการยกเลิก:** ${canceledBy}\n**เหตุผล:** ${cancelReason || 'ไม่ระบุ'}\n\n**รายการที่ถูกยกเลิก**\n${formattedItemsDescription}`,
       timestamp: new Date().toISOString()
