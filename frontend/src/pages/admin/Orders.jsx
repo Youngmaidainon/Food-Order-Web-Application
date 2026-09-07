@@ -68,7 +68,7 @@ export default function Orders() {
   const updateOrderStatus = async (orderId, newStatus) => {
     let payload = { status: newStatus };
     if (newStatus === 'ยกเลิก') {
-      const reason = await showPrompt('กรุณาระบุเหตุผลการยกเลิก (1-20 ตัวอักษร):');
+      const reason = await showPrompt('กรุณาระบุเหตุผลที่ยกเลิกออเดอร์นี้');
       if (!reason || reason.trim().length === 0) return;
       payload.cancel_reason = reason.trim();
     }
